@@ -2,6 +2,14 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.5]
+
+### Changed
+
+- Home hero carousel now shows one banner at a time and auto-advances every 3 seconds across 5 slides.
+- Renamed the home subscriptions row title from **Séries** to **Assinaturas**.
+- Limited subscription cards to Netflix, HBO Max, Disney+, Prime Video, Discovery, Paramount+, Globoplay, Apple TV+, Brasil Paralelo, OnlyFans/Privacy, and AMC.
+
 ## [1.0.4]
 
 ### Changed
