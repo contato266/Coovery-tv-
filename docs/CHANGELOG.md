@@ -2,6 +2,12 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.1]
+
+### Added
+
+- Added a five-card Coovery tv+ hero carousel and a Séries category row with Netflix, HBO Max, Disney+, Prime Video, Discovery, Paramount+, and additional genre tags on the Series browse screen.
+
 ## [1.0.17]
 
 ### Added
