@@ -508,85 +508,32 @@ private fun SeriesVodContent(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(bottom = 28.dp)
         ) {
-            item(key = "hero") {
-            if (heroSeries != null) {
-                VodHeroStrip(
-                        title = heroSeries.name,
-                        subtitle = heroSeries.plot?.takeIf { it.isNotBlank() }
-                            ?: heroSeries.genre
-                            ?: stringResource(R.string.series_library_lens_subtitle),
-                        actionLabel = stringResource(R.string.player_resume).substringBefore(" "),
-                        onClick = {
-                            val isLocked = isSeriesLocked(heroSeries)
-                            if (isLocked) onProtectedSeriesClick(heroSeries) else onSeriesClick(heroSeries)
-                        },
-                        modifier = Modifier
-                            .padding(top = 8.dp, bottom = 6.dp)
-                            .focusRequester(initialFocusRequester)
-                    )
+            item(key = "hero_carousel") {
+                SeriesHeroCarousel(
+                    modifier = Modifier
+                        .padding(top = 8.dp, bottom = 6.dp)
+                        .focusRequester(initialFocusRequester),
+                    onCardClick = {
+                        heroSeries?.let { series ->
+                            val isLocked = isSeriesLocked(series)
+                            if (isLocked) onProtectedSeriesClick(series) else onSeriesClick(series)
+                        }
+                    }
+                )
             }
-            }
-            item(key = "actions") {
-            VodActionChipRow(
-                    actions = buildList {
-                        add(
-                            VodActionChip(
-                                key = "browse_all",
-                                label = stringResource(R.string.library_full_browse_title_series),
-                                detail = stringResource(R.string.library_full_browse_subtitle, uiState.libraryCount),
-                                onClick = onSelectFullLibraryBrowse
-                            )
-                        )
-                        add(
-                            VodActionChip(
-                                key = "categories",
-                                label = stringResource(R.string.series_categories_title),
-                                detail = "${visibleCategoryNames.count { name -> categoryByName[name]?.id != VodBrowseDefaults.FAVORITES_SENTINEL_ID }} groups",
-                                onClick = { showCategoryPicker = true }
-                            )
-                        )
-                        if (favoriteSeries.isNotEmpty()) {
-                            add(
-                                VodActionChip(
-                                    key = "favorites",
-                                    label = stringResource(R.string.favorites_title),
-                                    detail = stringResource(R.string.library_saved_items_count, favoriteSeries.size),
-                                    onClick = { onSelectCategory(uiState.favoriteCategoryName) }
-                                )
-                            )
-                        }
-                        if (continueWatching.isNotEmpty()) {
-                            add(
-                                VodActionChip(
-                                    key = "resume",
-                                    label = stringResource(R.string.library_lens_continue),
-                                    detail = "${continueWatching.size} items",
-                                    onClick = onOpenContinueWatching
-                                )
-                            )
-                        }
-                        if (topRatedSeries.isNotEmpty()) {
-                            add(
-                                VodActionChip(
-                                    key = SeriesLibraryLens.TOP_RATED.name,
-                                    label = stringResource(R.string.library_lens_top_rated),
-                                    detail = "${topRatedSeries.size} picks",
-                                    onClick = onOpenTopRated
-                                )
-                            )
-                        }
-                        if (freshSeries.isNotEmpty()) {
-                            add(
-                                VodActionChip(
-                                    key = SeriesLibraryLens.FRESH.name,
-                                    label = stringResource(R.string.library_lens_fresh_series),
-                                    detail = "${freshSeries.size} picks",
-                                    onClick = onOpenFresh
-                                )
-                            )
+            item(key = "series_category_cards") {
+                SeriesCategoryCardsRow(
+                    visibleCategoryNames = visibleCategoryNames,
+                    onCategorySelected = { categoryName ->
+                        val matchedCategory = categoryByName[categoryName]
+                        val lockedCategory = matchedCategory?.let(isCategoryLocked) == true
+                        if (lockedCategory && matchedCategory != null) {
+                            openProtectedCategory(matchedCategory)
+                        } else {
+                            onSelectCategory(categoryName)
                         }
                     },
-                    modifier = Modifier.padding(top = 2.dp, bottom = 6.dp)
+                    modifier = Modifier.padding(bottom = 6.dp)
                 )
             }
             if (continueWatching.isNotEmpty()) {
