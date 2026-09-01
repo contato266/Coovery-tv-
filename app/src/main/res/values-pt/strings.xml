@@ -193,6 +193,7 @@
     <string name="series_categories_title">Categorias</string>
     <string name="series_browse_section_title">Séries</string>
     <string name="series_carousel_banner_content_description">Banner em destaque Coovery tv+</string>
+    <string name="home_carousel_banner_content_description">Banner em destaque Coovery tv+</string>
     <string name="series_shell_subtitle">Prateleiras editoriais, grupos salvos e navegação de séries paginadas ajustadas para grandes bibliotecas de provedores.</string>
     <string name="series_all_categories">Todas as categorias</string>
     <string name="series_search_placeholder">Pesquisar série...</string>
