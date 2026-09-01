@@ -1,4 +1,4 @@
-package com.streamvault.app.ui.screens.series
+package com.streamvault.app.ui.screens.dashboard
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -39,9 +39,10 @@ import com.streamvault.app.ui.components.shell.AppSectionHeader
 import com.streamvault.app.ui.design.AppColors
 import com.streamvault.app.ui.interaction.TvClickableSurface
 
-private const val SERIES_CAROUSEL_CARD_COUNT = 5
+private const val HOME_CAROUSEL_CARD_COUNT = 5
+private const val COOVERY_BANNER_ASPECT_RATIO = 2000f / 626f
 
-internal data class SeriesCategoryCard(
+internal data class HomeSeriesCategoryCard(
     val key: String,
     val label: String,
     val backgroundColor: Color,
@@ -50,26 +51,34 @@ internal data class SeriesCategoryCard(
 )
 
 @Composable
-internal fun SeriesHeroCarousel(
+internal fun HomeHeroCarousel(
     modifier: Modifier = Modifier,
     onCardClick: (Int) -> Unit = {}
 ) {
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+    val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val isTelevisionDevice = rememberIsTelevisionDevice()
-    val cardWidth = when {
-        screenWidth < 700.dp -> screenWidth * 0.88f
-        !isTelevisionDevice && screenWidth < 1280.dp -> screenWidth * 0.82f
-        else -> screenWidth * 0.78f
+    val horizontalPadding = when {
+        screenWidth < 700.dp -> 16.dp
+        !isTelevisionDevice && screenWidth < 1280.dp -> 20.dp
+        else -> 24.dp
     }
-    val cardHeight = cardWidth / 3.2f
-    val cardShape = RoundedCornerShape(18.dp)
+    val cardWidth = when {
+        screenWidth < 700.dp -> screenWidth - horizontalPadding * 2
+        !isTelevisionDevice && screenWidth < 1280.dp -> (screenWidth - horizontalPadding * 2) * 0.94f
+        else -> (screenWidth - horizontalPadding * 2) * 0.92f
+    }
+    val cardHeight = (cardWidth / COOVERY_BANNER_ASPECT_RATIO)
+        .coerceAtMost(screenHeight * 0.42f)
+        .coerceAtLeast(140.dp)
+    val cardShape = RoundedCornerShape(20.dp)
 
     LazyRow(
         modifier = modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(horizontal = 20.dp),
-        horizontalArrangement = Arrangement.spacedBy(14.dp)
+        contentPadding = PaddingValues(horizontal = horizontalPadding),
+        horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        items(SERIES_CAROUSEL_CARD_COUNT, key = { index -> "series_carousel_$index" }) { index ->
+        items(HOME_CAROUSEL_CARD_COUNT, key = { index -> "home_carousel_$index" }) { index ->
             TvClickableSurface(
                 onClick = { onCardClick(index) },
                 modifier = Modifier
@@ -90,11 +99,11 @@ internal fun SeriesHeroCarousel(
                         shape = cardShape
                     )
                 ),
-                scale = ClickableSurfaceDefaults.scale(focusedScale = 1.02f)
+                scale = ClickableSurfaceDefaults.scale(focusedScale = 1.01f)
             ) {
                 Image(
                     painter = painterResource(R.drawable.coovery_hero_banner),
-                    contentDescription = stringResource(R.string.series_carousel_banner_content_description),
+                    contentDescription = stringResource(R.string.home_carousel_banner_content_description),
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
                         .fillMaxSize()
@@ -106,12 +115,13 @@ internal fun SeriesHeroCarousel(
 }
 
 @Composable
-internal fun SeriesCategoryCardsRow(
+internal fun HomeSeriesCategoryCardsRow(
     visibleCategoryNames: List<String>,
     onCategorySelected: (String) -> Unit,
+    onNavigateToSeries: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val cards = remember { seriesCategoryCards() }
+    val cards = remember { homeSeriesCategoryCards() }
     val resolvedCards = remember(visibleCategoryNames, cards) {
         cards.map { card ->
             val matchedCategory = visibleCategoryNames.firstOrNull { name ->
@@ -136,10 +146,14 @@ internal fun SeriesCategoryCardsRow(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             itemsIndexed(resolvedCards, key = { _, (card, _) -> card.key }) { _, (card, matchedCategory) ->
-                SeriesCategoryCardItem(
+                HomeSeriesCategoryCardItem(
                     card = card,
                     onClick = {
-                        matchedCategory?.let(onCategorySelected)
+                        if (matchedCategory != null) {
+                            onCategorySelected(matchedCategory)
+                        } else {
+                            onNavigateToSeries()
+                        }
                     }
                 )
             }
@@ -148,8 +162,8 @@ internal fun SeriesCategoryCardsRow(
 }
 
 @Composable
-private fun SeriesCategoryCardItem(
-    card: SeriesCategoryCard,
+private fun HomeSeriesCategoryCardItem(
+    card: HomeSeriesCategoryCard,
     onClick: () -> Unit
 ) {
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
@@ -201,99 +215,99 @@ private fun SeriesCategoryCardItem(
     }
 }
 
-private fun seriesCategoryCards(): List<SeriesCategoryCard> = listOf(
-    SeriesCategoryCard(
+private fun homeSeriesCategoryCards(): List<HomeSeriesCategoryCard> = listOf(
+    HomeSeriesCategoryCard(
         key = "netflix",
         label = "Netflix",
         backgroundColor = Color(0xFFE50914),
         contentColor = Color.White,
         categoryMatchers = listOf("netflix")
     ),
-    SeriesCategoryCard(
+    HomeSeriesCategoryCard(
         key = "hbo_max",
         label = "HBO Max",
         backgroundColor = Color(0xFF002BE7),
         contentColor = Color.White,
         categoryMatchers = listOf("hbo", "max")
     ),
-    SeriesCategoryCard(
+    HomeSeriesCategoryCard(
         key = "disney_plus",
         label = "Disney+",
         backgroundColor = Color(0xFF113CCF),
         contentColor = Color.White,
         categoryMatchers = listOf("disney")
     ),
-    SeriesCategoryCard(
+    HomeSeriesCategoryCard(
         key = "prime_video",
         label = "Prime Video",
         backgroundColor = Color(0xFF00A8E1),
         contentColor = Color.White,
         categoryMatchers = listOf("prime", "amazon")
     ),
-    SeriesCategoryCard(
+    HomeSeriesCategoryCard(
         key = "discovery",
         label = "Discovery",
         backgroundColor = Color(0xFF0047AB),
         contentColor = Color.White,
         categoryMatchers = listOf("discovery")
     ),
-    SeriesCategoryCard(
+    HomeSeriesCategoryCard(
         key = "paramount_plus",
         label = "Paramount+",
         backgroundColor = Color(0xFF0064FF),
         contentColor = Color.White,
         categoryMatchers = listOf("paramount")
     ),
-    SeriesCategoryCard(
+    HomeSeriesCategoryCard(
         key = "action",
         label = "Ação",
         backgroundColor = Color(0xFF1A1A1A),
         contentColor = Color.White,
         categoryMatchers = listOf("ação", "acao", "action")
     ),
-    SeriesCategoryCard(
+    HomeSeriesCategoryCard(
         key = "drama",
         label = "Drama",
         backgroundColor = Color(0xFF2B1B2E),
         contentColor = Color.White,
         categoryMatchers = listOf("drama")
     ),
-    SeriesCategoryCard(
+    HomeSeriesCategoryCard(
         key = "comedy",
         label = "Comédia",
         backgroundColor = Color(0xFF3D2C1E),
         contentColor = Color.White,
         categoryMatchers = listOf("comédia", "comedia", "comedy")
     ),
-    SeriesCategoryCard(
+    HomeSeriesCategoryCard(
         key = "sci_fi",
         label = "Sci-Fi",
         backgroundColor = Color(0xFF0F1B2D),
         contentColor = Color.White,
         categoryMatchers = listOf("sci", "ficção", "ficcao", "science")
     ),
-    SeriesCategoryCard(
+    HomeSeriesCategoryCard(
         key = "horror",
         label = "Terror",
         backgroundColor = Color(0xFF1F0A0A),
         contentColor = Color.White,
         categoryMatchers = listOf("terror", "horror")
     ),
-    SeriesCategoryCard(
+    HomeSeriesCategoryCard(
         key = "romance",
         label = "Romance",
         backgroundColor = Color(0xFF3A1028),
         contentColor = Color.White,
         categoryMatchers = listOf("romance", "romântico", "romantico")
     ),
-    SeriesCategoryCard(
+    HomeSeriesCategoryCard(
         key = "animation",
         label = "Animação",
         backgroundColor = Color(0xFF1E3A2F),
         contentColor = Color.White,
         categoryMatchers = listOf("animação", "animacao", "anime", "cartoon")
     ),
-    SeriesCategoryCard(
+    HomeSeriesCategoryCard(
         key = "documentary",
         label = "Documentário",
         backgroundColor = Color(0xFF1C2430),

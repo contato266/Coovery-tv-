@@ -2,6 +2,13 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.3]
+
+### Changed
+
+- Moved the five-card Coovery tv+ hero carousel and the Séries streaming category row from the Series screen to the Home (Página inicial) screen.
+- Enlarged the home carousel to match the wide Claro TV Box banner proportions.
+
 ## [1.0.2]
 
 ### Fixed

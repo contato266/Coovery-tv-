@@ -290,6 +290,7 @@
     <string name="series_categories_title">Categories</string>
     <string name="series_browse_section_title">Séries</string>
     <string name="series_carousel_banner_content_description">Coovery tv+ featured series banner</string>
+    <string name="home_carousel_banner_content_description">Coovery tv+ featured banner</string>
     <string name="series_shell_subtitle">Editorial shelves, saved groups, and paged series browsing tuned for large provider libraries.</string>
     <string name="series_all_categories">All Categories</string>
     <string name="series_search_placeholder">Search series...</string>

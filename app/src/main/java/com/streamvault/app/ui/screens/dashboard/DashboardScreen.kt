@@ -185,6 +185,20 @@ fun DashboardScreen(
                         )
                     }
                 }
+                item(key = "home_hero_carousel") {
+                    HomeHeroCarousel(
+                        modifier = Modifier.padding(top = 8.dp, bottom = 6.dp),
+                        onCardClick = { onNavigate(Routes.SERIES) }
+                    )
+                }
+                item(key = "home_series_category_cards") {
+                    HomeSeriesCategoryCardsRow(
+                        visibleCategoryNames = uiState.seriesCategoryNames,
+                        onCategorySelected = { onNavigate(Routes.SERIES) },
+                        onNavigateToSeries = { onNavigate(Routes.SERIES) },
+                        modifier = Modifier.padding(bottom = 6.dp)
+                    )
+                }
                 items(orderedSections, key = { it.storageValue }) { section ->
                     when (section) {
                     AppHomeDashboardShelf.LIVE_SHORTCUTS -> DashboardShortcutRow(

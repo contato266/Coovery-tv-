@@ -268,7 +268,13 @@ class DashboardViewModel @Inject constructor(
             snapshot.copy(homeDashboardShelves = homeDashboardShelves)
         }.combine(observeUpdateNotice().onStart { emit(null) }) { snapshot, updateNotice ->
             snapshot.copy(updateNotice = updateNotice)
-        }.combine(syncManager.syncStateForProvider(provider.id).onStart { emit(SyncState.Idle) }) { snapshot, syncState ->
+        }.combine(
+            seriesRepository.getCategories(provider.id)
+                .map { categories -> categories.map { it.name } }
+                .onStart { emit(emptyList()) }
+        ) { snapshot, seriesCategoryNames ->
+            snapshot to seriesCategoryNames
+        }.combine(syncManager.syncStateForProvider(provider.id).onStart { emit(SyncState.Idle) }) { (snapshot, seriesCategoryNames), syncState ->
             DashboardUiState(
                 provider = provider,
                 homeDashboardShelves = snapshot.homeDashboardShelves,
@@ -285,6 +291,7 @@ class DashboardViewModel @Inject constructor(
                 recentSeries = snapshot.shelves.recentSeries,
                 topRatedMovies = snapshot.shelves.topRatedMovies,
                 recommendedMovies = snapshot.shelves.recommendedMovies,
+                seriesCategoryNames = seriesCategoryNames,
                 lastLiveCategory = snapshot.liveContext.lastVisitedCategory,
                 liveShortcuts = snapshot.liveContext.shortcuts,
                 currentCombinedProfileId = combinedProfileId,
@@ -856,6 +863,7 @@ data class DashboardUiState(
     val recentSeries: List<Series> = emptyList(),
     val topRatedMovies: List<Movie> = emptyList(),
     val recommendedMovies: List<Movie> = emptyList(),
+    val seriesCategoryNames: List<String> = emptyList(),
     val lastLiveCategory: Category? = null,
     val liveShortcuts: List<DashboardLiveShortcut> = emptyList(),
     val feature: DashboardFeature = DashboardFeature(),
