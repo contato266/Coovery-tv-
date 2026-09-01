@@ -192,6 +192,7 @@
     <string name="series_no_found_subtitle">Experimente outra categoria ou retorne à biblioteca completa para encontrar mais prateleiras de séries.</string>
     <string name="series_categories_title">Categorias</string>
     <string name="series_browse_section_title">Séries</string>
+    <string name="home_subscriptions_section_title">Assinaturas</string>
     <string name="series_carousel_banner_content_description">Banner em destaque Coovery tv+</string>
     <string name="home_carousel_banner_content_description">Banner em destaque Coovery tv+</string>
     <string name="series_shell_subtitle">Prateleiras editoriais, grupos salvos e navegação de séries paginadas ajustadas para grandes bibliotecas de provedores.</string>

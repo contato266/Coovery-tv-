@@ -1,5 +1,7 @@
 package com.streamvault.app.ui.screens.dashboard
 
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -15,7 +17,11 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -38,8 +44,10 @@ import com.streamvault.app.device.rememberIsTelevisionDevice
 import com.streamvault.app.ui.components.shell.AppSectionHeader
 import com.streamvault.app.ui.design.AppColors
 import com.streamvault.app.ui.interaction.TvClickableSurface
+import kotlinx.coroutines.delay
 
 private const val HOME_CAROUSEL_CARD_COUNT = 5
+private const val HOME_CAROUSEL_AUTO_ADVANCE_MS = 3_000L
 private const val COOVERY_BANNER_ASPECT_RATIO = 2000f / 626f
 
 internal data class HomeSeriesCategoryCard(
@@ -72,13 +80,26 @@ internal fun HomeHeroCarousel(
         .coerceAtMost(screenHeight * 0.42f)
         .coerceAtLeast(140.dp)
     val cardShape = RoundedCornerShape(20.dp)
+    var currentIndex by remember { mutableIntStateOf(0) }
 
-    LazyRow(
-        modifier = modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(horizontal = horizontalPadding),
-        horizontalArrangement = Arrangement.spacedBy(16.dp)
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(HOME_CAROUSEL_AUTO_ADVANCE_MS)
+            currentIndex = (currentIndex + 1) % HOME_CAROUSEL_CARD_COUNT
+        }
+    }
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = horizontalPadding),
+        contentAlignment = Alignment.Center
     ) {
-        items(HOME_CAROUSEL_CARD_COUNT, key = { index -> "home_carousel_$index" }) { index ->
+        Crossfade(
+            targetState = currentIndex,
+            animationSpec = tween(durationMillis = 450),
+            label = "home_hero_carousel"
+        ) { index ->
             TvClickableSurface(
                 onClick = { onCardClick(index) },
                 modifier = Modifier
@@ -135,7 +156,7 @@ internal fun HomeSeriesCategoryCardsRow(
 
     Column(modifier = modifier.fillMaxWidth()) {
         AppSectionHeader(
-            title = stringResource(R.string.series_browse_section_title),
+            title = stringResource(R.string.home_subscriptions_section_title),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(start = 20.dp, end = 20.dp, top = 10.dp, bottom = 8.dp)
@@ -259,59 +280,38 @@ private fun homeSeriesCategoryCards(): List<HomeSeriesCategoryCard> = listOf(
         categoryMatchers = listOf("paramount")
     ),
     HomeSeriesCategoryCard(
-        key = "action",
-        label = "Ação",
-        backgroundColor = Color(0xFF1A1A1A),
+        key = "globoplay",
+        label = "Globoplay",
+        backgroundColor = Color(0xFFE53935),
         contentColor = Color.White,
-        categoryMatchers = listOf("ação", "acao", "action")
+        categoryMatchers = listOf("globo", "globoplay")
     ),
     HomeSeriesCategoryCard(
-        key = "drama",
-        label = "Drama",
-        backgroundColor = Color(0xFF2B1B2E),
+        key = "apple_tv_plus",
+        label = "Apple TV+",
+        backgroundColor = Color(0xFF1C1C1E),
         contentColor = Color.White,
-        categoryMatchers = listOf("drama")
+        categoryMatchers = listOf("apple", "appletv")
     ),
     HomeSeriesCategoryCard(
-        key = "comedy",
-        label = "Comédia",
-        backgroundColor = Color(0xFF3D2C1E),
+        key = "brasil_paralelo",
+        label = "Brasil Paralelo",
+        backgroundColor = Color(0xFF0D3B66),
         contentColor = Color.White,
-        categoryMatchers = listOf("comédia", "comedia", "comedy")
+        categoryMatchers = listOf("brasil paralelo", "paralelo")
     ),
     HomeSeriesCategoryCard(
-        key = "sci_fi",
-        label = "Sci-Fi",
-        backgroundColor = Color(0xFF0F1B2D),
+        key = "onlyfans_privacy",
+        label = "OnlyFans/Privacy",
+        backgroundColor = Color(0xFF00AFF0),
         contentColor = Color.White,
-        categoryMatchers = listOf("sci", "ficção", "ficcao", "science")
+        categoryMatchers = listOf("onlyfans", "privacy")
     ),
     HomeSeriesCategoryCard(
-        key = "horror",
-        label = "Terror",
-        backgroundColor = Color(0xFF1F0A0A),
+        key = "amc",
+        label = "AMC",
+        backgroundColor = Color(0xFF7B1E3A),
         contentColor = Color.White,
-        categoryMatchers = listOf("terror", "horror")
-    ),
-    HomeSeriesCategoryCard(
-        key = "romance",
-        label = "Romance",
-        backgroundColor = Color(0xFF3A1028),
-        contentColor = Color.White,
-        categoryMatchers = listOf("romance", "romântico", "romantico")
-    ),
-    HomeSeriesCategoryCard(
-        key = "animation",
-        label = "Animação",
-        backgroundColor = Color(0xFF1E3A2F),
-        contentColor = Color.White,
-        categoryMatchers = listOf("animação", "animacao", "anime", "cartoon")
-    ),
-    HomeSeriesCategoryCard(
-        key = "documentary",
-        label = "Documentário",
-        backgroundColor = Color(0xFF1C2430),
-        contentColor = Color.White,
-        categoryMatchers = listOf("documentário", "documentario", "documentary", "doc")
+        categoryMatchers = listOf("amc")
     )
 )
