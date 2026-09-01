@@ -4,6 +4,7 @@ import com.streamvault.app.update.AppUpdateActionState
 import com.streamvault.app.update.AppUpdateDownloadState
 import com.streamvault.app.update.AppUpdateDownloadStatus
 import com.streamvault.app.update.GitHubReleaseInfo
+import com.streamvault.app.update.isCooveryAppUpdateRelease
 import com.streamvault.app.update.isRemoteVersionNewer
 import com.streamvault.app.update.latestAppUpdateAction
 
@@ -73,7 +74,8 @@ internal fun SettingsPreferenceSnapshot.toCachedAppUpdateUiModel(): AppUpdateUiM
         releaseNotes = cachedAppUpdateReleaseNotes,
         publishedAt = cachedAppUpdatePublishedAt,
         isUpdateAvailable = versionName?.let {
-            isRemoteVersionNewer(cachedAppUpdateVersionCode, it, cachedAppUpdatePublishedAt)
+            isCooveryAppUpdateRelease(cachedAppUpdateReleaseUrl) &&
+                isRemoteVersionNewer(cachedAppUpdateVersionCode, it, cachedAppUpdatePublishedAt)
         } ?: false,
         lastCheckedAt = lastAppUpdateCheckAt
     )

@@ -14,8 +14,15 @@ import java.net.URI
 import javax.inject.Inject
 import javax.inject.Singleton
 
-private const val GITHUB_RELEASES_LATEST_URL = "https://api.github.com/repos/Davidona/StreamVault-IPTV/releases/latest"
-private const val GITHUB_RELEASES_LIST_URL = "https://api.github.com/repos/Davidona/StreamVault-IPTV/releases?per_page=20"
+private const val COOVERY_GITHUB_REPO = "contato266/Coovery-tv-"
+private const val GITHUB_RELEASES_LATEST_URL = "https://api.github.com/repos/$COOVERY_GITHUB_REPO/releases/latest"
+private const val GITHUB_RELEASES_LIST_URL = "https://api.github.com/repos/$COOVERY_GITHUB_REPO/releases?per_page=20"
+
+fun isCooveryAppUpdateRelease(releaseUrl: String?): Boolean {
+    val normalized = releaseUrl?.trim().orEmpty()
+    if (normalized.isBlank()) return false
+    return normalized.contains("github.com/$COOVERY_GITHUB_REPO", ignoreCase = true)
+}
 
 data class GitHubReleaseInfo(
     val versionName: String,
@@ -42,7 +49,7 @@ class GitHubReleaseChecker @Inject constructor(
             val request = Request.Builder()
                 .url(updateChannel.releaseApiUrl)
                 .header("Accept", "application/vnd.github+json")
-                .header("User-Agent", "StreamVault-Update-Checker")
+                .header("User-Agent", "Coovery-Update-Checker")
                 .build()
 
             okHttpClient.newCall(request).execute().use { response ->
@@ -163,22 +170,24 @@ class GitHubReleaseChecker @Inject constructor(
             )
             when (updateChannel) {
                 AppUpdateChannel.Stable -> {
-                    if (name.equals("StreamVault.apk", ignoreCase = true)) {
+                    if (name.equals("Coovery.apk", ignoreCase = true)) {
                         return releaseAsset
                     }
                     if (fallback == null &&
                         name.endsWith(".apk", ignoreCase = true) &&
+                        name.contains("coovery", ignoreCase = true) &&
                         !name.contains("beta", ignoreCase = true)
                     ) {
                         fallback = releaseAsset
                     }
                 }
                 AppUpdateChannel.Beta -> {
-                    if (name.equals("StreamVault-beta.apk", ignoreCase = true)) {
+                    if (name.equals("Coovery-beta.apk", ignoreCase = true)) {
                         return releaseAsset
                     }
                     if (fallback == null &&
                         name.endsWith(".apk", ignoreCase = true) &&
+                        name.contains("coovery", ignoreCase = true) &&
                         name.contains("beta", ignoreCase = true)
                     ) {
                         fallback = releaseAsset
