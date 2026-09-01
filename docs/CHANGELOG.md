@@ -2,6 +2,12 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.2]
+
+### Fixed
+
+- Fixed release APK installation on TV boxes and phones by signing release builds with the Coovery release keystore (previous v1.0.1 APK was unsigned and rejected by Android).
+
 ## [1.0.1]
 
 ### Added

@@ -29,6 +29,7 @@ secret.properties
 keystore/
 release-signing-info.local.txt
 *.jks
+!signing/coovery-release.jks
 *.keystore
 *.p12
 *.pfx

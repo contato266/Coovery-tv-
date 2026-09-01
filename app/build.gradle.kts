@@ -14,9 +14,11 @@ plugins {
 }
 
 val keystorePropertiesFile = rootProject.file("keystore.properties")
+val defaultKeystorePropertiesFile = rootProject.file("signing/coovery-signing.properties")
 val keystoreProperties = Properties()
-if (keystorePropertiesFile.exists()) {
-    FileInputStream(keystorePropertiesFile).use(keystoreProperties::load)
+when {
+    keystorePropertiesFile.exists() -> FileInputStream(keystorePropertiesFile).use(keystoreProperties::load)
+    defaultKeystorePropertiesFile.exists() -> FileInputStream(defaultKeystorePropertiesFile).use(keystoreProperties::load)
 }
 
 val localPropertiesFile = rootProject.file("local.properties")
@@ -28,7 +30,7 @@ if (localPropertiesFile.exists()) {
 fun localProp(key: String): String = localProperties.getProperty(key, "")
 
 fun computeOfficialSigningCertSha256(): String {
-    if (!keystorePropertiesFile.exists()) return ""
+    if (keystoreProperties.isEmpty()) return ""
 
     val storePath = keystoreProperties.getProperty("storeFile") ?: return ""
     val storePassword = keystoreProperties.getProperty("storePassword") ?: return ""
@@ -57,8 +59,8 @@ android {
         applicationId = "com.coovery.app"
         minSdk = 25
         targetSdk = 36
-        versionCode = 2
-        versionName = "1.0.1"
+        versionCode = 3
+        versionName = "1.0.2"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         providers.gradleProperty("compatApi").orNull?.let { expectedApi ->
             testInstrumentationRunnerArguments["expected_api"] = expectedApi
@@ -86,12 +88,16 @@ android {
     }
 
     signingConfigs {
-        if (keystorePropertiesFile.exists()) {
+        if (keystoreProperties.isNotEmpty()) {
             create("release") {
                 storeFile = rootProject.file(keystoreProperties.getProperty("storeFile"))
                 storePassword = keystoreProperties.getProperty("storePassword")
                 keyAlias = keystoreProperties.getProperty("keyAlias")
                 keyPassword = keystoreProperties.getProperty("keyPassword")
+                enableV1Signing = true
+                enableV2Signing = true
+                enableV3Signing = true
+                enableV4Signing = true
             }
         }
     }
@@ -117,7 +123,7 @@ android {
             // Keep beta close to release behavior but faster for CI/test distribution.
             isMinifyEnabled = false
             isShrinkResources = false
-            if (keystorePropertiesFile.exists()) {
+            if (keystoreProperties.isNotEmpty()) {
                 signingConfig = signingConfigs.getByName("release")
             }
             matchingFallbacks += listOf("release")
@@ -129,7 +135,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            if (keystorePropertiesFile.exists()) {
+            if (keystoreProperties.isNotEmpty()) {
                 signingConfig = signingConfigs.getByName("release")
             }
         }
