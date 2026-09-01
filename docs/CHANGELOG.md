@@ -2,6 +2,14 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.4]
+
+### Changed
+
+- Renamed the app display name to **Coovery tv+**.
+- App update checks now use the Coovery GitHub repository instead of StreamVault.
+- Update notifications are shown only for Coovery releases (cached StreamVault updates are ignored).
+
 ## [1.0.3]
 
 ### Changed

@@ -7,6 +7,7 @@ import com.streamvault.data.preferences.PreferencesRepository
 import com.streamvault.data.sync.ProviderSyncStateSource
 import com.streamvault.app.update.AppUpdateActionState
 import com.streamvault.app.update.AppUpdateInstaller
+import com.streamvault.app.update.isCooveryAppUpdateRelease
 import com.streamvault.app.update.isRemoteVersionNewer
 import com.streamvault.app.update.latestAppUpdateAction
 import com.streamvault.domain.model.ActiveLiveSource
@@ -599,24 +600,29 @@ class DashboardViewModel @Inject constructor(
 
     private fun observeUpdateNotice(): Flow<DashboardUpdateNotice?> {
         val cachedRelease = combine(
-            preferencesRepository.cachedAppUpdateVersionName,
-            preferencesRepository.cachedAppUpdateVersionCode,
-            preferencesRepository.cachedAppUpdatePublishedAt,
-            preferencesRepository.cachedAppUpdateDownloadUrl,
-            preferencesRepository.cachedAppUpdateDownloadSha256
-        ) { latestVersionName, latestVersionCode, publishedAt, downloadUrl, downloadSha256 ->
-            DashboardCachedUpdateRelease(
-                latestVersionName = latestVersionName,
-                latestVersionCode = latestVersionCode,
-                publishedAt = publishedAt,
-                downloadUrl = downloadUrl,
-                downloadSha256 = downloadSha256
-            )
+            combine(
+                preferencesRepository.cachedAppUpdateVersionName,
+                preferencesRepository.cachedAppUpdateVersionCode,
+                preferencesRepository.cachedAppUpdatePublishedAt,
+                preferencesRepository.cachedAppUpdateDownloadUrl,
+                preferencesRepository.cachedAppUpdateDownloadSha256
+            ) { latestVersionName, latestVersionCode, publishedAt, downloadUrl, downloadSha256 ->
+                DashboardCachedUpdateRelease(
+                    latestVersionName = latestVersionName,
+                    latestVersionCode = latestVersionCode,
+                    publishedAt = publishedAt,
+                    downloadUrl = downloadUrl,
+                    downloadSha256 = downloadSha256
+                )
+            },
+            preferencesRepository.cachedAppUpdateReleaseUrl
+        ) { release, releaseUrl ->
+            release.copy(releaseUrl = releaseUrl)
         }
 
         return cachedRelease.combine(appUpdateInstaller.downloadState) { release, downloadState ->
             val latestVersionName = release.latestVersionName
-            if (latestVersionName.isNullOrBlank()) {
+            if (latestVersionName.isNullOrBlank() || !isCooveryAppUpdateRelease(release.releaseUrl)) {
                 return@combine null
             }
 
@@ -844,7 +850,8 @@ private data class DashboardCachedUpdateRelease(
     val latestVersionCode: Int?,
     val publishedAt: String?,
     val downloadUrl: String?,
-    val downloadSha256: String?
+    val downloadSha256: String?,
+    val releaseUrl: String? = null
 )
 
 data class DashboardUiState(
