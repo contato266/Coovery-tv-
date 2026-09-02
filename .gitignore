@@ -84,3 +84,4 @@ final_narrow_*.log
 gradle_*_test*.log
 gradle_*_rerun.log
 releases/*.apk
+dist/
