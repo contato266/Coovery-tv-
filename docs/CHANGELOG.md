@@ -2,6 +2,12 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.9]
+
+### Added
+
+- Added custom carousel banners for cards 2, 3, and 4 on the Home screen.
+
 ## [1.0.8]
 
 ### Fixed

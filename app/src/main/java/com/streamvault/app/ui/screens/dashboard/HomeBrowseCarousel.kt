@@ -35,6 +35,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.annotation.DrawableRes
 import androidx.tv.material3.Border
 import androidx.tv.material3.ClickableSurfaceDefaults
 import androidx.tv.material3.MaterialTheme
@@ -50,6 +51,14 @@ import kotlinx.coroutines.delay
 private const val HOME_CAROUSEL_CARD_COUNT = 5
 private const val HOME_CAROUSEL_AUTO_ADVANCE_MS = 3_000L
 private const val COOVERY_BANNER_ASPECT_RATIO = 2000f / 626f
+
+@DrawableRes
+private fun homeCarouselBannerRes(index: Int): Int = when (index) {
+    1 -> R.drawable.coovery_carousel_banner_2
+    2 -> R.drawable.coovery_carousel_banner_3
+    3 -> R.drawable.coovery_carousel_banner_4
+    else -> R.drawable.coovery_hero_banner
+}
 
 internal enum class HomeSubscriptionDestination {
     LIVE,
@@ -130,7 +139,7 @@ internal fun HomeHeroCarousel(
                 scale = ClickableSurfaceDefaults.scale(focusedScale = 1.01f)
             ) {
                 Image(
-                    painter = painterResource(R.drawable.coovery_hero_banner),
+                    painter = painterResource(homeCarouselBannerRes(index)),
                     contentDescription = stringResource(R.string.home_carousel_banner_content_description),
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
