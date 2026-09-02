@@ -1,5 +1,7 @@
 package com.streamvault.app.ui.screens.dashboard
 
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -15,7 +17,11 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -39,8 +45,10 @@ import com.streamvault.app.ui.components.shell.AppSectionHeader
 import com.streamvault.app.ui.design.AppColors
 import com.streamvault.app.ui.interaction.TvClickableSurface
 import com.streamvault.domain.model.Category
+import kotlinx.coroutines.delay
 
 private const val HOME_CAROUSEL_CARD_COUNT = 5
+private const val HOME_CAROUSEL_AUTO_ADVANCE_MS = 3_000L
 private const val COOVERY_BANNER_ASPECT_RATIO = 2000f / 626f
 
 internal enum class HomeSubscriptionDestination {
@@ -79,13 +87,26 @@ internal fun HomeHeroCarousel(
         .coerceAtMost(screenHeight * 0.42f)
         .coerceAtLeast(140.dp)
     val cardShape = RoundedCornerShape(20.dp)
+    var currentIndex by remember { mutableIntStateOf(0) }
 
-    LazyRow(
-        modifier = modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(horizontal = horizontalPadding),
-        horizontalArrangement = Arrangement.spacedBy(16.dp)
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(HOME_CAROUSEL_AUTO_ADVANCE_MS)
+            currentIndex = (currentIndex + 1) % HOME_CAROUSEL_CARD_COUNT
+        }
+    }
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = horizontalPadding),
+        contentAlignment = Alignment.Center
     ) {
-        items(HOME_CAROUSEL_CARD_COUNT, key = { index -> "home_carousel_$index" }) { index ->
+        Crossfade(
+            targetState = currentIndex,
+            animationSpec = tween(durationMillis = 450),
+            label = "home_hero_carousel"
+        ) { index ->
             TvClickableSurface(
                 onClick = { onCardClick(index) },
                 modifier = Modifier

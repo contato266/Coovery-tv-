@@ -2,6 +2,12 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.8]
+
+### Fixed
+
+- Restored the Home carousel to show one banner at a time with automatic 3-second transitions.
+
 ## [1.0.7]
 
 ### Fixed
