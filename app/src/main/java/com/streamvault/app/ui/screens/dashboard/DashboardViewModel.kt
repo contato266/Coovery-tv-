@@ -270,12 +270,16 @@ class DashboardViewModel @Inject constructor(
         }.combine(observeUpdateNotice().onStart { emit(null) }) { snapshot, updateNotice ->
             snapshot.copy(updateNotice = updateNotice)
         }.combine(
-            seriesRepository.getCategories(provider.id)
-                .map { categories -> categories.map { it.name } }
+            channelRepository.getCategories(provider.id)
                 .onStart { emit(emptyList()) }
-        ) { snapshot, seriesCategoryNames ->
-            snapshot to seriesCategoryNames
-        }.combine(syncManager.syncStateForProvider(provider.id).onStart { emit(SyncState.Idle) }) { (snapshot, seriesCategoryNames), syncState ->
+        ) { snapshot, liveCategories ->
+            snapshot to liveCategories
+        }.combine(
+            seriesRepository.getCategories(provider.id)
+                .onStart { emit(emptyList()) }
+        ) { (snapshot, liveCategories), seriesCategories ->
+            Triple(snapshot, liveCategories, seriesCategories)
+        }.combine(syncManager.syncStateForProvider(provider.id).onStart { emit(SyncState.Idle) }) { (snapshot, liveCategories, seriesCategories), syncState ->
             DashboardUiState(
                 provider = provider,
                 homeDashboardShelves = snapshot.homeDashboardShelves,
@@ -292,7 +296,8 @@ class DashboardViewModel @Inject constructor(
                 recentSeries = snapshot.shelves.recentSeries,
                 topRatedMovies = snapshot.shelves.topRatedMovies,
                 recommendedMovies = snapshot.shelves.recommendedMovies,
-                seriesCategoryNames = seriesCategoryNames,
+                liveCategories = liveCategories,
+                seriesCategories = seriesCategories,
                 lastLiveCategory = snapshot.liveContext.lastVisitedCategory,
                 liveShortcuts = snapshot.liveContext.shortcuts,
                 currentCombinedProfileId = combinedProfileId,
@@ -870,7 +875,8 @@ data class DashboardUiState(
     val recentSeries: List<Series> = emptyList(),
     val topRatedMovies: List<Movie> = emptyList(),
     val recommendedMovies: List<Movie> = emptyList(),
-    val seriesCategoryNames: List<String> = emptyList(),
+    val liveCategories: List<Category> = emptyList(),
+    val seriesCategories: List<Category> = emptyList(),
     val lastLiveCategory: Category? = null,
     val liveShortcuts: List<DashboardLiveShortcut> = emptyList(),
     val feature: DashboardFeature = DashboardFeature(),

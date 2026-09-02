@@ -99,6 +99,7 @@ fun SeriesScreen(
     onSeriesIdClick: (Long) -> Unit,
     onNavigate: (String) -> Unit,
     currentRoute: String,
+    initialCategoryId: Long? = null,
     viewModel: SeriesViewModel = hiltViewModel()
 ) {
     remember(viewModel) {
@@ -112,6 +113,10 @@ fun SeriesScreen(
     var pendingSeries by remember { mutableStateOf<Series?>(null) }
     var pendingCategory by remember { mutableStateOf<Category?>(null) }
     val context = androidx.compose.ui.platform.LocalContext.current
+
+    LaunchedEffect(initialCategoryId) {
+        viewModel.setPreferredInitialCategory(initialCategoryId)
+    }
 
     HandleVodUserMessage(
         userMessage = uiState.userMessage,

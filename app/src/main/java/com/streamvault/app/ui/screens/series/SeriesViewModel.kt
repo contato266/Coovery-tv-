@@ -106,6 +106,7 @@ class SeriesViewModel @Inject constructor(
     private val _selectedLibraryFilterType = MutableStateFlow(LibraryFilterType.ALL)
     private val _selectedLibrarySortBy = MutableStateFlow(LibrarySortBy.LIBRARY)
     private val _previewBatchSize = MutableStateFlow(INITIAL_PREVIEW_BATCH_SIZE)
+    private val _preferredInitialCategoryId = MutableStateFlow<Long?>(null)
     private var activeProviderId: Long? = null
     private var remotePageRequestInFlight = false
     private var initialRemoteRequestInFlight = false
@@ -258,6 +259,14 @@ class SeriesViewModel @Inject constructor(
                     val snapshot = result.snapshot
                     val isReordering = _uiState.value.isReorderMode
                     val currentSelected = _uiState.value.selectedCategory
+                    val preferredCategory = _preferredInitialCategoryId.value?.let { categoryId ->
+                        snapshot.providerCategories.firstOrNull { it.id == categoryId }
+                    }
+                    if (preferredCategory != null && currentSelected != preferredCategory.name) {
+                        _preferredInitialCategoryId.value = null
+                        selectCategory(preferredCategory.name)
+                        return@collect
+                    }
                     val preserveSelectedCategory = currentSelected != null && _searchQuery.value.isNotBlank()
                     val resolvedSelected = currentSelected?.takeIf { selected ->
                         val customCategoryNames = _uiState.value.categories.mapTo(linkedSetOf()) { it.name }
@@ -529,6 +538,7 @@ class SeriesViewModel @Inject constructor(
 
     fun selectCategory(categoryName: String?) {
         _previewBatchSize.value = INITIAL_PREVIEW_BATCH_SIZE
+        _preferredInitialCategoryId.value = null
         activeProviderId?.let { providerId ->
             parentalControlManager.retainUnlockedCategory(
                 providerId = providerId,
@@ -596,6 +606,20 @@ class SeriesViewModel @Inject constructor(
 
     fun selectFullLibraryBrowse() {
         selectCategory(VodBrowseDefaults.FULL_LIBRARY_CATEGORY)
+    }
+
+    fun setPreferredInitialCategory(categoryId: Long?) {
+        if (categoryId == null) return
+
+        val matchingCategory = _uiState.value.providerCategories.firstOrNull { it.id == categoryId }
+        if (matchingCategory != null) {
+            if (_uiState.value.selectedCategory != matchingCategory.name) {
+                selectCategory(matchingCategory.name)
+            }
+            return
+        }
+
+        _preferredInitialCategoryId.value = categoryId
     }
 
     fun loadMoreSelectedCategory() {

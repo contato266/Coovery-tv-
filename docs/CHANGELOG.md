@@ -2,6 +2,39 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.9]
+
+### Added
+
+- Added custom carousel banners for cards 2, 3, and 4 on the Home screen.
+
+## [1.0.8]
+
+### Fixed
+
+- Restored the Home carousel to show one banner at a time with automatic 3-second transitions.
+
+## [1.0.7]
+
+### Fixed
+
+- Merged Assinaturas live-TV and series cards into a single horizontal row, with live cards placed after AMC.
+
+## [1.0.6]
+
+### Added
+
+- Added live-TV Assinaturas cards on Home: Premiere, SportyNet, Telecine, Dogtv, and Sky.
+- Added series Assinaturas cards: Netflix, HBO Max, Prime Video, Discovery, Paramount, Globoplay, Apple tv+, Brasil Paralelo, Onlyfans/privacy, and AMC.
+- Tapping an Assinaturas card now opens the matching provider category directly in Live TV or Series.
+
+## [1.0.5]
+
+### Added
+
+- Added the **Assinaturas** section on the Home screen with live-TV cards (Premiere, SportyNet, Telecine, Dogtv, Sky) and series cards (Netflix, HBO Max, Prime Video, Discovery, Paramount, Globoplay, Apple tv+, Brasil Paralelo, Onlyfans/privacy, AMC).
+- Tapping an Assinaturas card now opens the matching provider category directly in Live TV or Series.
+
 ## [1.0.4]
 
 ### Changed
