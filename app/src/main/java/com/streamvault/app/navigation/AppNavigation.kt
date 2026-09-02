@@ -106,6 +106,7 @@ object Routes {
     const val LIVE_TV_DESTINATION = "live_tv?categoryId={categoryId}"
     const val MOVIES = "movies"
     const val SERIES = "series"
+    const val SERIES_DESTINATION = "series?categoryId={categoryId}"
     const val VOD = "vod"
     const val DOWNLOADS = "downloads"
     const val EPG = "epg"
@@ -128,6 +129,7 @@ object Routes {
         return "provider_setup?providerId=${providerId ?: -1L}&importUri=$encodedImportUri"
     }
     fun liveTv(categoryId: Long? = null) = if (categoryId == null) LIVE_TV else "$LIVE_TV?categoryId=$categoryId"
+    fun series(categoryId: Long? = null) = if (categoryId == null) SERIES else "$SERIES?categoryId=$categoryId"
     fun epg(categoryId: Long? = null, anchorTime: Long? = null, favoritesOnly: Boolean? = null): String {
         val resolvedCategoryId = categoryId ?: -1L
         val resolvedAnchorTime = anchorTime ?: -1L
@@ -685,7 +687,13 @@ fun AppNavigation(mainActivity: MainActivity) {
             )
         }
 
-        composable(Routes.SERIES) {
+        composable(
+            route = Routes.SERIES_DESTINATION,
+            arguments = listOf(
+                navArgument("categoryId") { type = NavType.LongType; defaultValue = -1L }
+            )
+        ) { backStackEntry ->
+            val initialCategoryId = backStackEntry.arguments?.getLong("categoryId")?.takeIf { it != -1L }
             SeriesScreen(
                 onSeriesClick = { series ->
                     navController.navigateToSeriesDetail(series, Routes.SERIES)
@@ -694,7 +702,8 @@ fun AppNavigation(mainActivity: MainActivity) {
                     navController.navigateIfResumed(Routes.seriesDetail(seriesId, Routes.SERIES))
                 },
                 onNavigate = { route -> tabNavigate(route) },
-                currentRoute = Routes.SERIES
+                currentRoute = Routes.SERIES,
+                initialCategoryId = initialCategoryId
             )
         }
 

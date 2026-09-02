@@ -191,10 +191,17 @@ fun DashboardScreen(
                         onCardClick = { onNavigate(Routes.SERIES) }
                     )
                 }
-                item(key = "home_series_category_cards") {
-                    HomeSeriesCategoryCardsRow(
-                        visibleCategoryNames = uiState.seriesCategoryNames,
-                        onCategorySelected = { onNavigate(Routes.SERIES) },
+                item(key = "home_assinaturas_cards") {
+                    HomeAssinaturasSection(
+                        liveCategories = uiState.liveCategories,
+                        seriesCategories = uiState.seriesCategories,
+                        onLiveCategorySelected = { categoryId ->
+                            onNavigate(Routes.liveTv(categoryId))
+                        },
+                        onSeriesCategorySelected = { categoryId ->
+                            onNavigate(Routes.series(categoryId))
+                        },
+                        onNavigateToLiveTv = { onNavigate(Routes.LIVE_TV) },
                         onNavigateToSeries = { onNavigate(Routes.SERIES) },
                         modifier = Modifier.padding(bottom = 6.dp)
                     )

@@ -38,11 +38,12 @@ import com.streamvault.app.device.rememberIsTelevisionDevice
 import com.streamvault.app.ui.components.shell.AppSectionHeader
 import com.streamvault.app.ui.design.AppColors
 import com.streamvault.app.ui.interaction.TvClickableSurface
+import com.streamvault.domain.model.Category
 
 private const val HOME_CAROUSEL_CARD_COUNT = 5
 private const val COOVERY_BANNER_ASPECT_RATIO = 2000f / 626f
 
-internal data class HomeSeriesCategoryCard(
+internal data class HomeSubscriptionCard(
     val key: String,
     val label: String,
     val backgroundColor: Color,
@@ -115,55 +116,80 @@ internal fun HomeHeroCarousel(
 }
 
 @Composable
-internal fun HomeSeriesCategoryCardsRow(
-    visibleCategoryNames: List<String>,
-    onCategorySelected: (String) -> Unit,
+internal fun HomeAssinaturasSection(
+    liveCategories: List<Category>,
+    seriesCategories: List<Category>,
+    onLiveCategorySelected: (Long) -> Unit,
+    onSeriesCategorySelected: (Long) -> Unit,
+    onNavigateToLiveTv: () -> Unit,
     onNavigateToSeries: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val cards = remember { homeSeriesCategoryCards() }
-    val resolvedCards = remember(visibleCategoryNames, cards) {
-        cards.map { card ->
-            val matchedCategory = visibleCategoryNames.firstOrNull { name ->
-                card.categoryMatchers.any { matcher ->
-                    name.contains(matcher, ignoreCase = true)
-                }
-            }
-            card to matchedCategory
-        }
+    val liveCards = remember { homeLiveSubscriptionCards() }
+    val seriesCards = remember { homeSeriesSubscriptionCards() }
+    val resolvedLiveCards = remember(liveCategories, liveCards) {
+        resolveSubscriptionCards(liveCards, liveCategories)
+    }
+    val resolvedSeriesCards = remember(seriesCategories, seriesCards) {
+        resolveSubscriptionCards(seriesCards, seriesCategories)
     }
 
     Column(modifier = modifier.fillMaxWidth()) {
         AppSectionHeader(
-            title = stringResource(R.string.series_browse_section_title),
+            title = stringResource(R.string.home_assinaturas_section_title),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(start = 20.dp, end = 20.dp, top = 10.dp, bottom = 8.dp)
         )
 
-        LazyRow(
-            contentPadding = PaddingValues(horizontal = 20.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            itemsIndexed(resolvedCards, key = { _, (card, _) -> card.key }) { _, (card, matchedCategory) ->
-                HomeSeriesCategoryCardItem(
-                    card = card,
-                    onClick = {
-                        if (matchedCategory != null) {
-                            onCategorySelected(matchedCategory)
-                        } else {
-                            onNavigateToSeries()
-                        }
-                    }
-                )
+        SubscriptionCardsRow(
+            resolvedCards = resolvedLiveCards,
+            onCardClick = { matchedCategory ->
+                if (matchedCategory != null) {
+                    onLiveCategorySelected(matchedCategory.id)
+                } else {
+                    onNavigateToLiveTv()
+                }
             }
+        )
+
+        SubscriptionCardsRow(
+            resolvedCards = resolvedSeriesCards,
+            modifier = Modifier.padding(top = 8.dp, bottom = 4.dp),
+            onCardClick = { matchedCategory ->
+                if (matchedCategory != null) {
+                    onSeriesCategorySelected(matchedCategory.id)
+                } else {
+                    onNavigateToSeries()
+                }
+            }
+        )
+    }
+}
+
+@Composable
+private fun SubscriptionCardsRow(
+    resolvedCards: List<Pair<HomeSubscriptionCard, Category?>>,
+    onCardClick: (Category?) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    LazyRow(
+        modifier = modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(horizontal = 20.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        itemsIndexed(resolvedCards, key = { _, (card, _) -> card.key }) { _, (card, matchedCategory) ->
+            HomeSubscriptionCardItem(
+                card = card,
+                onClick = { onCardClick(matchedCategory) }
+            )
         }
     }
 }
 
 @Composable
-private fun HomeSeriesCategoryCardItem(
-    card: HomeSeriesCategoryCard,
+private fun HomeSubscriptionCardItem(
+    card: HomeSubscriptionCard,
     onClick: () -> Unit
 ) {
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
@@ -215,103 +241,127 @@ private fun HomeSeriesCategoryCardItem(
     }
 }
 
-private fun homeSeriesCategoryCards(): List<HomeSeriesCategoryCard> = listOf(
-    HomeSeriesCategoryCard(
+private fun resolveSubscriptionCards(
+    cards: List<HomeSubscriptionCard>,
+    categories: List<Category>
+): List<Pair<HomeSubscriptionCard, Category?>> {
+    return cards.map { card ->
+        val matchedCategory = categories.firstOrNull { category ->
+            card.categoryMatchers.any { matcher ->
+                category.name.contains(matcher, ignoreCase = true)
+            }
+        }
+        card to matchedCategory
+    }
+}
+
+private fun homeLiveSubscriptionCards(): List<HomeSubscriptionCard> = listOf(
+    HomeSubscriptionCard(
+        key = "premiere",
+        label = "Premiere",
+        backgroundColor = Color(0xFF0B6B3A),
+        contentColor = Color.White,
+        categoryMatchers = listOf("premiere")
+    ),
+    HomeSubscriptionCard(
+        key = "sportynet",
+        label = "SportyNet",
+        backgroundColor = Color(0xFF111111),
+        contentColor = Color.White,
+        categoryMatchers = listOf("sportynet", "sporty net", "sporty")
+    ),
+    HomeSubscriptionCard(
+        key = "telecine",
+        label = "Telecine",
+        backgroundColor = Color(0xFF7B1FA2),
+        contentColor = Color.White,
+        categoryMatchers = listOf("telecine")
+    ),
+    HomeSubscriptionCard(
+        key = "dogtv",
+        label = "Dogtv",
+        backgroundColor = Color(0xFFE65100),
+        contentColor = Color.White,
+        categoryMatchers = listOf("dogtv", "dog tv")
+    ),
+    HomeSubscriptionCard(
+        key = "sky",
+        label = "Sky",
+        backgroundColor = Color(0xFF0072C6),
+        contentColor = Color.White,
+        categoryMatchers = listOf("sky")
+    )
+)
+
+private fun homeSeriesSubscriptionCards(): List<HomeSubscriptionCard> = listOf(
+    HomeSubscriptionCard(
         key = "netflix",
         label = "Netflix",
         backgroundColor = Color(0xFFE50914),
         contentColor = Color.White,
         categoryMatchers = listOf("netflix")
     ),
-    HomeSeriesCategoryCard(
+    HomeSubscriptionCard(
         key = "hbo_max",
         label = "HBO Max",
         backgroundColor = Color(0xFF002BE7),
         contentColor = Color.White,
-        categoryMatchers = listOf("hbo", "max")
+        categoryMatchers = listOf("hbo max", "hbo")
     ),
-    HomeSeriesCategoryCard(
-        key = "disney_plus",
-        label = "Disney+",
-        backgroundColor = Color(0xFF113CCF),
-        contentColor = Color.White,
-        categoryMatchers = listOf("disney")
-    ),
-    HomeSeriesCategoryCard(
+    HomeSubscriptionCard(
         key = "prime_video",
         label = "Prime Video",
         backgroundColor = Color(0xFF00A8E1),
         contentColor = Color.White,
-        categoryMatchers = listOf("prime", "amazon")
+        categoryMatchers = listOf("prime video", "prime", "amazon")
     ),
-    HomeSeriesCategoryCard(
+    HomeSubscriptionCard(
         key = "discovery",
         label = "Discovery",
         backgroundColor = Color(0xFF0047AB),
         contentColor = Color.White,
         categoryMatchers = listOf("discovery")
     ),
-    HomeSeriesCategoryCard(
-        key = "paramount_plus",
-        label = "Paramount+",
+    HomeSubscriptionCard(
+        key = "paramount",
+        label = "Paramount",
         backgroundColor = Color(0xFF0064FF),
         contentColor = Color.White,
         categoryMatchers = listOf("paramount")
     ),
-    HomeSeriesCategoryCard(
-        key = "action",
-        label = "Ação",
+    HomeSubscriptionCard(
+        key = "globoplay",
+        label = "Globoplay",
+        backgroundColor = Color(0xFFE50914),
+        contentColor = Color.White,
+        categoryMatchers = listOf("globoplay", "globo play")
+    ),
+    HomeSubscriptionCard(
+        key = "apple_tv_plus",
+        label = "Apple tv+",
+        backgroundColor = Color(0xFF1C1C1E),
+        contentColor = Color.White,
+        categoryMatchers = listOf("apple tv", "appletv", "apple+")
+    ),
+    HomeSubscriptionCard(
+        key = "brasil_paralelo",
+        label = "Brasil Paralelo",
+        backgroundColor = Color(0xFF1A237E),
+        contentColor = Color.White,
+        categoryMatchers = listOf("brasil paralelo", "paralelo")
+    ),
+    HomeSubscriptionCard(
+        key = "onlyfans_privacy",
+        label = "Onlyfans/privacy",
+        backgroundColor = Color(0xFF00AFF0),
+        contentColor = Color.White,
+        categoryMatchers = listOf("onlyfans", "privacy", "only fans")
+    ),
+    HomeSubscriptionCard(
+        key = "amc",
+        label = "AMC",
         backgroundColor = Color(0xFF1A1A1A),
         contentColor = Color.White,
-        categoryMatchers = listOf("ação", "acao", "action")
-    ),
-    HomeSeriesCategoryCard(
-        key = "drama",
-        label = "Drama",
-        backgroundColor = Color(0xFF2B1B2E),
-        contentColor = Color.White,
-        categoryMatchers = listOf("drama")
-    ),
-    HomeSeriesCategoryCard(
-        key = "comedy",
-        label = "Comédia",
-        backgroundColor = Color(0xFF3D2C1E),
-        contentColor = Color.White,
-        categoryMatchers = listOf("comédia", "comedia", "comedy")
-    ),
-    HomeSeriesCategoryCard(
-        key = "sci_fi",
-        label = "Sci-Fi",
-        backgroundColor = Color(0xFF0F1B2D),
-        contentColor = Color.White,
-        categoryMatchers = listOf("sci", "ficção", "ficcao", "science")
-    ),
-    HomeSeriesCategoryCard(
-        key = "horror",
-        label = "Terror",
-        backgroundColor = Color(0xFF1F0A0A),
-        contentColor = Color.White,
-        categoryMatchers = listOf("terror", "horror")
-    ),
-    HomeSeriesCategoryCard(
-        key = "romance",
-        label = "Romance",
-        backgroundColor = Color(0xFF3A1028),
-        contentColor = Color.White,
-        categoryMatchers = listOf("romance", "romântico", "romantico")
-    ),
-    HomeSeriesCategoryCard(
-        key = "animation",
-        label = "Animação",
-        backgroundColor = Color(0xFF1E3A2F),
-        contentColor = Color.White,
-        categoryMatchers = listOf("animação", "animacao", "anime", "cartoon")
-    ),
-    HomeSeriesCategoryCard(
-        key = "documentary",
-        label = "Documentário",
-        backgroundColor = Color(0xFF1C2430),
-        contentColor = Color.White,
-        categoryMatchers = listOf("documentário", "documentario", "documentary", "doc")
+        categoryMatchers = listOf("amc")
     )
 )

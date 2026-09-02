@@ -2,6 +2,13 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.5]
+
+### Added
+
+- Added the **Assinaturas** section on the Home screen with live-TV cards (Premiere, SportyNet, Telecine, Dogtv, Sky) and series cards (Netflix, HBO Max, Prime Video, Discovery, Paramount, Globoplay, Apple tv+, Brasil Paralelo, Onlyfans/privacy, AMC).
+- Tapping an Assinaturas card now opens the matching provider category directly in Live TV or Series.
+
 ## [1.0.4]
 
 ### Changed
