@@ -2,6 +2,12 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.7]
+
+### Fixed
+
+- Merged Assinaturas live-TV and series cards into a single horizontal row, with live cards placed after AMC.
+
 ## [1.0.6]
 
 ### Added

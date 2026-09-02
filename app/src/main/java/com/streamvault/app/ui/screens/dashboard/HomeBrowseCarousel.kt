@@ -43,12 +43,18 @@ import com.streamvault.domain.model.Category
 private const val HOME_CAROUSEL_CARD_COUNT = 5
 private const val COOVERY_BANNER_ASPECT_RATIO = 2000f / 626f
 
+internal enum class HomeSubscriptionDestination {
+    LIVE,
+    SERIES
+}
+
 internal data class HomeSubscriptionCard(
     val key: String,
     val label: String,
     val backgroundColor: Color,
     val contentColor: Color,
-    val categoryMatchers: List<String>
+    val categoryMatchers: List<String>,
+    val destination: HomeSubscriptionDestination
 )
 
 @Composable
@@ -125,13 +131,20 @@ internal fun HomeAssinaturasSection(
     onNavigateToSeries: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val liveCards = remember { homeLiveSubscriptionCards() }
-    val seriesCards = remember { homeSeriesSubscriptionCards() }
-    val resolvedLiveCards = remember(liveCategories, liveCards) {
-        resolveSubscriptionCards(liveCards, liveCategories)
-    }
-    val resolvedSeriesCards = remember(seriesCategories, seriesCards) {
-        resolveSubscriptionCards(seriesCards, seriesCategories)
+    val cards = remember { homeAssinaturasCards() }
+    val resolvedCards = remember(liveCategories, seriesCategories, cards) {
+        cards.map { card ->
+            val categories = when (card.destination) {
+                HomeSubscriptionDestination.LIVE -> liveCategories
+                HomeSubscriptionDestination.SERIES -> seriesCategories
+            }
+            val matchedCategory = categories.firstOrNull { category ->
+                card.categoryMatchers.any { matcher ->
+                    category.name.contains(matcher, ignoreCase = true)
+                }
+            }
+            ResolvedSubscriptionCard(card, matchedCategory)
+        }
     }
 
     Column(modifier = modifier.fillMaxWidth()) {
@@ -142,50 +155,40 @@ internal fun HomeAssinaturasSection(
                 .padding(start = 20.dp, end = 20.dp, top = 10.dp, bottom = 8.dp)
         )
 
-        SubscriptionCardsRow(
-            resolvedCards = resolvedLiveCards,
-            onCardClick = { matchedCategory ->
-                if (matchedCategory != null) {
-                    onLiveCategorySelected(matchedCategory.id)
-                } else {
-                    onNavigateToLiveTv()
-                }
+        LazyRow(
+            contentPadding = PaddingValues(horizontal = 20.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            itemsIndexed(resolvedCards, key = { _, resolved -> resolved.card.key }) { _, resolved ->
+                HomeSubscriptionCardItem(
+                    card = resolved.card,
+                    onClick = {
+                        val matchedCategory = resolved.matchedCategory
+                        if (matchedCategory != null) {
+                            when (resolved.card.destination) {
+                                HomeSubscriptionDestination.LIVE -> onLiveCategorySelected(matchedCategory.id)
+                                HomeSubscriptionDestination.SERIES -> onSeriesCategorySelected(matchedCategory.id)
+                            }
+                        } else {
+                            when (resolved.card.destination) {
+                                HomeSubscriptionDestination.LIVE -> onNavigateToLiveTv()
+                                HomeSubscriptionDestination.SERIES -> onNavigateToSeries()
+                            }
+                        }
+                    }
+                )
             }
-        )
-
-        SubscriptionCardsRow(
-            resolvedCards = resolvedSeriesCards,
-            modifier = Modifier.padding(top = 8.dp, bottom = 4.dp),
-            onCardClick = { matchedCategory ->
-                if (matchedCategory != null) {
-                    onSeriesCategorySelected(matchedCategory.id)
-                } else {
-                    onNavigateToSeries()
-                }
-            }
-        )
-    }
-}
-
-@Composable
-private fun SubscriptionCardsRow(
-    resolvedCards: List<Pair<HomeSubscriptionCard, Category?>>,
-    onCardClick: (Category?) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    LazyRow(
-        modifier = modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(horizontal = 20.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        itemsIndexed(resolvedCards, key = { _, (card, _) -> card.key }) { _, (card, matchedCategory) ->
-            HomeSubscriptionCardItem(
-                card = card,
-                onClick = { onCardClick(matchedCategory) }
-            )
         }
     }
 }
+
+private data class ResolvedSubscriptionCard(
+    val card: HomeSubscriptionCard,
+    val matchedCategory: Category?
+)
+
+private fun homeAssinaturasCards(): List<HomeSubscriptionCard> =
+    homeSeriesSubscriptionCards() + homeLiveSubscriptionCards()
 
 @Composable
 private fun HomeSubscriptionCardItem(
@@ -241,55 +244,46 @@ private fun HomeSubscriptionCardItem(
     }
 }
 
-private fun resolveSubscriptionCards(
-    cards: List<HomeSubscriptionCard>,
-    categories: List<Category>
-): List<Pair<HomeSubscriptionCard, Category?>> {
-    return cards.map { card ->
-        val matchedCategory = categories.firstOrNull { category ->
-            card.categoryMatchers.any { matcher ->
-                category.name.contains(matcher, ignoreCase = true)
-            }
-        }
-        card to matchedCategory
-    }
-}
-
 private fun homeLiveSubscriptionCards(): List<HomeSubscriptionCard> = listOf(
     HomeSubscriptionCard(
         key = "premiere",
         label = "Premiere",
         backgroundColor = Color(0xFF0B6B3A),
         contentColor = Color.White,
-        categoryMatchers = listOf("premiere")
+        categoryMatchers = listOf("premiere"),
+        destination = HomeSubscriptionDestination.LIVE
     ),
     HomeSubscriptionCard(
         key = "sportynet",
         label = "SportyNet",
         backgroundColor = Color(0xFF111111),
         contentColor = Color.White,
-        categoryMatchers = listOf("sportynet", "sporty net", "sporty")
+        categoryMatchers = listOf("sportynet", "sporty net", "sporty"),
+        destination = HomeSubscriptionDestination.LIVE
     ),
     HomeSubscriptionCard(
         key = "telecine",
         label = "Telecine",
         backgroundColor = Color(0xFF7B1FA2),
         contentColor = Color.White,
-        categoryMatchers = listOf("telecine")
+        categoryMatchers = listOf("telecine"),
+        destination = HomeSubscriptionDestination.LIVE
     ),
     HomeSubscriptionCard(
         key = "dogtv",
         label = "Dogtv",
         backgroundColor = Color(0xFFE65100),
         contentColor = Color.White,
-        categoryMatchers = listOf("dogtv", "dog tv")
+        categoryMatchers = listOf("dogtv", "dog tv"),
+        destination = HomeSubscriptionDestination.LIVE
     ),
     HomeSubscriptionCard(
         key = "sky",
         label = "Sky",
         backgroundColor = Color(0xFF0072C6),
         contentColor = Color.White,
-        categoryMatchers = listOf("sky")
+        categoryMatchers = listOf("sky"),
+        destination = HomeSubscriptionDestination.LIVE
     )
 )
 
@@ -299,69 +293,79 @@ private fun homeSeriesSubscriptionCards(): List<HomeSubscriptionCard> = listOf(
         label = "Netflix",
         backgroundColor = Color(0xFFE50914),
         contentColor = Color.White,
-        categoryMatchers = listOf("netflix")
+        categoryMatchers = listOf("netflix"),
+        destination = HomeSubscriptionDestination.SERIES
     ),
     HomeSubscriptionCard(
         key = "hbo_max",
         label = "HBO Max",
         backgroundColor = Color(0xFF002BE7),
         contentColor = Color.White,
-        categoryMatchers = listOf("hbo max", "hbo")
+        categoryMatchers = listOf("hbo max", "hbo"),
+        destination = HomeSubscriptionDestination.SERIES
     ),
     HomeSubscriptionCard(
         key = "prime_video",
         label = "Prime Video",
         backgroundColor = Color(0xFF00A8E1),
         contentColor = Color.White,
-        categoryMatchers = listOf("prime video", "prime", "amazon")
+        categoryMatchers = listOf("prime video", "prime", "amazon"),
+        destination = HomeSubscriptionDestination.SERIES
     ),
     HomeSubscriptionCard(
         key = "discovery",
         label = "Discovery",
         backgroundColor = Color(0xFF0047AB),
         contentColor = Color.White,
-        categoryMatchers = listOf("discovery")
+        categoryMatchers = listOf("discovery"),
+        destination = HomeSubscriptionDestination.SERIES
     ),
     HomeSubscriptionCard(
         key = "paramount",
         label = "Paramount",
         backgroundColor = Color(0xFF0064FF),
         contentColor = Color.White,
-        categoryMatchers = listOf("paramount")
+        categoryMatchers = listOf("paramount"),
+        destination = HomeSubscriptionDestination.SERIES
     ),
     HomeSubscriptionCard(
         key = "globoplay",
         label = "Globoplay",
         backgroundColor = Color(0xFFE50914),
         contentColor = Color.White,
-        categoryMatchers = listOf("globoplay", "globo play")
+        categoryMatchers = listOf("globoplay", "globo play"),
+        destination = HomeSubscriptionDestination.SERIES
     ),
     HomeSubscriptionCard(
         key = "apple_tv_plus",
         label = "Apple tv+",
         backgroundColor = Color(0xFF1C1C1E),
         contentColor = Color.White,
-        categoryMatchers = listOf("apple tv", "appletv", "apple+")
+        categoryMatchers = listOf("apple tv", "appletv", "apple+"),
+        destination = HomeSubscriptionDestination.SERIES
     ),
     HomeSubscriptionCard(
         key = "brasil_paralelo",
         label = "Brasil Paralelo",
         backgroundColor = Color(0xFF1A237E),
         contentColor = Color.White,
-        categoryMatchers = listOf("brasil paralelo", "paralelo")
+        categoryMatchers = listOf("brasil paralelo", "paralelo"),
+        destination = HomeSubscriptionDestination.SERIES
     ),
     HomeSubscriptionCard(
         key = "onlyfans_privacy",
         label = "Onlyfans/privacy",
         backgroundColor = Color(0xFF00AFF0),
         contentColor = Color.White,
-        categoryMatchers = listOf("onlyfans", "privacy", "only fans")
+        categoryMatchers = listOf("onlyfans", "privacy", "only fans"),
+        destination = HomeSubscriptionDestination.SERIES
     ),
     HomeSubscriptionCard(
         key = "amc",
         label = "AMC",
         backgroundColor = Color(0xFF1A1A1A),
         contentColor = Color.White,
-        categoryMatchers = listOf("amc")
+        categoryMatchers = listOf("amc"),
+        destination = HomeSubscriptionDestination.SERIES
     )
 )
