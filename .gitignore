@@ -29,6 +29,7 @@ secret.properties
 keystore/
 release-signing-info.local.txt
 *.jks
+!signing/coovery-release.jks
 *.keystore
 *.p12
 *.pfx
@@ -82,3 +83,5 @@ tools/smoke_*.ps1
 final_narrow_*.log
 gradle_*_test*.log
 gradle_*_rerun.log
+releases/*.apk
+dist/
