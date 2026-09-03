@@ -265,6 +265,7 @@ class SeriesViewModel @Inject constructor(
                     if (preferredCategory != null && currentSelected != preferredCategory.name) {
                         _preferredInitialCategoryId.value = null
                         selectCategory(preferredCategory.name)
+                        _uiState.update { it.copy(isLoading = false) }
                         return@collect
                     }
                     val preserveSelectedCategory = currentSelected != null && _searchQuery.value.isNotBlank()
@@ -616,6 +617,7 @@ class SeriesViewModel @Inject constructor(
             if (_uiState.value.selectedCategory != matchingCategory.name) {
                 selectCategory(matchingCategory.name)
             }
+            _uiState.update { it.copy(isLoading = false) }
             return
         }
 

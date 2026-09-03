@@ -14,7 +14,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "StreamVault"
+rootProject.name = "Coovery tv+"
 
 include(":app")
 include(":domain")
