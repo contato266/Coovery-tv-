@@ -2,6 +2,12 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.10]
+
+### Added
+
+- Added custom carousel banner for card 5 on the Home screen.
+
 ## [1.0.9]
 
 ### Added

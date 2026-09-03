@@ -57,6 +57,7 @@ private fun homeCarouselBannerRes(index: Int): Int = when (index) {
     1 -> R.drawable.coovery_carousel_banner_2
     2 -> R.drawable.coovery_carousel_banner_3
     3 -> R.drawable.coovery_carousel_banner_4
+    4 -> R.drawable.coovery_carousel_banner_5
     else -> R.drawable.coovery_hero_banner
 }
 
