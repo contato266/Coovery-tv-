@@ -72,7 +72,8 @@ internal data class HomeSubscriptionCard(
     val backgroundColor: Color,
     val contentColor: Color,
     val categoryMatchers: List<String>,
-    val destination: HomeSubscriptionDestination
+    val destination: HomeSubscriptionDestination,
+    @DrawableRes val imageRes: Int? = null
 )
 
 @Composable
@@ -253,24 +254,35 @@ private fun HomeSubscriptionCardItem(
         ),
         scale = ClickableSurfaceDefaults.scale(focusedScale = 1.04f)
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 10.dp, vertical = 12.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = card.label,
-                style = MaterialTheme.typography.titleSmall.copy(
-                    fontSize = if (card.label.length > 10) 13.sp else 15.sp,
-                    fontWeight = FontWeight.Bold,
-                    lineHeight = 18.sp
-                ),
-                color = card.contentColor,
-                textAlign = TextAlign.Center,
-                maxLines = 3,
-                overflow = TextOverflow.Ellipsis
+        if (card.imageRes != null) {
+            Image(
+                painter = painterResource(card.imageRes),
+                contentDescription = card.label,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(cardShape)
             )
+        } else {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 10.dp, vertical = 12.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = card.label,
+                    style = MaterialTheme.typography.titleSmall.copy(
+                        fontSize = if (card.label.length > 10) 13.sp else 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        lineHeight = 18.sp
+                    ),
+                    color = card.contentColor,
+                    textAlign = TextAlign.Center,
+                    maxLines = 3,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
         }
     }
 }
@@ -282,7 +294,8 @@ private fun homeLiveSubscriptionCards(): List<HomeSubscriptionCard> = listOf(
         backgroundColor = Color(0xFF0B6B3A),
         contentColor = Color.White,
         categoryMatchers = listOf("premiere"),
-        destination = HomeSubscriptionDestination.LIVE
+        destination = HomeSubscriptionDestination.LIVE,
+        imageRes = R.drawable.assinatura_card_premiere
     ),
     HomeSubscriptionCard(
         key = "sportynet",
@@ -298,7 +311,8 @@ private fun homeLiveSubscriptionCards(): List<HomeSubscriptionCard> = listOf(
         backgroundColor = Color(0xFF7B1FA2),
         contentColor = Color.White,
         categoryMatchers = listOf("telecine"),
-        destination = HomeSubscriptionDestination.LIVE
+        destination = HomeSubscriptionDestination.LIVE,
+        imageRes = R.drawable.assinatura_card_telecine
     ),
     HomeSubscriptionCard(
         key = "dogtv",
@@ -325,7 +339,8 @@ private fun homeSeriesSubscriptionCards(): List<HomeSubscriptionCard> = listOf(
         backgroundColor = Color(0xFFE50914),
         contentColor = Color.White,
         categoryMatchers = listOf("netflix"),
-        destination = HomeSubscriptionDestination.SERIES
+        destination = HomeSubscriptionDestination.SERIES,
+        imageRes = R.drawable.assinatura_card_netflix
     ),
     HomeSubscriptionCard(
         key = "hbo_max",
@@ -333,7 +348,8 @@ private fun homeSeriesSubscriptionCards(): List<HomeSubscriptionCard> = listOf(
         backgroundColor = Color(0xFF002BE7),
         contentColor = Color.White,
         categoryMatchers = listOf("hbo max", "hbo"),
-        destination = HomeSubscriptionDestination.SERIES
+        destination = HomeSubscriptionDestination.SERIES,
+        imageRes = R.drawable.assinatura_card_hbo_max
     ),
     HomeSubscriptionCard(
         key = "prime_video",
@@ -341,7 +357,8 @@ private fun homeSeriesSubscriptionCards(): List<HomeSubscriptionCard> = listOf(
         backgroundColor = Color(0xFF00A8E1),
         contentColor = Color.White,
         categoryMatchers = listOf("prime video", "prime", "amazon"),
-        destination = HomeSubscriptionDestination.SERIES
+        destination = HomeSubscriptionDestination.SERIES,
+        imageRes = R.drawable.assinatura_card_prime_video
     ),
     HomeSubscriptionCard(
         key = "discovery",
@@ -349,7 +366,8 @@ private fun homeSeriesSubscriptionCards(): List<HomeSubscriptionCard> = listOf(
         backgroundColor = Color(0xFF0047AB),
         contentColor = Color.White,
         categoryMatchers = listOf("discovery"),
-        destination = HomeSubscriptionDestination.SERIES
+        destination = HomeSubscriptionDestination.SERIES,
+        imageRes = R.drawable.assinatura_card_discovery
     ),
     HomeSubscriptionCard(
         key = "paramount",
@@ -357,7 +375,8 @@ private fun homeSeriesSubscriptionCards(): List<HomeSubscriptionCard> = listOf(
         backgroundColor = Color(0xFF0064FF),
         contentColor = Color.White,
         categoryMatchers = listOf("paramount"),
-        destination = HomeSubscriptionDestination.SERIES
+        destination = HomeSubscriptionDestination.SERIES,
+        imageRes = R.drawable.assinatura_card_paramount
     ),
     HomeSubscriptionCard(
         key = "globoplay",
@@ -365,7 +384,8 @@ private fun homeSeriesSubscriptionCards(): List<HomeSubscriptionCard> = listOf(
         backgroundColor = Color(0xFFE50914),
         contentColor = Color.White,
         categoryMatchers = listOf("globoplay", "globo play"),
-        destination = HomeSubscriptionDestination.SERIES
+        destination = HomeSubscriptionDestination.SERIES,
+        imageRes = R.drawable.assinatura_card_globoplay
     ),
     HomeSubscriptionCard(
         key = "apple_tv_plus",
@@ -373,7 +393,8 @@ private fun homeSeriesSubscriptionCards(): List<HomeSubscriptionCard> = listOf(
         backgroundColor = Color(0xFF1C1C1E),
         contentColor = Color.White,
         categoryMatchers = listOf("apple tv", "appletv", "apple+"),
-        destination = HomeSubscriptionDestination.SERIES
+        destination = HomeSubscriptionDestination.SERIES,
+        imageRes = R.drawable.assinatura_card_apple_tv
     ),
     HomeSubscriptionCard(
         key = "brasil_paralelo",
