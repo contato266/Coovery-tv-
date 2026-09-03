@@ -408,7 +408,7 @@
     <string name="settings_about_subtitle">Detalhes de versão, compilação e suporte para esta instalação.</string>
     <string name="settings_app_version">Versão do aplicativo</string>
     <string name="settings_build">Construir</string>
-    <string name="settings_build_desc">StreamVault para Android TV</string>
+    <string name="settings_build_desc">Coovery tv+ para Android TV</string>
     <string name="settings_enabled">Ativado</string>
     <string name="settings_disabled">Desativado</string>
     <string name="settings_developed_by">Desenvolvido por</string>
@@ -418,7 +418,7 @@
     <string name="settings_donate">Suporte no Ko-fi</string>
     <string name="settings_donate_url">https://ko-fi.com/davidona</string>
     <string name="settings_updates_title">Atualizações</string>
-    <string name="settings_updates_subtitle">Verifique os GitHub Releases para novas versões do StreamVault sem sair do app.</string>
+    <string name="settings_updates_subtitle">Verifique os GitHub Releases para novas versões do Coovery tv+ sem sair do app.</string>
     <string name="settings_update_auto_check">Verificar atualizações automaticamente</string>
     <string name="settings_update_latest_release">Versão mais recente</string>
     <string name="settings_update_status">Status da atualização</string>
@@ -706,7 +706,7 @@
     <string name="a11y_catch_up_available">Atualização disponível</string>
     <string name="a11y_now_playing">Agora jogando %1$s</string>
     <string name="a11y_channel_with_number">Canal %1$d, %2$s</string>
-    <string name="setup_title_streamvault">StreamVault</string>
+    <string name="setup_title_streamvault">Coovery tv+</string>
     <string name="setup_provider_title">Adicionar um provedor</string>
     <string name="setup_edit_provider">Editar provedor</string>
     <string name="setup_update_desc">Atualize os detalhes do seu provedor de IPTV</string>
@@ -1171,21 +1171,21 @@
     <string name="settings_history_cleared">Histórico de visualização e recentes limpos</string>
     <string name="settings_pin_changed">PIN salvo com sucesso</string>
     <string name="home_reorder_channels">Reordenar canais</string>
-    <string name="tv_input_setup_scanning_title">Verificando canais StreamVault</string>
+    <string name="tv_input_setup_scanning_title">Verificando canais Coovery tv+</string>
     <string name="tv_input_setup_success_title">A TV ao vivo está pronta</string>
     <string name="tv_input_setup_no_provider_title">Nenhum provedor de IPTV configurado</string>
     <string name="tv_input_setup_error_title">Falha na busca automática</string>
     <string name="tv_input_setup_idle_title">Preparando a integração com Live TV</string>
-    <string name="tv_input_setup_scanning_body">StreamVault está sincronizando seu provedor ativo com Android TV Live TV.</string>
+    <string name="tv_input_setup_scanning_body">Coovery tv+ está sincronizando seu provedor ativo com Android TV Live TV.</string>
     <string name="tv_input_setup_success_body">Seus canais foram sincronizados com sucesso.</string>
-    <string name="tv_input_setup_no_provider_body">Adicione pelo menos um provedor de IPTV no StreamVault e retorne aqui para procurar canais no Android TV Live TV.</string>
+    <string name="tv_input_setup_no_provider_body">Adicione pelo menos um provedor de IPTV no Coovery tv+ e retorne aqui para procurar canais no Android TV Live TV.</string>
     <string name="tv_input_setup_error_body">A sincronização da entrada de TV não foi concluída.</string>
     <string name="tv_input_setup_idle_body">Por favor, aguarde.</string>
     <string name="tv_input_setup_source_format">Fonte: %1$s</string>
-    <string name="tv_input_setup_open_setup">Abrir configuração do StreamVault</string>
+    <string name="tv_input_setup_open_setup">Abrir configuração do Coovery tv+</string>
     <string name="tv_input_setup_try_scan_again">Tentar busca automática novamente</string>
     <string name="tv_input_setup_retry_scan">Tentar busca automática novamente</string>
-    <string name="tv_input_setup_success_hint">Android TV Live TV agora pode abrir seus canais StreamVault.</string>
+    <string name="tv_input_setup_success_hint">Android TV Live TV agora pode abrir seus canais Coovery tv+.</string>
     <string name="badge_beta">Beta</string>
     <string name="badge_recording">REC</string>
     <string name="badge_scheduled">SCHED</string>
@@ -1212,8 +1212,8 @@
     <string name="label_slots_count_dynamic">%1$d/%2$d slots</string>
     <string name="movie_detail_related">Mais como este</string>
     <string name="movie_detail_resume_from">Retomar de %1$s</string>
-    <string name="notification_permission_recording_alert_required">Ative notificações para StreamVault para receber alertas de falha de gravação.</string>
-    <string name="notification_permission_reminder_required">Ative notificações para StreamVault para receber lembretes de programas.</string>
+    <string name="notification_permission_recording_alert_required">Ative notificações para Coovery tv+ para receber alertas de falha de gravação.</string>
+    <string name="notification_permission_reminder_required">Ative notificações para Coovery tv+ para receber lembretes de programas.</string>
     <string name="player_action_variants">Variantes</string>
     <string name="player_auto_play_cancel">Cancelar</string>
     <string name="player_auto_play_countdown">Reproduzindo em %1$d s</string>
@@ -1387,7 +1387,7 @@
     <string name="settings_recording_skipped">Ocorrência ignorada</string>
     <string name="settings_recording_wifi_only">Gravar somente em Wi-Fi</string>
     <string name="settings_reset">Redefinir</string>
-    <string name="settings_restore_subtitle">Escolha um arquivo de backup ou abra um backup com StreamVault de um gerenciador de arquivos.</string>
+    <string name="settings_restore_subtitle">Escolha um arquivo de backup ou abra um backup com Coovery tv+ de um gerenciador de arquivos.</string>
     <string name="settings_select_guide_default_category">Selecionar categoria padrão do guia</string>
     <string name="settings_select_live_timeshift_depth">Selecionar profundidade de retrocesso ao vivo local</string>
     <string name="settings_select_time_format">Selecionar formato de hora</string>
@@ -1433,7 +1433,7 @@
     <string name="vod_sync_needed_title">Sincronização necessária</string>
     <!-- M2: Google Drive backup sync -->
     <string name="settings_drive_section_title">Google Drive backup</string>
-    <string name="settings_drive_section_subtitle">Push and pull your StreamVault configuration to a private Drive folder.</string>
+    <string name="settings_drive_section_subtitle">Push and pull your Coovery tv+ configuration to a private Drive folder.</string>
     <string name="settings_drive_signin">Sign in to Google Drive</string>
     <string name="settings_drive_signin_description">Connect a Google account to enable cloud backup.</string>
     <string name="settings_drive_signout">Sign out</string>

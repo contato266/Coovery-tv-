@@ -2,6 +2,16 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.11]
+
+### Fixed
+
+- Fixed Assinaturas series cards (Netflix, HBO Max, Prime Video, and others) getting stuck on the loading screen instead of opening the selected category.
+
+### Changed
+
+- Replaced remaining StreamVault branding with Coovery tv+ across release artifacts, user-facing strings, and backup paths.
+
 ## [1.0.10]
 
 ### Added
