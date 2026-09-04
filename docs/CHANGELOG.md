@@ -2,6 +2,12 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.14]
+
+### Changed
+
+- Updated the Home carousel banner image for card 3.
+
 ## [1.0.11]
 
 ### Fixed
