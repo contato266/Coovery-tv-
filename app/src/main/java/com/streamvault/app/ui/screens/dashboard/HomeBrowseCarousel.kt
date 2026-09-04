@@ -303,7 +303,8 @@ private fun homeLiveSubscriptionCards(): List<HomeSubscriptionCard> = listOf(
         backgroundColor = Color(0xFF111111),
         contentColor = Color.White,
         categoryMatchers = listOf("sportynet", "sporty net", "sporty"),
-        destination = HomeSubscriptionDestination.LIVE
+        destination = HomeSubscriptionDestination.LIVE,
+        imageRes = R.drawable.assinatura_card_sportynet
     ),
     HomeSubscriptionCard(
         key = "telecine",
@@ -320,7 +321,8 @@ private fun homeLiveSubscriptionCards(): List<HomeSubscriptionCard> = listOf(
         backgroundColor = Color(0xFFE65100),
         contentColor = Color.White,
         categoryMatchers = listOf("dogtv", "dog tv"),
-        destination = HomeSubscriptionDestination.LIVE
+        destination = HomeSubscriptionDestination.LIVE,
+        imageRes = R.drawable.assinatura_card_dogtv
     ),
     HomeSubscriptionCard(
         key = "sky",
@@ -328,7 +330,8 @@ private fun homeLiveSubscriptionCards(): List<HomeSubscriptionCard> = listOf(
         backgroundColor = Color(0xFF0072C6),
         contentColor = Color.White,
         categoryMatchers = listOf("sky"),
-        destination = HomeSubscriptionDestination.LIVE
+        destination = HomeSubscriptionDestination.LIVE,
+        imageRes = R.drawable.assinatura_card_sky
     )
 )
 
@@ -402,7 +405,8 @@ private fun homeSeriesSubscriptionCards(): List<HomeSubscriptionCard> = listOf(
         backgroundColor = Color(0xFF1A237E),
         contentColor = Color.White,
         categoryMatchers = listOf("brasil paralelo", "paralelo"),
-        destination = HomeSubscriptionDestination.SERIES
+        destination = HomeSubscriptionDestination.SERIES,
+        imageRes = R.drawable.assinatura_card_brasil_paralelo
     ),
     HomeSubscriptionCard(
         key = "onlyfans_privacy",
@@ -410,7 +414,8 @@ private fun homeSeriesSubscriptionCards(): List<HomeSubscriptionCard> = listOf(
         backgroundColor = Color(0xFF00AFF0),
         contentColor = Color.White,
         categoryMatchers = listOf("onlyfans", "privacy", "only fans"),
-        destination = HomeSubscriptionDestination.SERIES
+        destination = HomeSubscriptionDestination.SERIES,
+        imageRes = R.drawable.assinatura_card_onlyfans
     ),
     HomeSubscriptionCard(
         key = "amc",
@@ -418,6 +423,7 @@ private fun homeSeriesSubscriptionCards(): List<HomeSubscriptionCard> = listOf(
         backgroundColor = Color(0xFF1A1A1A),
         contentColor = Color.White,
         categoryMatchers = listOf("amc"),
-        destination = HomeSubscriptionDestination.SERIES
+        destination = HomeSubscriptionDestination.SERIES,
+        imageRes = R.drawable.assinatura_card_amc
     )
 )
