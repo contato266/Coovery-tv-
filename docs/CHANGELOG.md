@@ -2,6 +2,12 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.15]
+
+### Changed
+
+- Redesigned series episode lists with a Netflix-style layout and removed the Copy URL action from episode rows.
+
 ## [1.0.14]
 
 ### Changed
