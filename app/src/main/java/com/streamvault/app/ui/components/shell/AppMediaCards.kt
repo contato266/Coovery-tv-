@@ -11,6 +11,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.PaddingValues
@@ -382,78 +383,111 @@ fun SeriesPosterCard(series: Series, modifier: Modifier = Modifier) {
 fun EpisodeRowCard(
     episode: Episode,
     modifier: Modifier = Modifier,
-    fallbackImageUrl: String? = null
+    fallbackImageUrl: String? = null,
+    trailingActions: @Composable RowScope.() -> Unit = {}
 ) {
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
-    val previewWidth = if (screenWidth < 700.dp) 124.dp else 164.dp
+    val previewWidth = if (screenWidth < 700.dp) 132.dp else 168.dp
     val durationMs = episode.durationSeconds.toLong() * 1000L
     val showProgress = episode.watchProgress > 5000L && durationMs > 0L &&
         !isPlaybackComplete(episode.watchProgress, durationMs)
     val displayUrl = episode.coverUrl.takeIf { !it.isNullOrBlank() } ?: fallbackImageUrl
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(18.dp))
-            .background(AppColors.SurfaceElevated)
-            .padding(16.dp)
-    ) {
-        Column {
-            Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier
-                        .width(previewWidth)
-                        .aspectRatio(16f / 9f)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(AppColors.SurfaceEmphasis),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = stringResource(R.string.label_episode, episode.episodeNumber),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = AppColors.TextSecondary
+    val metadata = buildList {
+        add(stringResource(R.string.label_episode_full, episode.episodeNumber))
+        episode.duration?.takeIf { it.isNotBlank() }?.let(::add)
+    }.joinToString(" • ")
+
+    Column(modifier = modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 10.dp),
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            verticalAlignment = Alignment.Top
+        ) {
+            Box(
+                modifier = Modifier
+                    .width(previewWidth)
+                    .aspectRatio(16f / 9f)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(AppColors.SurfaceEmphasis)
+            ) {
+                if (displayUrl != null) {
+                    AsyncImage(
+                        model = displayUrl,
+                        contentDescription = episode.title,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
                     )
-                    if (displayUrl != null) {
-                        AsyncImage(
-                            model = displayUrl,
-                            contentDescription = episode.title,
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop
+                } else {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = episode.episodeNumber.toString(),
+                            style = MaterialTheme.typography.headlineMedium,
+                            color = AppColors.TextSecondary
                         )
                     }
                 }
-                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                if (showProgress) {
+                    LinearProgressIndicator(
+                        progress = { (episode.watchProgress.toFloat() / durationMs).coerceIn(0f, 1f) },
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .fillMaxWidth()
+                            .height(3.dp),
+                        color = AppColors.Brand,
+                        trackColor = Color.Transparent
+                    )
+                }
+            }
+
+            Row(
+                modifier = Modifier.weight(1f),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.Top
+            ) {
+                Text(
+                    text = episode.episodeNumber.toString(),
+                    modifier = Modifier.width(28.dp),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = AppColors.TextTertiary
+                )
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
                     Text(
                         text = episode.title,
                         style = MaterialTheme.typography.titleMedium,
                         color = AppColors.TextPrimary,
-                        maxLines = 1,
+                        maxLines = 2,
                         overflow = TextOverflow.Ellipsis
                     )
-                    ContentMetadataStrip(
-                        values = listOf(stringResource(R.string.label_episode_full, episode.episodeNumber), episode.duration ?: "")
-                    )
+                    if (metadata.isNotBlank()) {
+                        Text(
+                            text = metadata,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = AppColors.TextTertiary,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                     episode.plot?.takeIf { it.isNotBlank() }?.let { plot ->
                         Text(
                             text = plot,
                             style = MaterialTheme.typography.bodySmall,
                             color = AppColors.TextSecondary,
-                            maxLines = 2,
+                            maxLines = 3,
                             overflow = TextOverflow.Ellipsis
                         )
                     }
                 }
             }
-            if (showProgress) {
-                LinearProgressIndicator(
-                    progress = { (episode.watchProgress.toFloat() / durationMs).coerceIn(0f, 1f) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 8.dp)
-                        .height(3.dp),
-                    color = AppColors.Brand,
-                    trackColor = AppColors.SurfaceEmphasis
-                )
-            }
+
+            trailingActions()
         }
     }
 }

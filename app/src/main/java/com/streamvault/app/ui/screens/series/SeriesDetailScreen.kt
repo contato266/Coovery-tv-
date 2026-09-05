@@ -25,9 +25,11 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Cast
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.outlined.FavoriteBorder
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -479,7 +481,6 @@ private fun SeriesDetailContent(
                         episode = episode,
                         fallbackImageUrl = fallbackCover,
                         onClick = { onEpisodeClick(episode) },
-                        onCopyUrl = { copyEpisodeUrl(episode) },
                         onDownload = { onDownloadEpisode(episode) },
                         onCast = { onCastEpisode(episode) },
                         isCasting = isCasting
@@ -665,55 +666,68 @@ fun EpisodeItem(
     episode: Episode,
     fallbackImageUrl: String? = null,
     onClick: () -> Unit,
-    onCopyUrl: () -> Unit,
     onDownload: () -> Unit,
     onCast: () -> Unit,
     isCasting: Boolean
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        TvClickableSurface(
-            onClick = onClick,
-            shape = ClickableSurfaceDefaults.shape(shape = RoundedCornerShape(18.dp)),
-            colors = ClickableSurfaceDefaults.colors(
-                containerColor = AppColors.SurfaceElevated,
-                focusedContainerColor = AppColors.SurfaceEmphasis
-            ),
-            modifier = Modifier.weight(1f)
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.Top
         ) {
-            EpisodeRowCard(
-                episode = episode,
-                fallbackImageUrl = fallbackImageUrl,
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            TvButton(
-                onClick = onDownload,
-                colors = ButtonDefaults.colors(
-                    containerColor = AppColors.SurfaceEmphasis,
-                    contentColor = AppColors.TextPrimary
+            TvClickableSurface(
+                onClick = onClick,
+                shape = ClickableSurfaceDefaults.shape(shape = RoundedCornerShape(6.dp)),
+                colors = ClickableSurfaceDefaults.colors(
+                    containerColor = Color.Transparent,
+                    focusedContainerColor = AppColors.SurfaceElevated.copy(alpha = 0.45f)
+                ),
+                modifier = Modifier.weight(1f)
+            ) {
+                EpisodeRowCard(
+                    episode = episode,
+                    fallbackImageUrl = fallbackImageUrl,
+                    modifier = Modifier.fillMaxWidth()
                 )
-            ) {
-                Text(stringResource(R.string.download_button_label))
             }
-            TvButton(onClick = onCopyUrl) {
-                Text(stringResource(R.string.stream_url_copy))
-            }
-            TvButton(
-                onClick = onCast,
-                enabled = !isCasting
+            Column(
+                modifier = Modifier.padding(top = 10.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                Text(
-                    stringResource(
-                        if (isCasting) R.string.cast_launching else R.string.cast_button_label
+                TvIconButton(
+                    onClick = onDownload,
+                    colors = ButtonDefaults.colors(
+                        containerColor = AppColors.SurfaceEmphasis,
+                        contentColor = AppColors.TextPrimary
                     )
-                )
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Download,
+                        contentDescription = stringResource(R.string.download_button_label)
+                    )
+                }
+                TvIconButton(
+                    onClick = onCast,
+                    enabled = !isCasting,
+                    colors = ButtonDefaults.colors(
+                        containerColor = AppColors.SurfaceEmphasis,
+                        contentColor = AppColors.TextPrimary
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Cast,
+                        contentDescription = stringResource(
+                            if (isCasting) R.string.cast_launching else R.string.cast_button_label
+                        )
+                    )
+                }
             }
         }
+        HorizontalDivider(
+            color = AppColors.Outline.copy(alpha = 0.28f),
+            modifier = Modifier.padding(top = 4.dp)
+        )
     }
 }
 
