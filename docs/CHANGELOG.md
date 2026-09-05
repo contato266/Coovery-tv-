@@ -2,6 +2,12 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.16]
+
+### Changed
+
+- Removed the Copy URL action from the series detail header actions.
+
 ## [1.0.15]
 
 ### Changed
