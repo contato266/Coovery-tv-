@@ -2,6 +2,13 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.19]
+
+### Fixed
+
+- Restored the More Like This section on the movie detail screen.
+- Restored movie titles below poster cards and limited selection styling to a full white border around the poster card.
+
 ## [1.0.18]
 
 ### Changed

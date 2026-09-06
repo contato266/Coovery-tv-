@@ -6,7 +6,6 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -35,10 +34,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -104,35 +99,6 @@ private object ChannelProgressTicker {
 }
 
 @Composable
-private fun BoxScope.PartialFocusBorder(
-    isFocused: Boolean,
-    cornerRadius: Dp = 12.dp,
-    borderWidth: Dp = FocusSpec.CardBorderWidth,
-    color: Color = FocusBorder
-) {
-    if (!isFocused) return
-    val density = LocalDensity.current
-    val cornerPx = with(density) { cornerRadius.toPx() }
-    val strokePx = with(density) { borderWidth.toPx() }
-    Canvas(modifier = Modifier.matchParentSize()) {
-        val halfStroke = strokePx / 2f
-        val path = Path().apply {
-            moveTo(halfStroke, size.height)
-            lineTo(halfStroke, cornerPx)
-            quadraticTo(halfStroke, halfStroke, cornerPx, halfStroke)
-            lineTo(size.width - cornerPx, halfStroke)
-            quadraticTo(size.width - halfStroke, halfStroke, size.width - halfStroke, cornerPx)
-            lineTo(size.width - halfStroke, size.height)
-        }
-        drawPath(
-            path = path,
-            color = color,
-            style = Stroke(width = strokePx, cap = StrokeCap.Square)
-        )
-    }
-}
-
-@Composable
 fun FocusableCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -141,7 +107,7 @@ fun FocusableCard(
     height: Dp = 240.dp,
     isReorderMode: Boolean = false,
     isDragging: Boolean = false,
-    usePartialFocusBorder: Boolean = false,
+    suppressFocusBackground: Boolean = false,
     semanticsDescription: String? = null,
     semanticsStateDescription: String? = null,
     content: @Composable BoxScope.(Boolean) -> Unit
@@ -199,37 +165,24 @@ fun FocusableCard(
         ),
         colors = ClickableSurfaceDefaults.colors(
             containerColor = Surface,
-            focusedContainerColor = SurfaceHighlight
+            focusedContainerColor = if (suppressFocusBackground) Surface else SurfaceHighlight
         ),
         border = ClickableSurfaceDefaults.border(
             border = Border(
                 border = BorderStroke(0.dp, Color.Transparent),
                 shape = RoundedCornerShape(12.dp)
             ),
-            focusedBorder = if (usePartialFocusBorder) {
-                Border(
-                    border = BorderStroke(0.dp, Color.Transparent),
-                    shape = RoundedCornerShape(12.dp)
-                )
-            } else {
-                Border(
-                    border = BorderStroke(
-                        width = if (isDragging) 4.dp else FocusSpec.CardBorderWidth,
-                        color = if (isDragging) AccentAmber else FocusBorder
-                    ),
-                    shape = RoundedCornerShape(12.dp)
-                )
-            }
+            focusedBorder = Border(
+                border = BorderStroke(
+                    width = if (isDragging) 4.dp else FocusSpec.CardBorderWidth,
+                    color = if (isDragging) AccentAmber else FocusBorder
+                ),
+                shape = RoundedCornerShape(12.dp)
+            )
         )
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             content(isFocused)
-            if (usePartialFocusBorder) {
-                PartialFocusBorder(
-                    isFocused = isFocused || isDragging,
-                    color = if (isDragging) AccentAmber else FocusBorder
-                )
-            }
         }
     }
 }
@@ -416,99 +369,114 @@ fun MovieCard(
             append(stringResource(R.string.a11y_favorite))
         }
     }
-    FocusableCard(
-        onClick = onClick,
-        onLongClick = onLongClick,
-        modifier = modifier,
-        width = width,
-        height = height,
-        isReorderMode = isReorderMode,
-        isDragging = isDragging,
-        usePartialFocusBorder = true,
-        semanticsDescription = movieDescription,
-        semanticsStateDescription = if (isLocked) stringResource(R.string.a11y_locked) else null
-    ) {
-        if (!isLocked) {
-            MoviePosterCard(
-                movie = movie,
-                modifier = Modifier.fillMaxSize(),
-                showTitleOverlay = false
-            )
-        } else {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(SurfaceElevated),
-                contentAlignment = Alignment.Center
-            ) {
-                StatusPill(
-                    label = if (isLocked) stringResource(R.string.home_locked_short) else stringResource(R.string.badge_movie),
-                    containerColor = SurfaceHighlight,
-                    cornerRadius = 4.dp,
-                    horizontalPadding = 6.dp,
-                    verticalPadding = 2.dp
+    Column(modifier = modifier.width(width)) {
+        FocusableCard(
+            onClick = onClick,
+            onLongClick = onLongClick,
+            modifier = Modifier.fillMaxWidth(),
+            width = width,
+            height = height,
+            isReorderMode = isReorderMode,
+            isDragging = isDragging,
+            suppressFocusBackground = true,
+            semanticsDescription = movieDescription,
+            semanticsStateDescription = if (isLocked) stringResource(R.string.a11y_locked) else null
+        ) {
+            if (!isLocked) {
+                MoviePosterCard(
+                    movie = movie,
+                    modifier = Modifier.fillMaxSize(),
+                    showTitleOverlay = false
                 )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(SurfaceElevated),
+                    contentAlignment = Alignment.Center
+                ) {
+                    StatusPill(
+                        label = stringResource(R.string.home_locked_short),
+                        containerColor = SurfaceHighlight,
+                        cornerRadius = 4.dp,
+                        horizontalPadding = 6.dp,
+                        verticalPadding = 2.dp
+                    )
+                }
+            }
+
+            if (watchProgress > 0f && !isLocked) {
+                LinearProgressIndicator(
+                    progress = { watchProgress.coerceIn(0f, 1f) },
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .fillMaxWidth()
+                        .height(3.dp),
+                    color = Primary,
+                    trackColor = Color.Transparent
+                )
+            }
+
+            if (!isLocked) {
+                if (showTypeBadge) {
+                    StatusPill(
+                        label = stringResource(R.string.badge_movie),
+                        containerColor = Color.Black.copy(alpha = 0.72f),
+                        cornerRadius = 4.dp,
+                        horizontalPadding = 6.dp,
+                        verticalPadding = 2.dp,
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .padding(start = 8.dp, bottom = 8.dp)
+                    )
+                }
+
+                if (movie.rating > 0f) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .padding(8.dp)
+                            .background(Color.Black.copy(alpha = 0.6f), RoundedCornerShape(4.dp))
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                    ) {
+                        Text(
+                            text = formatVodRatingLabel(movie.rating),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = AccentAmber
+                        )
+                    }
+                }
+
+                if (movie.isFavorite) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(6.dp)
+                            .background(Color.Black.copy(alpha = 0.55f), RoundedCornerShape(4.dp))
+                            .padding(4.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Star,
+                            contentDescription = null,
+                            tint = AccentAmber,
+                            modifier = Modifier.size(12.dp)
+                        )
+                    }
+                }
             }
         }
 
-        if (watchProgress > 0f && !isLocked) {
-            LinearProgressIndicator(
-                progress = { watchProgress.coerceIn(0f, 1f) },
+        if (!isLocked) {
+            Text(
+                text = movie.name,
                 modifier = Modifier
-                    .align(Alignment.BottomCenter)
                     .fillMaxWidth()
-                    .height(3.dp),
-                color = Primary,
-                trackColor = Color.Transparent
+                    .padding(top = 6.dp),
+                style = MaterialTheme.typography.labelMedium,
+                color = TextPrimary,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
             )
-        }
-
-        if (!isLocked) {
-            if (showTypeBadge) {
-                StatusPill(
-                    label = stringResource(R.string.badge_movie),
-                    containerColor = Color.Black.copy(alpha = 0.72f),
-                    cornerRadius = 4.dp,
-                    horizontalPadding = 6.dp,
-                    verticalPadding = 2.dp,
-                    modifier = Modifier
-                        .align(Alignment.BottomStart)
-                        .padding(start = 8.dp, bottom = 8.dp)
-                )
-            }
-
-            if (movie.rating > 0f) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopStart)
-                        .padding(8.dp)
-                        .background(Color.Black.copy(alpha = 0.6f), RoundedCornerShape(4.dp))
-                        .padding(horizontal = 6.dp, vertical = 2.dp)
-                ) {
-                    Text(
-                        text = formatVodRatingLabel(movie.rating),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = AccentAmber
-                    )
-                }
-            }
-
-            if (movie.isFavorite) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(6.dp)
-                        .background(Color.Black.copy(alpha = 0.55f), RoundedCornerShape(4.dp))
-                        .padding(4.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Star,
-                        contentDescription = null,
-                        tint = AccentAmber,
-                        modifier = Modifier.size(12.dp)
-                    )
-                }
-            }
         }
     }
 }

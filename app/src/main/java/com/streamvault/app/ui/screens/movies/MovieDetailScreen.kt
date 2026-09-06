@@ -45,6 +45,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.remember
 import androidx.tv.material3.Border
 import androidx.tv.material3.ButtonDefaults
+import androidx.tv.material3.ClickableSurfaceDefaults
 import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
@@ -65,6 +66,7 @@ import com.streamvault.domain.model.ExternalRatings
 import com.streamvault.domain.model.Movie
 import com.streamvault.domain.model.VodMovieVariant
 import com.streamvault.app.ui.interaction.TvButton
+import com.streamvault.app.ui.interaction.TvClickableSurface
 import com.streamvault.app.ui.interaction.TvIconButton
 
 @Composable
@@ -122,11 +124,13 @@ fun MovieDetailScreen(
                 isCasting = uiState.isCasting,
                 externalRatings = uiState.externalRatings,
                 isLoadingExternalRatings = uiState.isLoadingExternalRatings,
+                relatedContent = uiState.relatedContent,
                 onPlay = { onPlay(movie) },
                 onDownload = {},
                 onCast = viewModel::castMovie,
                 onToggleFavorite = viewModel::toggleFavorite,
                 onSelectVariant = viewModel::selectMovieVariant,
+                onRelatedClick = onPlay,
                 onBack = onBack,
                 viewModel = viewModel
             )
@@ -142,11 +146,13 @@ private fun MovieDetailContent(
     isCasting: Boolean,
     externalRatings: ExternalRatings,
     isLoadingExternalRatings: Boolean,
+    relatedContent: List<Movie>,
     onPlay: () -> Unit,
     onDownload: () -> Unit,
     onCast: () -> Unit,
     onToggleFavorite: () -> Unit,
     onSelectVariant: (Long) -> Unit,
+    onRelatedClick: (Movie) -> Unit,
     onBack: () -> Unit,
     viewModel: MovieDetailViewModel
 ) {
@@ -265,7 +271,85 @@ private fun MovieDetailContent(
                 }
             }
 
+            if (relatedContent.isNotEmpty()) {
+                item {
+                    Text(
+                        text = stringResource(R.string.movie_detail_related),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = AppColors.TextPrimary
+                    )
+                }
+                item {
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(relatedContent, key = { it.id }) { related ->
+                            RelatedMovieCard(
+                                movie = related,
+                                onClick = { onRelatedClick(related) }
+                            )
+                        }
+                    }
+                }
+            }
         }
+    }
+}
+
+@Composable
+private fun RelatedMovieCard(
+    movie: Movie,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier.width(120.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        TvClickableSurface(
+            onClick = onClick,
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(2f / 3f),
+            colors = ClickableSurfaceDefaults.colors(
+                containerColor = Color.Transparent,
+                focusedContainerColor = Color.Transparent
+            ),
+            border = ClickableSurfaceDefaults.border(
+                border = Border(
+                    border = androidx.compose.foundation.BorderStroke(0.dp, Color.Transparent),
+                    shape = RoundedCornerShape(12.dp)
+                ),
+                focusedBorder = Border(
+                    border = androidx.compose.foundation.BorderStroke(
+                        width = com.streamvault.app.ui.design.FocusSpec.CardBorderWidth,
+                        color = AppColors.TextPrimary
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                )
+            )
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(AppColors.SurfaceElevated)
+            ) {
+                AsyncImage(
+                    model = rememberCrossfadeImageModel(movie.posterUrl ?: movie.backdropUrl),
+                    contentDescription = movie.name,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            }
+        }
+        Text(
+            text = movie.name,
+            style = MaterialTheme.typography.labelMedium,
+            color = AppColors.TextPrimary,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }
 
