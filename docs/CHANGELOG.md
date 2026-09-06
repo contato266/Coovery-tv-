@@ -2,6 +2,12 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.20]
+
+### Changed
+
+- Replaced the top navigation Coovery tv+ text with the official transparent brand logo.
+
 ## [1.0.19]
 
 ### Fixed

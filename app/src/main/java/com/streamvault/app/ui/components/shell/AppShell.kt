@@ -5,6 +5,7 @@ import android.content.ContextWrapper
 import androidx.annotation.StringRes
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -55,6 +56,8 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.path
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.heading
@@ -282,11 +285,13 @@ private fun TopNavigationBar(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text(
-                text = stringResource(R.string.app_name),
-                style = MaterialTheme.typography.titleSmall,
-                color = AppColors.TextPrimary,
-                modifier = Modifier.wrapContentWidth(Alignment.Start)
+            Image(
+                painter = painterResource(R.drawable.coovery_brand_logo),
+                contentDescription = stringResource(R.string.app_name),
+                modifier = Modifier
+                    .height(32.dp)
+                    .wrapContentWidth(Alignment.Start),
+                contentScale = ContentScale.Fit
             )
             Spacer(modifier = Modifier.width(32.dp)) // Increased spacing to prevent overlap
             Row(
