@@ -3,8 +3,10 @@ package com.streamvault.app.ui.design
 import androidx.compose.ui.graphics.Color
 
 object AppColors {
-    val Canvas = Color(0xFF07111B)
-    val CanvasElevated = Color(0xFF0B1622)
+    val CinemaBlack = Color(0xFF000000)
+
+    val Canvas = CinemaBlack
+    val CanvasElevated = CinemaBlack
     val Surface = Color(0xFF0F1B29)
     val SurfaceElevated = Color(0xFF162338)
     val SurfaceEmphasis = Color(0xFF1D2E46)
@@ -28,6 +30,6 @@ object AppColors {
     val Divider = Color(0x1AF4F8FF)
     val Outline = Color(0x264C6D95)
 
-    val HeroTop = Color(0xCC07111B)
-    val HeroBottom = Color(0xF207111B)
+    val HeroTop = Color(0xCC000000)
+    val HeroBottom = Color(0xF2000000)
 }

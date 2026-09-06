@@ -117,15 +117,7 @@ fun AppScreenScaffold(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(
-                Brush.linearGradient(
-                    colors = listOf(
-                        AppColors.Canvas,
-                        AppColors.CanvasElevated,
-                        AppColors.Surface
-                    )
-                )
-            )
+            .background(AppColors.Canvas)
     ) {
         if (navigationChrome == AppNavigationChrome.Rail) {
             Row(modifier = Modifier.fillMaxSize()) {
@@ -275,7 +267,7 @@ private fun TopNavigationBar(
             }
         },
         shape = RoundedCornerShape(18.dp),
-        colors = SurfaceDefaults.colors(containerColor = Color(0xFF000000))
+        colors = SurfaceDefaults.colors(containerColor = AppColors.CinemaBlack)
     ) {
         Row(
             modifier = Modifier

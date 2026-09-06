@@ -2,6 +2,12 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.22]
+
+### Changed
+
+- Updated all screen backgrounds to cinema black while keeping navigation and selection button styling unchanged.
+
 ## [1.0.21]
 
 ### Changed

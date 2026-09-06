@@ -522,7 +522,7 @@ fun ProviderSetupScreen(
     BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
-            .background(Brush.verticalGradient(colors = listOf(BackgroundDeep, Background, Surface)))
+            .background(Brush.verticalGradient(colors = listOf(BackgroundDeep, Background, Background)))
     ) {
         val isWide = maxWidth >= 700.dp
         val hPad = if (isWide) 24.dp else 16.dp
