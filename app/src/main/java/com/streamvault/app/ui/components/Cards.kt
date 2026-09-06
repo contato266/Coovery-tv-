@@ -6,6 +6,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -34,6 +35,10 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -99,6 +104,35 @@ private object ChannelProgressTicker {
 }
 
 @Composable
+private fun BoxScope.PartialFocusBorder(
+    isFocused: Boolean,
+    cornerRadius: Dp = 12.dp,
+    borderWidth: Dp = FocusSpec.CardBorderWidth,
+    color: Color = FocusBorder
+) {
+    if (!isFocused) return
+    val density = LocalDensity.current
+    val cornerPx = with(density) { cornerRadius.toPx() }
+    val strokePx = with(density) { borderWidth.toPx() }
+    Canvas(modifier = Modifier.matchParentSize()) {
+        val halfStroke = strokePx / 2f
+        val path = Path().apply {
+            moveTo(halfStroke, size.height)
+            lineTo(halfStroke, cornerPx)
+            quadraticTo(halfStroke, halfStroke, cornerPx, halfStroke)
+            lineTo(size.width - cornerPx, halfStroke)
+            quadraticTo(size.width - halfStroke, halfStroke, size.width - halfStroke, cornerPx)
+            lineTo(size.width - halfStroke, size.height)
+        }
+        drawPath(
+            path = path,
+            color = color,
+            style = Stroke(width = strokePx, cap = StrokeCap.Square)
+        )
+    }
+}
+
+@Composable
 fun FocusableCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -107,6 +141,7 @@ fun FocusableCard(
     height: Dp = 240.dp,
     isReorderMode: Boolean = false,
     isDragging: Boolean = false,
+    usePartialFocusBorder: Boolean = false,
     semanticsDescription: String? = null,
     semanticsStateDescription: String? = null,
     content: @Composable BoxScope.(Boolean) -> Unit
@@ -171,17 +206,30 @@ fun FocusableCard(
                 border = BorderStroke(0.dp, Color.Transparent),
                 shape = RoundedCornerShape(12.dp)
             ),
-            focusedBorder = Border(
-                border = BorderStroke(
-                    width = if (isDragging) 4.dp else FocusSpec.CardBorderWidth,
-                    color = if (isDragging) AccentAmber else FocusBorder
-                ),
-                shape = RoundedCornerShape(12.dp)
-            )
+            focusedBorder = if (usePartialFocusBorder) {
+                Border(
+                    border = BorderStroke(0.dp, Color.Transparent),
+                    shape = RoundedCornerShape(12.dp)
+                )
+            } else {
+                Border(
+                    border = BorderStroke(
+                        width = if (isDragging) 4.dp else FocusSpec.CardBorderWidth,
+                        color = if (isDragging) AccentAmber else FocusBorder
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                )
+            }
         )
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             content(isFocused)
+            if (usePartialFocusBorder) {
+                PartialFocusBorder(
+                    isFocused = isFocused || isDragging,
+                    color = if (isDragging) AccentAmber else FocusBorder
+                )
+            }
         }
     }
 }
@@ -376,13 +424,15 @@ fun MovieCard(
         height = height,
         isReorderMode = isReorderMode,
         isDragging = isDragging,
+        usePartialFocusBorder = true,
         semanticsDescription = movieDescription,
         semanticsStateDescription = if (isLocked) stringResource(R.string.a11y_locked) else null
     ) {
         if (!isLocked) {
             MoviePosterCard(
                 movie = movie,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.fillMaxSize(),
+                showTitleOverlay = false
             )
         } else {
             Box(

@@ -360,12 +360,17 @@ fun LiveChannelRowSurface(
 }
 
 @Composable
-fun MoviePosterCard(movie: Movie, modifier: Modifier = Modifier) {
+fun MoviePosterCard(
+    movie: Movie,
+    modifier: Modifier = Modifier,
+    showTitleOverlay: Boolean = true
+) {
     PosterCard(
         imageUrl = movie.posterUrl,
         title = movie.name,
         subtitle = movie.year,
-        modifier = modifier
+        modifier = modifier,
+        showTitleOverlay = showTitleOverlay
     )
 }
 
@@ -497,7 +502,8 @@ private fun PosterCard(
     imageUrl: String?,
     title: String,
     subtitle: String?,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    showTitleOverlay: Boolean = true
 ) {
     val posterShape = RoundedCornerShape(12.dp)
     var imageLoaded by remember(imageUrl) { mutableStateOf(false) }
@@ -535,39 +541,41 @@ private fun PosterCard(
             )
         }
 
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight(0.52f)
-                .align(Alignment.BottomCenter)
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(Color.Transparent, AppColors.HeroBottom)
+        if (showTitleOverlay) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight(0.52f)
+                    .align(Alignment.BottomCenter)
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(Color.Transparent, AppColors.HeroBottom)
+                        )
                     )
-                )
-        )
-
-        Column(
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .padding(14.dp),
-            verticalArrangement = Arrangement.spacedBy(2.dp)
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.labelSmall,
-                color = AppColors.TextPrimary,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
             )
-            subtitle?.takeIf { it.isNotBlank() }?.let {
+
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(14.dp),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
                 Text(
-                    text = it,
+                    text = title,
                     style = MaterialTheme.typography.labelSmall,
-                    color = AppColors.TextSecondary,
-                    maxLines = 1,
+                    color = AppColors.TextPrimary,
+                    maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
+                subtitle?.takeIf { it.isNotBlank() }?.let {
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = AppColors.TextSecondary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
             }
         }
     }

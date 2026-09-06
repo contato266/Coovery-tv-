@@ -24,7 +24,7 @@ sealed class ExternalDestination : Serializable {
 
     fun toRoute(): String = when (this) {
         Home -> Routes.HOME
-        Plugins -> Routes.PLUGINS
+        Plugins -> Routes.HOME
         is ProviderSetup -> Routes.providerSetup(providerId = providerId, importUri = importUri)
         is MovieDetail -> Routes.movieDetail(movieId = movieId, returnRoute = returnRoute)
         is SeriesDetail -> Routes.seriesDetail(seriesId = seriesId, returnRoute = returnRoute)
@@ -37,7 +37,7 @@ sealed class ExternalDestination : Serializable {
 
             return when {
                 normalizedRoute == Routes.HOME -> Home
-                normalizedRoute == Routes.PLUGINS -> Plugins
+                normalizedRoute == Routes.PLUGINS -> Home
                 normalizedRoute.startsWith(Routes.PROVIDER_SETUP.substringBefore('?')) -> {
                     val queryParameters = normalizedRoute.queryParameters()
                     val providerId = queryParameters["providerId"]

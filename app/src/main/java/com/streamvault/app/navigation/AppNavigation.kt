@@ -32,7 +32,6 @@ import com.streamvault.app.ui.screens.multiview.MultiViewScreen
 import com.streamvault.app.ui.screens.home.HomeScreen
 import com.streamvault.app.ui.screens.movies.MoviesScreen
 import com.streamvault.app.ui.screens.player.PlayerScreen
-import com.streamvault.app.ui.screens.plugins.PluginsScreen
 import com.streamvault.app.ui.screens.provider.ProviderSetupScreen
 import com.streamvault.app.ui.screens.series.SeriesScreen
 import com.streamvault.app.ui.screens.vod.VodScreen
@@ -341,7 +340,7 @@ internal fun AppLandingDestination.toAppRoute(): String = when (this) {
     AppLandingDestination.SERIES -> Routes.SERIES
     AppLandingDestination.GUIDE -> Routes.EPG
     AppLandingDestination.DOWNLOADS -> Routes.DOWNLOADS
-    AppLandingDestination.PLUGINS -> Routes.PLUGINS
+    AppLandingDestination.PLUGINS -> Routes.HOME
     AppLandingDestination.SETTINGS -> Routes.SETTINGS
 }
 
@@ -353,7 +352,7 @@ internal fun AppTopLevelDestination.toAppRoute(): String = when (this) {
     AppTopLevelDestination.DOWNLOADS -> Routes.DOWNLOADS
     AppTopLevelDestination.GUIDE -> Routes.EPG
     AppTopLevelDestination.SEARCH -> Routes.SEARCH
-    AppTopLevelDestination.PLUGINS -> Routes.PLUGINS
+    AppTopLevelDestination.PLUGINS -> Routes.HOME
     AppTopLevelDestination.SETTINGS -> Routes.SETTINGS
 }
 
@@ -805,10 +804,9 @@ fun AppNavigation(mainActivity: MainActivity) {
         }
 
         composable(Routes.PLUGINS) {
-            PluginsScreen(
-                currentRoute = Routes.PLUGINS,
-                onNavigate = { route -> tabNavigate(route) }
-            )
+            LaunchedEffect(Unit) {
+                tabNavigate(Routes.HOME)
+            }
         }
 
         composable(

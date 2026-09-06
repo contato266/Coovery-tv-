@@ -2,6 +2,14 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.18]
+
+### Changed
+
+- Removed the Plugins tab from the app navigation.
+- Removed the More Like This section from the movie detail screen.
+- Updated movie list cards to drop the bottom title bar and use a top-and-side focus highlight.
+
 ## [1.0.17]
 
 ### Changed

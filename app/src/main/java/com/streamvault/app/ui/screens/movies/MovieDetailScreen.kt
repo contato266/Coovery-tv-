@@ -64,7 +64,6 @@ import com.streamvault.app.ui.model.formatVodRatingLabel
 import com.streamvault.domain.model.ExternalRatings
 import com.streamvault.domain.model.Movie
 import com.streamvault.domain.model.VodMovieVariant
-import com.streamvault.app.ui.interaction.TvClickableSurface
 import com.streamvault.app.ui.interaction.TvButton
 import com.streamvault.app.ui.interaction.TvIconButton
 
@@ -123,13 +122,11 @@ fun MovieDetailScreen(
                 isCasting = uiState.isCasting,
                 externalRatings = uiState.externalRatings,
                 isLoadingExternalRatings = uiState.isLoadingExternalRatings,
-                relatedContent = uiState.relatedContent,
                 onPlay = { onPlay(movie) },
                 onDownload = {},
                 onCast = viewModel::castMovie,
                 onToggleFavorite = viewModel::toggleFavorite,
                 onSelectVariant = viewModel::selectMovieVariant,
-                onRelatedClick = onPlay,
                 onBack = onBack,
                 viewModel = viewModel
             )
@@ -145,13 +142,11 @@ private fun MovieDetailContent(
     isCasting: Boolean,
     externalRatings: ExternalRatings,
     isLoadingExternalRatings: Boolean,
-    relatedContent: List<Movie>,
     onPlay: () -> Unit,
     onDownload: () -> Unit,
     onCast: () -> Unit,
     onToggleFavorite: () -> Unit,
     onSelectVariant: (Long) -> Unit,
-    onRelatedClick: (Movie) -> Unit,
     onBack: () -> Unit,
     viewModel: MovieDetailViewModel
 ) {
@@ -270,51 +265,6 @@ private fun MovieDetailContent(
                 }
             }
 
-            if (relatedContent.isNotEmpty()) {
-                item {
-                    Text(
-                        text = stringResource(R.string.movie_detail_related),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = AppColors.TextPrimary
-                    )
-                }
-                item {
-                    LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        items(relatedContent, key = { it.id }) { related ->
-                            TvClickableSurface(
-                                onClick = { onRelatedClick(related) },
-                                modifier = Modifier.width(120.dp)
-                            ) {
-                                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .aspectRatio(2f / 3f)
-                                            .clip(RoundedCornerShape(12.dp))
-                                            .background(AppColors.SurfaceElevated)
-                                    ) {
-                                        AsyncImage(
-                                            model = rememberCrossfadeImageModel(related.posterUrl ?: related.backdropUrl),
-                                            contentDescription = related.name,
-                                            modifier = Modifier.fillMaxSize(),
-                                            contentScale = ContentScale.Crop
-                                        )
-                                    }
-                                    Text(
-                                        text = related.name,
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = AppColors.TextPrimary,
-                                        maxLines = 2,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-            }
         }
     }
 }

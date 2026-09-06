@@ -848,10 +848,11 @@ private fun buildDestinationItems(
     configured: List<AppTopLevelDestination>,
     layout: CatalogLayout
 ): List<DestinationItem> {
-    if (layout == CatalogLayout.SPLIT) return configured.map { it.toDestinationItem() }
+    val visibleDestinations = configured.filter { it != AppTopLevelDestination.PLUGINS }
+    if (layout == CatalogLayout.SPLIT) return visibleDestinations.map { it.toDestinationItem() }
     var insertedVod = false
     return buildList {
-        configured.forEach { destination ->
+        visibleDestinations.forEach { destination ->
             when (destination) {
                 AppTopLevelDestination.MOVIES,
                 AppTopLevelDestination.SERIES -> if (!insertedVod) {
