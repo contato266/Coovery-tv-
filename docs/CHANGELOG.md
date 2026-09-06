@@ -2,6 +2,12 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.21]
+
+### Changed
+
+- Updated the top navigation header background to cinema black.
+
 ## [1.0.20]
 
 ### Changed

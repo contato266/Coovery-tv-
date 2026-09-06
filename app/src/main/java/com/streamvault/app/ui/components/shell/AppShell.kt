@@ -275,7 +275,7 @@ private fun TopNavigationBar(
             }
         },
         shape = RoundedCornerShape(18.dp),
-        colors = SurfaceDefaults.colors(containerColor = AppColors.Surface.copy(alpha = 0.9f))
+        colors = SurfaceDefaults.colors(containerColor = Color(0xFF000000))
     ) {
         Row(
             modifier = Modifier
