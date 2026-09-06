@@ -2,6 +2,12 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.17]
+
+### Changed
+
+- Removed the Copy URL and Trailer actions from the movie detail header actions.
+
 ## [1.0.16]
 
 ### Changed
