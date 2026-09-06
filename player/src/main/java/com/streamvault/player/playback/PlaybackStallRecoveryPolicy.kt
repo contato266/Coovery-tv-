@@ -15,12 +15,16 @@ internal fun shouldReconnectLiveStall(
     playbackState: PlaybackState,
     resolvedStreamType: ResolvedStreamType,
     recoveryAttempt: Int
-): Boolean =
-    recoveryAttempt == 1 &&
-        (
-            playbackState == PlaybackState.BUFFERING && resolvedStreamType.isLiveForStallRecovery ||
-                playbackState == PlaybackState.READY && resolvedStreamType.isLiveForStallRecovery
-        )
+): Boolean {
+    if (recoveryAttempt != 1) return false
+    return when (playbackState) {
+        PlaybackState.BUFFERING ->
+            resolvedStreamType.isLiveForStallRecovery ||
+                resolvedStreamType == ResolvedStreamType.PROGRESSIVE
+        PlaybackState.READY -> resolvedStreamType.isLiveForStallRecovery
+        else -> false
+    }
+}
 
 private val ResolvedStreamType.isLiveForStallRecovery: Boolean
     get() = this == ResolvedStreamType.HLS ||

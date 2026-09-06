@@ -12,6 +12,7 @@ import java.net.UnknownHostException
 
 private const val FAST_TRANSIENT_RETRY_DELAY_MS = 500L
 private const val LIVE_TRANSIENT_RETRY_ATTEMPTS = 10
+private const val VOD_TRANSIENT_RETRY_ATTEMPTS = 10
 private const val LIVE_HLS_MALFORMED_RETRY_ATTEMPTS_AFTER_START = 12
 
 data class PlaybackRetryContext(
@@ -72,7 +73,8 @@ class PlayerRetryPolicy(
             PlaybackErrorCategory.HTTP_SERVER,
             PlaybackErrorCategory.PROVIDER_LIMIT,
             PlaybackErrorCategory.EMPTY_RESPONSE,
-            PlaybackErrorCategory.UNKNOWN -> streamContext.isLive
+            PlaybackErrorCategory.UNKNOWN ->
+                streamContext.isLive || streamContext.isProgressiveVod()
             PlaybackErrorCategory.SOURCE_MALFORMED -> streamContext.resolvedStreamType == ResolvedStreamType.HLS
             PlaybackErrorCategory.HTTP_AUTH,
             PlaybackErrorCategory.SSL,
@@ -121,7 +123,9 @@ class PlayerRetryPolicy(
             streamContext.isLive && dataType == C.DATA_TYPE_MANIFEST -> LIVE_TRANSIENT_RETRY_ATTEMPTS
             streamContext.isLive && dataType == C.DATA_TYPE_MEDIA -> LIVE_TRANSIENT_RETRY_ATTEMPTS
             dataType == C.DATA_TYPE_MANIFEST -> 3
-            dataType == C.DATA_TYPE_MEDIA -> if (streamContext.resolvedStreamType == ResolvedStreamType.PROGRESSIVE) 2 else 2
+            streamContext.resolvedStreamType == ResolvedStreamType.PROGRESSIVE && dataType == C.DATA_TYPE_MEDIA ->
+                VOD_TRANSIENT_RETRY_ATTEMPTS
+            dataType == C.DATA_TYPE_MEDIA -> 2
             else -> 1
         }
     }
@@ -154,25 +158,30 @@ class PlayerRetryPolicy(
 
             PlaybackErrorCategory.LIVE_WINDOW -> 1
             PlaybackErrorCategory.HTTP_SERVER -> {
-                val isProgressive = streamContext.resolvedStreamType == ResolvedStreamType.PROGRESSIVE
                 when {
                     streamContext.isLive -> LIVE_TRANSIENT_RETRY_ATTEMPTS
-                    isProgressive -> 3
+                    streamContext.isProgressiveVod(playbackStarted) -> VOD_TRANSIENT_RETRY_ATTEMPTS
+                    streamContext.resolvedStreamType == ResolvedStreamType.PROGRESSIVE -> 3
                     else -> 2
                 }
             }
             PlaybackErrorCategory.PROVIDER_LIMIT,
             PlaybackErrorCategory.EMPTY_RESPONSE -> 0
             PlaybackErrorCategory.NETWORK -> when {
-                error.hasCause<UnknownHostException>() -> 1
+                error.hasCause<UnknownHostException>() -> when {
+                    streamContext.isLive -> LIVE_TRANSIENT_RETRY_ATTEMPTS
+                    streamContext.isProgressiveVod(playbackStarted) -> VOD_TRANSIENT_RETRY_ATTEMPTS
+                    else -> 1
+                }
                 error.hasCause<SocketTimeoutException>() || error.hasCause<ConnectException>() ->
                     when {
                         streamContext.isLive -> LIVE_TRANSIENT_RETRY_ATTEMPTS
-                        streamContext.resolvedStreamType == ResolvedStreamType.PROGRESSIVE && playbackStarted ->
-                            LIVE_TRANSIENT_RETRY_ATTEMPTS
+                        streamContext.isProgressiveVod(playbackStarted) -> VOD_TRANSIENT_RETRY_ATTEMPTS
                         else -> 2
                     }
                 !playbackStarted -> if (streamContext.isLive) LIVE_TRANSIENT_RETRY_ATTEMPTS else 2
+                streamContext.isProgressiveVod(playbackStarted) -> VOD_TRANSIENT_RETRY_ATTEMPTS
+                streamContext.isLive -> LIVE_TRANSIENT_RETRY_ATTEMPTS
                 else -> 1
             }
 
@@ -184,11 +193,15 @@ class PlayerRetryPolicy(
             }
             PlaybackErrorCategory.UNKNOWN -> when {
                 streamContext.isLive && playbackStarted -> LIVE_TRANSIENT_RETRY_ATTEMPTS
+                streamContext.isProgressiveVod(playbackStarted) -> VOD_TRANSIENT_RETRY_ATTEMPTS
                 playbackStarted -> 0
                 else -> 1
             }
         }
     }
+
+    private fun PlaybackRetryContext.isProgressiveVod(playbackStarted: Boolean = true): Boolean =
+        resolvedStreamType == ResolvedStreamType.PROGRESSIVE && playbackStarted
 
     private inline fun <reified T : Throwable> Throwable.hasCause(): Boolean {
         return generateSequence(this) { it.cause }.any { it is T }

@@ -56,4 +56,15 @@ class PlaybackStallRecoveryPolicyTest {
             )
         ).isFalse()
     }
+
+    @Test
+    fun `vod buffering stalls reconnect the current stream`() {
+        assertThat(
+            shouldReconnectLiveStall(
+                playbackState = PlaybackState.BUFFERING,
+                resolvedStreamType = ResolvedStreamType.PROGRESSIVE,
+                recoveryAttempt = 1
+            )
+        ).isTrue()
+    }
 }

@@ -79,7 +79,7 @@ data class SettingsUiState(
     val appTimeFormat: AppTimeFormat = AppTimeFormat.SYSTEM,
     val preferredAudioLanguage: String = "auto",
     val playerMediaSessionEnabled: Boolean = true,
-    val playerFastRetryOnTransientFailures: Boolean = false,
+    val playerFastRetryOnTransientFailures: Boolean = true,
     val playerAudioDecoderMode: DecoderMode = DecoderMode.AUTO,
     val playerVideoDecoderMode: DecoderMode = DecoderMode.AUTO,
     val playerPlaybackBufferMode: PlaybackBufferMode = PlaybackBufferMode.AUTO,

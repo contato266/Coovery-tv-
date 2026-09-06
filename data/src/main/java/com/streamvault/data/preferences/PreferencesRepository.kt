@@ -394,7 +394,7 @@ class PreferencesRepository @Inject constructor(
     }
 
     val playerFastRetryOnTransientFailures: Flow<Boolean> = context.dataStore.data.map { preferences ->
-        preferences[PreferencesKeys.PLAYER_FAST_RETRY_ON_TRANSIENT_FAILURES] ?: false
+        preferences[PreferencesKeys.PLAYER_FAST_RETRY_ON_TRANSIENT_FAILURES] ?: true
     }
 
     val playerAudioDecoderMode: Flow<DecoderMode> = context.dataStore.data.map { preferences ->

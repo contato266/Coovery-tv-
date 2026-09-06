@@ -358,7 +358,9 @@ class Media3PlayerEngine @Inject constructor(
                 val stats = _playerStats.value
                 val liveStream = isCurrentStreamLive()
                 val effectivePlaybackStarted = isEffectivelyPlaybackStarted()
-                val liveBufferingRecoveryEligible = liveStream && effectivePlaybackStarted
+                val bufferingRecoveryEligible = effectivePlaybackStarted && (
+                    liveStream || currentResolvedStreamType == ResolvedStreamType.PROGRESSIVE
+                )
                 val stalled = videoStallDetector.shouldReportStall(
                     playbackState = _playbackState.value,
                     isPlaying = _isPlaying.value,
@@ -366,7 +368,7 @@ class Media3PlayerEngine @Inject constructor(
                     currentPositionMs = _currentPosition.value,
                     bufferedDurationMs = stats.bufferedDurationMs,
                     playWhenReady = exoPlayer?.playWhenReady == true,
-                    recoverBufferingStalls = liveBufferingRecoveryEligible,
+                    recoverBufferingStalls = bufferingRecoveryEligible,
                     recoverReadyStalls = shouldRecoverReadyStalls(currentResolvedStreamType),
                     recoverPositionAdvancingReadyStalls =
                         shouldRecoverPositionAdvancingReadyStalls(currentResolvedStreamType),
@@ -1830,11 +1832,20 @@ class Media3PlayerEngine @Inject constructor(
 
         videoStallRecoveryAttempt = nextRecoveryAttempt
         if (liveReconnectionStall) {
-            Log.w(TAG, "live-${_playbackState.value.name.lowercase()}-stall reconnect attempt=$videoStallRecoveryAttempt")
+            val reconnectSeekPositionMs = if (currentResolvedStreamType == ResolvedStreamType.PROGRESSIVE) {
+                seekPosition
+            } else {
+                null
+            }
+            Log.w(
+                TAG,
+                "stream-${_playbackState.value.name.lowercase()}-stall reconnect attempt=$videoStallRecoveryAttempt " +
+                    "streamType=$currentResolvedStreamType seekMs=${reconnectSeekPositionMs ?: -1L}"
+            )
             prepareInternal(
                 streamInfo = streamInfo,
                 preserveRetryState = true,
-                seekPositionMs = null,
+                seekPositionMs = reconnectSeekPositionMs,
                 autoPlay = wasPlaying
             )
             return

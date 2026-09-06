@@ -2,6 +2,14 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.23]
+
+### Fixed
+
+- Improved movie and series playback resilience during brief internet drops.
+- Progressive VOD streams now retry up to 10 times instead of stopping after a single retry.
+- Enabled buffering stall recovery and fast 500 ms retries for VOD playback by default.
+
 ## [1.0.22]
 
 ### Changed

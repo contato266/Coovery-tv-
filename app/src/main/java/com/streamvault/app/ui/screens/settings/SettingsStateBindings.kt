@@ -52,7 +52,7 @@ internal fun observeSettingsPreferenceSnapshot(
             appTimeFormat = AppTimeFormat.SYSTEM,
             preferredAudioLanguage = "auto",
             playerMediaSessionEnabled = true,
-            playerFastRetryOnTransientFailures = false,
+            playerFastRetryOnTransientFailures = true,
             playerAudioDecoderMode = DecoderMode.AUTO,
             playerVideoDecoderMode = DecoderMode.AUTO,
             playerPlaybackBufferMode = PlaybackBufferMode.AUTO,

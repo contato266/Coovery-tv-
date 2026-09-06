@@ -149,8 +149,9 @@ class PlayerRetryPolicyTest {
         assertThat(progressivePolicy.shouldRetry(error, progressiveContext, playbackStarted = true, attempt = 1)).isTrue()
         assertThat(progressivePolicy.shouldRetry(error, progressiveContext, playbackStarted = true, attempt = 2)).isTrue()
         assertThat(progressivePolicy.shouldRetry(error, progressiveContext, playbackStarted = true, attempt = 3)).isTrue()
-        assertThat(progressivePolicy.shouldRetry(error, progressiveContext, playbackStarted = true, attempt = 4)).isFalse()
-        assertThat(progressivePolicy.maxAttempts(error, playbackStarted = true)).isEqualTo(3)
+        assertThat(progressivePolicy.shouldRetry(error, progressiveContext, playbackStarted = true, attempt = 10)).isTrue()
+        assertThat(progressivePolicy.shouldRetry(error, progressiveContext, playbackStarted = true, attempt = 11)).isFalse()
+        assertThat(progressivePolicy.maxAttempts(error, playbackStarted = true)).isEqualTo(10)
         assertThat(progressivePolicy.retryReason(error)).isEqualTo("server-retryable")
     }
 
@@ -185,6 +186,43 @@ class PlayerRetryPolicyTest {
         assertThat(progressivePolicy.shouldRetry(error, progressiveContext, playbackStarted = true, attempt = 11))
             .isFalse()
         assertThat(progressivePolicy.maxAttempts(error, playbackStarted = true)).isEqualTo(10)
+    }
+
+    @Test
+    fun `progressive network errors after playback start retry 10 times`() {
+        val error = IOException("connection reset")
+
+        assertThat(progressivePolicy.shouldRetry(error, progressiveContext, playbackStarted = true, attempt = 10))
+            .isTrue()
+        assertThat(progressivePolicy.shouldRetry(error, progressiveContext, playbackStarted = true, attempt = 11))
+            .isFalse()
+        assertThat(progressivePolicy.maxAttempts(error, playbackStarted = true)).isEqualTo(10)
+    }
+
+    @Test
+    fun `progressive unknown runtime error after playback start retries before surfacing`() {
+        val error = RuntimeException("Unexpected runtime error")
+        assertThat(progressivePolicy.shouldRetry(error, progressiveContext, playbackStarted = true, attempt = 1)).isTrue()
+        assertThat(progressivePolicy.shouldRetry(error, progressiveContext, playbackStarted = true, attempt = 10)).isTrue()
+        assertThat(progressivePolicy.shouldRetry(error, progressiveContext, playbackStarted = true, attempt = 11)).isFalse()
+        assertThat(progressivePolicy.maxAttempts(error, playbackStarted = true)).isEqualTo(10)
+    }
+
+    @Test
+    fun `progressive loadable retry count uses 10 attempt ceiling`() {
+        assertThat(progressivePolicy.getMinimumLoadableRetryCount(C.DATA_TYPE_MEDIA)).isEqualTo(10)
+    }
+
+    @Test
+    fun `fast transient retry mode uses 500 ms for progressive vod network failures`() {
+        val progressiveFastRetryPolicy = PlayerRetryPolicy(
+            streamContext = progressiveContext,
+            playbackStarted = { true },
+            fastRetryOnTransientFailures = { true }
+        )
+
+        assertThat(progressiveFastRetryPolicy.retryDelayMs(IOException("connection reset"), 1)).isEqualTo(500L)
+        assertThat(progressiveFastRetryPolicy.retryDelayMs(IOException("HTTP 503"), 2)).isEqualTo(500L)
     }
 
     @Test
