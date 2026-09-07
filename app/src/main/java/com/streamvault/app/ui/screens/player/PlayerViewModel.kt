@@ -916,6 +916,25 @@ class PlayerViewModel @Inject constructor(
         cancelAutoPlay()
     }
 
+    internal suspend fun refreshSeriesEpisodeContext(
+        providerId: Long,
+        seriesId: Long,
+        episodeId: Long,
+        seasonNumber: Int?,
+        episodeNumber: Int?
+    ): Episode? {
+        return when (val result = playerContentResolver.getSeriesDetails(providerId, seriesId)) {
+            is Result.Success -> applySeriesEpisodeContext(
+                series = result.data.sanitizedForPlayer(),
+                seriesId = seriesId,
+                episodeId = episodeId,
+                seasonNumber = seasonNumber,
+                episodeNumber = episodeNumber
+            )
+            else -> null
+        }
+    }
+
     internal suspend fun loadSeriesEpisodeContext(
         requestVersion: Long,
         providerId: Long,
@@ -927,32 +946,13 @@ class PlayerViewModel @Inject constructor(
         return when (val result = playerContentResolver.getSeriesDetails(providerId, seriesId)) {
             is Result.Success -> {
                 if (!isActivePlaybackSession(requestVersion)) return null
-                val series = result.data.sanitizedForPlayer()
-                val resolution = buildSeriesEpisodeResolution(
-                    series = series,
+                applySeriesEpisodeContext(
+                    series = result.data.sanitizedForPlayer(),
+                    seriesId = seriesId,
                     episodeId = episodeId,
                     seasonNumber = seasonNumber,
-                    episodeNumber = episodeNumber,
-                    currentContentType = currentContentType,
-                    currentArtworkUrl = currentArtworkUrl
+                    episodeNumber = episodeNumber
                 )
-                _currentSeries.value = series
-                _currentEpisode.value = resolution.resolvedEpisode
-                _nextEpisode.value = resolution.nextEpisode
-                currentSeriesId = seriesId
-                currentSeasonNumber = resolution.resolvedSeasonNumber
-                currentEpisodeNumber = resolution.resolvedEpisodeNumber
-                if (resolution.resolvedEpisode != null && currentContentType == ContentType.SERIES_EPISODE) {
-                    currentArtworkUrl = resolution.resolvedArtworkUrl
-                    currentTitle = resolution.resolvedTitle ?: currentTitle
-                    playbackTitleFlow.value = currentTitle
-                    resolution.resolvedEpisode.id.takeIf { it > 0L }?.let { resolvedId ->
-                        if (currentContentId != resolvedId) {
-                            currentContentId = resolvedId
-                        }
-                    }
-                }
-                resolution.resolvedEpisode
             }
 
             else -> {
@@ -965,6 +965,50 @@ class PlayerViewModel @Inject constructor(
                 currentEpisodeNumber = episodeNumber
                 null
             }
+        }
+    }
+
+    private fun applySeriesEpisodeContext(
+        series: Series,
+        seriesId: Long,
+        episodeId: Long,
+        seasonNumber: Int?,
+        episodeNumber: Int?
+    ): Episode? {
+        val resolution = buildSeriesEpisodeResolution(
+            series = series,
+            episodeId = episodeId,
+            seasonNumber = seasonNumber,
+            episodeNumber = episodeNumber,
+            currentContentType = currentContentType,
+            currentArtworkUrl = currentArtworkUrl
+        )
+        _currentSeries.value = series
+        _currentEpisode.value = resolution.resolvedEpisode
+        _nextEpisode.value = resolution.nextEpisode
+        currentSeriesId = seriesId
+        currentSeasonNumber = resolution.resolvedSeasonNumber
+        currentEpisodeNumber = resolution.resolvedEpisodeNumber
+        if (resolution.resolvedEpisode != null && currentContentType == ContentType.SERIES_EPISODE) {
+            currentArtworkUrl = resolution.resolvedArtworkUrl
+            currentTitle = resolution.resolvedTitle ?: currentTitle
+            playbackTitleFlow.value = currentTitle
+            resolution.resolvedEpisode.id.takeIf { it > 0L }?.let { resolvedId ->
+                if (currentContentId != resolvedId) {
+                    currentContentId = resolvedId
+                }
+            }
+        }
+        return resolution.resolvedEpisode
+    }
+
+    internal fun primeSeriesEpisodePlayback(episode: Episode) {
+        _currentEpisode.value = episode
+        currentSeasonNumber = episode.seasonNumber
+        currentEpisodeNumber = episode.episodeNumber
+        currentStableEpisodeId = episode.episodeId.takeIf { it > 0 } ?: episode.id.takeIf { it > 0L }
+        _currentSeries.value?.let { series ->
+            _nextEpisode.value = findNextEpisode(series, episode)
         }
     }
 
@@ -1088,7 +1132,8 @@ class PlayerViewModel @Inject constructor(
         seasonNumber: Int? = null,
         episodeNumber: Int? = null,
         episodeId: Long? = null,
-        showResumePrompt: Boolean = true
+        showResumePrompt: Boolean = true,
+        showEntryOverlay: Boolean = true
     ) {
         val hasArchiveRequest = hasArchivePlaybackIdentity(
             contentType = contentType,
@@ -1237,7 +1282,9 @@ class PlayerViewModel @Inject constructor(
         }
         
         // Show context info on entry for both Live and VOD
-        openChannelInfoOverlay()
+        if (showEntryOverlay) {
+            openChannelInfoOverlay()
+        }
 
         if (providerId > 0) {
             playbackSessionScope(requestVersion)?.launch {

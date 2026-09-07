@@ -24,7 +24,11 @@ fun PlayerViewModel.seekToLiveEdge() {
     playerEngine.seekToLiveEdge()
 }
 
-fun PlayerViewModel.playEpisode(episode: Episode, showResumePrompt: Boolean = true) {
+fun PlayerViewModel.playEpisode(
+    episode: Episode,
+    showResumePrompt: Boolean = true,
+    showEntryOverlay: Boolean = true
+) {
     prepare(
         streamUrl = episode.streamUrl,
         epgChannelId = null,
@@ -39,7 +43,8 @@ fun PlayerViewModel.playEpisode(episode: Episode, showResumePrompt: Boolean = tr
         seasonNumber = episode.seasonNumber,
         episodeNumber = episode.episodeNumber,
         episodeId = episode.episodeId.takeIf { it > 0L } ?: episode.id.takeIf { it > 0L },
-        showResumePrompt = showResumePrompt
+        showResumePrompt = showResumePrompt,
+        showEntryOverlay = showEntryOverlay
     )
 }
 

@@ -136,7 +136,7 @@ internal suspend fun resolvePlayerPlaybackStreamInfo(
                             it.id == internalContentId ||
                                 it.playbackEpisodeIdentity() == internalContentId
                         }
-                }
+                } ?: seriesRepository.getEpisodeById(internalContentId)
                 episode?.let {
                     fallbackStreamId = it.episodeId.takeIf { episodeId -> episodeId > 0L } ?: it.id
                     fallbackContainerExtension = it.containerExtension

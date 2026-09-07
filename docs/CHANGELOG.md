@@ -2,6 +2,14 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.26]
+
+### Fixed
+
+- Fixed series auto-play closing the player with a black screen when the next episode exists.
+- Next-episode playback now refreshes series context and primes episode metadata before preparing the stream URL.
+- The player only returns to the series screen after confirming the current episode is the last one.
+
 ## [1.0.25]
 
 ### Fixed
