@@ -220,6 +220,7 @@ fun PlayerScreen(
     val timeshiftUiState by viewModel.timeshiftUiState.collectAsStateWithLifecycle()
     val sleepTimerUiState by viewModel.sleepTimerUiState.collectAsStateWithLifecycle()
     val sleepTimerExitEvent by viewModel.sleepTimerExitEvent.collectAsStateWithLifecycle()
+    val seriesPlaybackExitEvent by viewModel.seriesPlaybackExitEvent.collectAsStateWithLifecycle()
 
     var showTrackSelection by remember { mutableStateOf<TrackType?>(null) }
     var showVariantSelection by remember { mutableStateOf(false) }
@@ -267,6 +268,13 @@ fun PlayerScreen(
     LaunchedEffect(sleepTimerExitEvent) {
         if (sleepTimerExitEvent > 0) {
             viewModel.consumeSleepTimerExitEvent()
+            onBack()
+        }
+    }
+
+    LaunchedEffect(seriesPlaybackExitEvent) {
+        if (seriesPlaybackExitEvent > 0) {
+            viewModel.consumeSeriesPlaybackExitEvent()
             onBack()
         }
     }

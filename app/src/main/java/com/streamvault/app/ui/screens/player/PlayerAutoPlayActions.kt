@@ -3,6 +3,7 @@ package com.streamvault.app.ui.screens.player
 import androidx.lifecycle.viewModelScope
 import com.streamvault.domain.model.ContentType
 import com.streamvault.domain.model.Episode
+import com.streamvault.domain.model.Series
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -25,22 +26,54 @@ internal suspend fun PlayerViewModel.persistPlaybackCompletion() {
     }
 }
 
+internal fun resolveNextEpisodeForAutoPlay(
+    nextEpisode: Episode?,
+    currentSeries: Series?,
+    currentEpisode: Episode?
+): Episode? {
+    nextEpisode?.let { return it }
+    val series = currentSeries ?: return null
+    val episode = currentEpisode ?: return null
+    return findNextEpisode(series, episode)
+}
+
+internal fun shouldHandleSeriesEpisodeEnded(
+    positionMs: Long,
+    durationMs: Long
+): Boolean = positionMs > AUTO_PLAY_MIN_WATCHED_MS || durationMs > 0L
+
 internal fun PlayerViewModel.handlePlaybackEnded() {
     if (currentContentType == ContentType.LIVE) return
     val requestVersion = prepareRequestVersion
     playbackSessionScope(requestVersion)?.launch {
         persistPlaybackCompletion()
-        if (currentContentType == ContentType.SERIES_EPISODE) {
-            val position = playerEngine.currentPosition.value
-            val duration = playerEngine.duration.value
-            if (position > AUTO_PLAY_MIN_WATCHED_MS || duration > 0L) {
-                val next = nextEpisode.value ?: return@launch
-                if (autoPlayNextEpisodeEnabled) {
-                    startAutoPlayCountdown(next)
-                }
-            }
+        if (currentContentType != ContentType.SERIES_EPISODE) return@launch
+        if (!shouldHandleSeriesEpisodeEnded(
+                positionMs = playerEngine.currentPosition.value,
+                durationMs = playerEngine.duration.value
+            )
+        ) {
+            return@launch
+        }
+
+        val next = resolveNextEpisodeForAutoPlay(
+            nextEpisode = nextEpisode.value,
+            currentSeries = currentSeries.value,
+            currentEpisode = currentEpisode.value
+        )
+        when {
+            next != null && autoPlayNextEpisodeEnabled -> playEpisode(next, showResumePrompt = false)
+            next == null -> requestSeriesPlaybackExit()
         }
     }
+}
+
+internal fun PlayerViewModel.requestSeriesPlaybackExit() {
+    _seriesPlaybackExitEvent.value += 1
+}
+
+fun PlayerViewModel.consumeSeriesPlaybackExitEvent() {
+    _seriesPlaybackExitEvent.value = 0
 }
 
 internal fun PlayerViewModel.startAutoPlayCountdown(episode: Episode) {

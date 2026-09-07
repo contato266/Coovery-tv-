@@ -187,6 +187,8 @@ class PlayerViewModel @Inject constructor(
     val sleepTimerUiState: StateFlow<SleepTimerUiState> = _sleepTimerUiState.asStateFlow()
     internal val _sleepTimerExitEvent = MutableStateFlow(0)
     val sleepTimerExitEvent: StateFlow<Int> = _sleepTimerExitEvent.asStateFlow()
+    internal val _seriesPlaybackExitEvent = MutableStateFlow(0)
+    val seriesPlaybackExitEvent: StateFlow<Int> = _seriesPlaybackExitEvent.asStateFlow()
     val remoteShortcutPreferences = playerPreferencesCoordinator.remoteShortcutPreferences
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000L), com.streamvault.domain.model.RemoteShortcutPreferences())
     private val _playerPreferencesUiState = MutableStateFlow(PlayerPreferencesUiState())

@@ -2,6 +2,13 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.24]
+
+### Added
+
+- Series episodes now auto-play the next episode when one finishes.
+- When there is no next episode, playback returns to the series detail screen.
+
 ## [1.0.23]
 
 ### Fixed
