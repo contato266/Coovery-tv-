@@ -916,7 +916,7 @@ class PlayerViewModel @Inject constructor(
         cancelAutoPlay()
     }
 
-    private suspend fun loadSeriesEpisodeContext(
+    internal suspend fun loadSeriesEpisodeContext(
         requestVersion: Long,
         providerId: Long,
         seriesId: Long,

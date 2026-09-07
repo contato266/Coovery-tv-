@@ -38,6 +38,7 @@ fun PlayerViewModel.playEpisode(episode: Episode, showResumePrompt: Boolean = tr
         seriesId = currentSeriesId ?: episode.seriesId.takeIf { it > 0L },
         seasonNumber = episode.seasonNumber,
         episodeNumber = episode.episodeNumber,
+        episodeId = episode.episodeId.takeIf { it > 0L } ?: episode.id.takeIf { it > 0L },
         showResumePrompt = showResumePrompt
     )
 }

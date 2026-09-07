@@ -29,12 +29,65 @@ internal suspend fun PlayerViewModel.persistPlaybackCompletion() {
 internal fun resolveNextEpisodeForAutoPlay(
     nextEpisode: Episode?,
     currentSeries: Series?,
-    currentEpisode: Episode?
+    currentEpisode: Episode?,
+    currentSeasonNumber: Int? = null,
+    currentEpisodeNumber: Int? = null
 ): Episode? {
     nextEpisode?.let { return it }
     val series = currentSeries ?: return null
-    val episode = currentEpisode ?: return null
+    val episode = currentEpisode ?: resolveEpisode(
+        series = series,
+        episodeId = -1L,
+        seasonNumber = currentSeasonNumber,
+        episodeNumber = currentEpisodeNumber
+    ) ?: return null
     return findNextEpisode(series, episode)
+}
+
+internal data class SeriesEpisodeContinuation(
+    val nextEpisode: Episode?,
+    val seriesContextLoaded: Boolean
+)
+
+internal suspend fun PlayerViewModel.resolveSeriesEpisodeContinuation(): SeriesEpisodeContinuation {
+    val initial = resolveNextEpisodeForAutoPlay(
+        nextEpisode = nextEpisode.value,
+        currentSeries = currentSeries.value,
+        currentEpisode = currentEpisode.value,
+        currentSeasonNumber = currentSeasonNumber,
+        currentEpisodeNumber = currentEpisodeNumber
+    )
+    if (initial != null) {
+        return SeriesEpisodeContinuation(nextEpisode = initial, seriesContextLoaded = true)
+    }
+
+    val providerId = currentProviderId
+    val seriesId = currentSeriesId
+    if (providerId <= 0 || seriesId == null) {
+        return SeriesEpisodeContinuation(nextEpisode = null, seriesContextLoaded = false)
+    }
+
+    loadSeriesEpisodeContext(
+        requestVersion = prepareRequestVersion,
+        providerId = providerId,
+        seriesId = seriesId,
+        episodeId = currentStableEpisodeId?.takeIf { it > 0 } ?: currentContentId,
+        seasonNumber = currentSeasonNumber,
+        episodeNumber = currentEpisodeNumber
+    )
+
+    val seriesContextLoaded = currentSeries.value != null
+    val resolvedNext = resolveNextEpisodeForAutoPlay(
+        nextEpisode = nextEpisode.value,
+        currentSeries = currentSeries.value,
+        currentEpisode = currentEpisode.value,
+        currentSeasonNumber = currentSeasonNumber,
+        currentEpisodeNumber = currentEpisodeNumber
+    )
+    return SeriesEpisodeContinuation(
+        nextEpisode = resolvedNext,
+        seriesContextLoaded = seriesContextLoaded
+    )
 }
 
 internal fun shouldHandleSeriesEpisodeEnded(
@@ -44,8 +97,7 @@ internal fun shouldHandleSeriesEpisodeEnded(
 
 internal fun PlayerViewModel.handlePlaybackEnded() {
     if (currentContentType == ContentType.LIVE) return
-    val requestVersion = prepareRequestVersion
-    playbackSessionScope(requestVersion)?.launch {
+    viewModelScope.launch {
         persistPlaybackCompletion()
         if (currentContentType != ContentType.SERIES_EPISODE) return@launch
         if (!shouldHandleSeriesEpisodeEnded(
@@ -56,14 +108,14 @@ internal fun PlayerViewModel.handlePlaybackEnded() {
             return@launch
         }
 
-        val next = resolveNextEpisodeForAutoPlay(
-            nextEpisode = nextEpisode.value,
-            currentSeries = currentSeries.value,
-            currentEpisode = currentEpisode.value
-        )
+        val continuation = resolveSeriesEpisodeContinuation()
         when {
-            next != null && autoPlayNextEpisodeEnabled -> playEpisode(next, showResumePrompt = false)
-            next == null -> requestSeriesPlaybackExit()
+            continuation.nextEpisode != null && autoPlayNextEpisodeEnabled -> {
+                playEpisode(continuation.nextEpisode, showResumePrompt = false)
+            }
+            continuation.nextEpisode == null && continuation.seriesContextLoaded -> {
+                requestSeriesPlaybackExit()
+            }
         }
     }
 }

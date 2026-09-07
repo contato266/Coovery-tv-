@@ -69,6 +69,21 @@ class PlayerAutoPlayActionsTest {
     }
 
     @Test
+    fun `resolve next episode falls back to season and episode numbers`() {
+        val resolved = resolveNextEpisodeForAutoPlay(
+            nextEpisode = null,
+            currentSeries = series,
+            currentEpisode = null,
+            currentSeasonNumber = 1,
+            currentEpisodeNumber = 1
+        )
+
+        assertThat(resolved?.id).isEqualTo(102L)
+        assertThat(resolved?.seasonNumber).isEqualTo(1)
+        assertThat(resolved?.episodeNumber).isEqualTo(2)
+    }
+
+    @Test
     fun `series episode ended handling requires meaningful watch progress`() {
         assertThat(shouldHandleSeriesEpisodeEnded(positionMs = 6_000L, durationMs = 0L)).isTrue()
         assertThat(shouldHandleSeriesEpisodeEnded(positionMs = 0L, durationMs = 3_600_000L)).isTrue()

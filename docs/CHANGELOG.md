@@ -2,6 +2,13 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.25]
+
+### Fixed
+
+- Fixed series auto-play closing the player with a black screen when the next episode existed but series context was not loaded yet.
+- Next-episode detection now refreshes series data before deciding whether to continue or return to the series screen.
+
 ## [1.0.24]
 
 ### Added
