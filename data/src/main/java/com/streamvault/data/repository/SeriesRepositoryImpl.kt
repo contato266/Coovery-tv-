@@ -459,6 +459,9 @@ class SeriesRepositoryImpl @Inject constructor(
     override suspend fun getEpisodeById(episodeId: Long): Episode? =
         episodeDao.getById(episodeId)?.toDomain()
 
+    override suspend fun getEpisodesForSeries(seriesId: Long): List<Episode> =
+        episodeDao.getBySeriesSync(seriesId).map { it.toDomain() }
+
     override suspend fun getSeriesDetails(
         providerId: Long,
         seriesId: Long,

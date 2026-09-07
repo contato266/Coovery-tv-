@@ -189,6 +189,8 @@ class PlayerViewModel @Inject constructor(
     val sleepTimerExitEvent: StateFlow<Int> = _sleepTimerExitEvent.asStateFlow()
     internal val _seriesPlaybackExitEvent = MutableStateFlow(0)
     val seriesPlaybackExitEvent: StateFlow<Int> = _seriesPlaybackExitEvent.asStateFlow()
+    internal val _seriesEpisodeContinueEvent = MutableStateFlow<Episode?>(null)
+    val seriesEpisodeContinueEvent: StateFlow<Episode?> = _seriesEpisodeContinueEvent.asStateFlow()
     val remoteShortcutPreferences = playerPreferencesCoordinator.remoteShortcutPreferences
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000L), com.streamvault.domain.model.RemoteShortcutPreferences())
     private val _playerPreferencesUiState = MutableStateFlow(PlayerPreferencesUiState())
@@ -889,6 +891,7 @@ class PlayerViewModel @Inject constructor(
         lastRecordedVodVariantObservationSignature = null
         livePlaybackReadyForCurrentSession = false
         readySideEffectsRequestVersion = null
+        lastObservedPlaybackState = PlaybackState.IDLE
         playerEngine.setScrubbingMode(false)
         return sessionId
     }
@@ -1355,6 +1358,15 @@ class PlayerViewModel @Inject constructor(
             ContentType.LIVE
         }
         if (resolvedContentType != ContentType.SERIES_EPISODE || providerId <= 0L || internalChannelId <= 0L) {
+            return
+        }
+
+        if (
+            currentContentType == ContentType.SERIES_EPISODE &&
+            currentContentId > 0L &&
+            internalChannelId != currentContentId &&
+            (seasonNumber != currentSeasonNumber || episodeNumber != currentEpisodeNumber)
+        ) {
             return
         }
 

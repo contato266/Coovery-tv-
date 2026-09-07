@@ -64,6 +64,74 @@ class PlayerEpisodePlaybackSupportTest {
         ).isFalse()
     }
 
+    @Test
+    fun `find next episode from ordered list resolves by season and episode numbers`() {
+        val episodes = listOf(
+            episode(id = 101L, season = 1, number = 1),
+            episode(id = 102L, season = 1, number = 2),
+            episode(id = 201L, season = 2, number = 1)
+        )
+
+        val next = findNextEpisodeFromOrderedList(
+            episodes = episodes,
+            currentEpisode = null,
+            seasonNumber = 1,
+            episodeNumber = 1,
+            contentId = -1L,
+            stableEpisodeId = null
+        )
+
+        assertThat(next?.id).isEqualTo(102L)
+    }
+
+    @Test
+    fun `find next episode from ordered list resolves by content id`() {
+        val episodes = listOf(
+            episode(id = 101L, season = 1, number = 1),
+            episode(id = 102L, season = 1, number = 2)
+        )
+
+        val next = findNextEpisodeFromOrderedList(
+            episodes = episodes,
+            currentEpisode = null,
+            seasonNumber = null,
+            episodeNumber = null,
+            contentId = 101L,
+            stableEpisodeId = null
+        )
+
+        assertThat(next?.id).isEqualTo(102L)
+    }
+
+    @Test
+    fun `can confirm last episode uses persisted episode catalog`() {
+        val persistedEpisodes = listOf(
+            episode(id = 101L, season = 1, number = 1),
+            episode(id = 102L, season = 1, number = 2)
+        )
+
+        assertThat(
+            canConfirmSeriesEpisodeIsLast(
+                series = null,
+                currentEpisode = episode(id = 101L, season = 1, number = 1),
+                seasonNumber = 1,
+                episodeNumber = 1,
+                persistedEpisodes = persistedEpisodes,
+                contentId = 101L
+            )
+        ).isFalse()
+        assertThat(
+            canConfirmSeriesEpisodeIsLast(
+                series = null,
+                currentEpisode = episode(id = 102L, season = 1, number = 2),
+                seasonNumber = 1,
+                episodeNumber = 2,
+                persistedEpisodes = persistedEpisodes,
+                contentId = 102L
+            )
+        ).isTrue()
+    }
+
     private fun episode(id: Long, season: Int, number: Int): Episode = Episode(
         id = id,
         episodeId = id,

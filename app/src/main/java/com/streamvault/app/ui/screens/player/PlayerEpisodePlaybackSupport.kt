@@ -57,22 +57,101 @@ internal fun findNextEpisodeByNumbers(
     return orderedEpisodes.getOrNull(currentIndex + 1)
 }
 
+internal fun findNextEpisodeFromOrderedList(
+    episodes: List<Episode>,
+    currentEpisode: Episode?,
+    seasonNumber: Int?,
+    episodeNumber: Int?,
+    contentId: Long,
+    stableEpisodeId: Long?
+): Episode? {
+    if (episodes.isEmpty()) return null
+    val orderedEpisodes = episodes.sortedWith(compareBy({ it.seasonNumber }, { it.episodeNumber }))
+    val currentIndex = when {
+        currentEpisode != null -> orderedEpisodes.indexOfFirst { candidate ->
+            candidate.id == currentEpisode.id ||
+                candidate.playbackEpisodeIdentity() == currentEpisode.playbackEpisodeIdentity() ||
+                (candidate.seasonNumber == currentEpisode.seasonNumber &&
+                    candidate.episodeNumber == currentEpisode.episodeNumber)
+        }
+        seasonNumber != null && episodeNumber != null -> orderedEpisodes.indexOfFirst {
+            it.seasonNumber == seasonNumber && it.episodeNumber == episodeNumber
+        }
+        contentId > 0L -> orderedEpisodes.indexOfFirst { candidate ->
+            candidate.id == contentId ||
+                candidate.playbackEpisodeIdentity() == contentId ||
+                (stableEpisodeId != null && candidate.playbackEpisodeIdentity() == stableEpisodeId)
+        }
+        else -> -1
+    }
+    if (currentIndex < 0) return null
+    return orderedEpisodes.getOrNull(currentIndex + 1)
+}
+
 internal fun canConfirmSeriesEpisodeIsLast(
     series: Series?,
     currentEpisode: Episode?,
     seasonNumber: Int?,
-    episodeNumber: Int?
+    episodeNumber: Int?,
+    persistedEpisodes: List<Episode> = emptyList(),
+    contentId: Long = -1L,
+    stableEpisodeId: Long? = null
 ): Boolean {
-    val resolvedSeries = series ?: return false
-    val hasEpisodeCatalog = resolvedSeries.seasons.any { it.episodes.isNotEmpty() }
-    if (!hasEpisodeCatalog) return false
-    val resolvedCurrentEpisode = currentEpisode ?: resolveEpisode(
-        series = resolvedSeries,
-        episodeId = -1L,
+    val catalogEpisodes = when {
+        persistedEpisodes.isNotEmpty() -> persistedEpisodes
+        series != null -> series.seasons
+            .sanitizedForPlayer()
+            .sortedBy { it.seasonNumber }
+            .flatMap { season -> season.episodes.sortedBy { it.episodeNumber } }
+        else -> emptyList()
+    }
+    if (catalogEpisodes.isEmpty()) return false
+    val hasCurrentEpisode = findCurrentEpisodeIndex(
+        episodes = catalogEpisodes,
+        currentEpisode = currentEpisode,
         seasonNumber = seasonNumber,
-        episodeNumber = episodeNumber
-    ) ?: return false
-    return findNextEpisode(resolvedSeries, resolvedCurrentEpisode) == null
+        episodeNumber = episodeNumber,
+        contentId = contentId,
+        stableEpisodeId = stableEpisodeId
+    ) >= 0
+    if (!hasCurrentEpisode) return false
+    return findNextEpisodeFromOrderedList(
+        episodes = catalogEpisodes,
+        currentEpisode = currentEpisode,
+        seasonNumber = seasonNumber,
+        episodeNumber = episodeNumber,
+        contentId = contentId,
+        stableEpisodeId = stableEpisodeId
+    ) == null
+}
+
+private fun findCurrentEpisodeIndex(
+    episodes: List<Episode>,
+    currentEpisode: Episode?,
+    seasonNumber: Int?,
+    episodeNumber: Int?,
+    contentId: Long,
+    stableEpisodeId: Long?
+): Int {
+    if (episodes.isEmpty()) return -1
+    val orderedEpisodes = episodes.sortedWith(compareBy({ it.seasonNumber }, { it.episodeNumber }))
+    return when {
+        currentEpisode != null -> orderedEpisodes.indexOfFirst { candidate ->
+            candidate.id == currentEpisode.id ||
+                candidate.playbackEpisodeIdentity() == currentEpisode.playbackEpisodeIdentity() ||
+                (candidate.seasonNumber == currentEpisode.seasonNumber &&
+                    candidate.episodeNumber == currentEpisode.episodeNumber)
+        }
+        seasonNumber != null && episodeNumber != null -> orderedEpisodes.indexOfFirst {
+            it.seasonNumber == seasonNumber && it.episodeNumber == episodeNumber
+        }
+        contentId > 0L -> orderedEpisodes.indexOfFirst { candidate ->
+            candidate.id == contentId ||
+                candidate.playbackEpisodeIdentity() == contentId ||
+                (stableEpisodeId != null && candidate.playbackEpisodeIdentity() == stableEpisodeId)
+        }
+        else -> -1
+    }
 }
 
 internal fun Episode.playbackEpisodeIdentity(): Long =

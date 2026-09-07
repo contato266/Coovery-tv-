@@ -2,6 +2,14 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.27]
+
+### Fixed
+
+- Fixed series auto-play closing the player instead of continuing to the next episode.
+- Next-episode detection now falls back to the local episode catalog when in-memory series data is incomplete.
+- Auto-play now updates the player navigation request so the next episode starts with fresh route metadata.
+
 ## [1.0.26]
 
 ### Fixed

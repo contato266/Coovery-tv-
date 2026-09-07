@@ -35,6 +35,7 @@ interface SeriesRepository {
     fun searchSeries(providerId: Long, query: String): Flow<List<Series>>
     suspend fun getSeriesById(seriesId: Long): Series?
     suspend fun getEpisodeById(episodeId: Long): Episode?
+    suspend fun getEpisodesForSeries(seriesId: Long): List<Episode>
     suspend fun getSeriesDetails(
         providerId: Long,
         seriesId: Long,

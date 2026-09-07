@@ -859,10 +859,19 @@ fun AppNavigation(mainActivity: MainActivity) {
         }
 
         composable(route = Routes.PLAYER) { backStackEntry ->
-            val playerRequest = backStackEntry.savedStateHandle.get<PlayerNavigationRequest>(PLAYER_REQUEST_KEY)
-                ?: navController.previousBackStackEntry?.savedStateHandle?.get<PlayerNavigationRequest>(PLAYER_REQUEST_KEY)?.also {
-                    backStackEntry.savedStateHandle[PLAYER_REQUEST_KEY] = it
+            val playerRequest by backStackEntry.savedStateHandle
+                .getStateFlow<PlayerNavigationRequest?>(PLAYER_REQUEST_KEY, null)
+                .collectAsStateWithLifecycle()
+            LaunchedEffect(backStackEntry, playerRequest) {
+                if (playerRequest == null) {
+                    navController.previousBackStackEntry
+                        ?.savedStateHandle
+                        ?.get<PlayerNavigationRequest>(PLAYER_REQUEST_KEY)
+                        ?.let { inheritedRequest ->
+                            backStackEntry.savedStateHandle[PLAYER_REQUEST_KEY] = inheritedRequest
+                        }
                 }
+            }
             val safePlayerRequest = safePlayerNavigationRequest(playerRequest)
             if (safePlayerRequest == null) {
                 LaunchedEffect(playerRequest) {
@@ -923,6 +932,13 @@ fun AppNavigation(mainActivity: MainActivity) {
                                 popUpTo(Routes.PLAYER) { inclusive = true }
                             }
                         }
+                    },
+                    onContinueEpisode = { episode ->
+                        navController.navigateToPlayer(
+                            Routes.episodePlayer(episode).copy(
+                                returnRoute = safePlayerRequest.returnRoute
+                            )
+                        )
                     }
                 )
             }

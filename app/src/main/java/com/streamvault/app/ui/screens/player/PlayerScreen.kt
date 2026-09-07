@@ -47,6 +47,7 @@ import com.streamvault.app.device.rememberIsTelevisionDevice
 import com.streamvault.app.ui.theme.*
 import com.streamvault.domain.model.Channel
 import com.streamvault.domain.model.DecoderMode
+import com.streamvault.domain.model.Episode
 import com.streamvault.domain.model.StreamInfo
 import com.streamvault.domain.model.VideoFormat
 import com.streamvault.domain.model.Program
@@ -132,6 +133,7 @@ fun PlayerScreen(
     returnRoute: String? = null,
     onBack: () -> Unit,
     onNavigate: ((String) -> Unit)? = null,
+    onContinueEpisode: ((Episode) -> Unit)? = null,
     viewModel: PlayerViewModel = hiltViewModel()
 ) {
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
@@ -221,6 +223,7 @@ fun PlayerScreen(
     val sleepTimerUiState by viewModel.sleepTimerUiState.collectAsStateWithLifecycle()
     val sleepTimerExitEvent by viewModel.sleepTimerExitEvent.collectAsStateWithLifecycle()
     val seriesPlaybackExitEvent by viewModel.seriesPlaybackExitEvent.collectAsStateWithLifecycle()
+    val seriesEpisodeContinueEvent by viewModel.seriesEpisodeContinueEvent.collectAsStateWithLifecycle()
 
     var showTrackSelection by remember { mutableStateOf<TrackType?>(null) }
     var showVariantSelection by remember { mutableStateOf(false) }
@@ -277,6 +280,16 @@ fun PlayerScreen(
             viewModel.consumeSeriesPlaybackExitEvent()
             onBack()
         }
+    }
+
+    LaunchedEffect(seriesEpisodeContinueEvent) {
+        val episode = seriesEpisodeContinueEvent ?: return@LaunchedEffect
+        viewModel.consumeSeriesEpisodeContinueEvent()
+        onContinueEpisode?.invoke(episode) ?: viewModel.playEpisode(
+            episode = episode,
+            showResumePrompt = false,
+            showEntryOverlay = false
+        )
     }
 
     LaunchedEffect(audioVideoSyncEnabled) {

@@ -65,6 +65,9 @@ class PlayerContentResolver @Inject constructor(
 
     internal suspend fun getEpisodeById(episodeId: Long): Episode? =
         seriesRepository.getEpisodeById(episodeId)
+
+    internal suspend fun getEpisodesForSeries(seriesId: Long): List<Episode> =
+        seriesRepository.getEpisodesForSeries(seriesId)
 }
 
 internal suspend fun resolvePlayerPlaybackStreamInfo(
