@@ -49,11 +49,9 @@ import com.streamvault.domain.model.Channel
 import com.streamvault.domain.model.DecoderMode
 import com.streamvault.domain.model.Episode
 import com.streamvault.domain.model.StreamInfo
-import com.streamvault.domain.model.VideoFormat
 import com.streamvault.domain.model.Program
 import com.streamvault.domain.repository.EpgRepository
 import com.streamvault.player.PlaybackState
-import com.streamvault.player.PLAYER_TRACK_AUTO_ID
 import com.streamvault.player.PlayerEngine
 import com.streamvault.player.PlayerError
 import com.streamvault.player.PlayerRenderSurfaceType
@@ -93,10 +91,8 @@ import com.streamvault.app.ui.screens.player.overlay.PlayerNoticeBanner
 import com.streamvault.app.ui.screens.player.overlay.PlayerEpisodeSelectionDialog
 import com.streamvault.app.ui.screens.player.overlay.PlayerResumePrompt
 import com.streamvault.app.ui.screens.player.overlay.PlayerTrackSelectionDialog
-import com.streamvault.app.ui.screens.player.overlay.PlayerAspectRatioToast
 import com.streamvault.app.ui.screens.player.overlay.PlayerControlsOverlay
 import com.streamvault.app.ui.screens.player.overlay.PlayerNumericInputOverlay
-import com.streamvault.app.ui.screens.player.overlay.PlayerResolutionBadge
 import com.streamvault.app.ui.screens.player.overlay.PlayerAudioVideoOffsetDialog
 import com.streamvault.app.ui.screens.player.overlay.PlayerSpeedSelectionDialog
 import com.streamvault.app.ui.screens.player.overlay.PlayerSleepTimerDialog
@@ -367,31 +363,6 @@ fun PlayerScreen(
         if (!anyOverlayVisible) {
             // Restore focus to main player when all overlays are gone
             focusRequester.requestFocusSafely(tag = "PlayerScreen", target = "Player root")
-        }
-    }
-
-    val resolutionBadgeLabel = buildResolutionBadgeLabel(
-        videoFormat = videoFormat,
-        videoTracks = availableVideoQualities,
-        autoResolutionLabel = stringResource(R.string.player_resolution_auto_label, videoFormat.resolutionLabel)
-    )
-    var showResolution by remember(streamUrl) { mutableStateOf(false) }
-    var lastResolutionBadgeLabel by remember(streamUrl) { mutableStateOf<String?>(null) }
-
-    LaunchedEffect(resolutionBadgeLabel) {
-        val nextLabel = resolutionBadgeLabel ?: run {
-            showResolution = false
-            lastResolutionBadgeLabel = null
-            return@LaunchedEffect
-        }
-        if (nextLabel == lastResolutionBadgeLabel) {
-            return@LaunchedEffect
-        }
-        lastResolutionBadgeLabel = nextLabel
-        showResolution = true
-        delay(3000)
-        if (lastResolutionBadgeLabel == nextLabel) {
-            showResolution = false
         }
     }
 
@@ -917,35 +888,6 @@ fun PlayerScreen(
             modifier = Modifier.fillMaxSize()
         )
 
-        // Buffering indicator
-        if (playbackState == PlaybackState.BUFFERING) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(top = 64.dp),
-                contentAlignment = Alignment.TopCenter
-            ) {
-                Row(
-                    modifier = Modifier
-                        .background(Color.Black.copy(alpha = 0.62f), RoundedCornerShape(12.dp))
-                        .padding(horizontal = 16.dp, vertical = 10.dp),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    CircularProgressIndicator(
-                        color = Primary,
-                        strokeWidth = 2.dp,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Text(
-                        text = stringResource(R.string.player_buffering),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White
-                    )
-                }
-            }
-        }
-
         AnimatedVisibility(
             visible = playerNotice != null && !(playbackState == PlaybackState.BUFFERING && playerNotice?.isRetryNotice == false),
             enter = fadeIn(),
@@ -1117,22 +1059,6 @@ fun PlayerScreen(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .padding(top = 40.dp)
-        )
-
-        PlayerAspectRatioToast(
-            aspectRatioLabel = aspectRatio.modeName,
-            controlsVisible = showControls,
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(top = 32.dp)
-        )
-
-        PlayerResolutionBadge(
-            visible = showResolution && !showControls && resolutionBadgeLabel != null,
-            resolutionLabel = resolutionBadgeLabel.orEmpty(),
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(32.dp)
         )
 
         if (!isInPictureInPictureMode) {
@@ -1434,20 +1360,6 @@ private fun AspectRatio.toPlayerSurfaceResizeMode(): PlayerSurfaceResizeMode = w
     AspectRatio.FIT -> PlayerSurfaceResizeMode.FIT
     AspectRatio.FILL -> PlayerSurfaceResizeMode.FILL
     AspectRatio.ZOOM -> PlayerSurfaceResizeMode.ZOOM
-}
-
-private fun buildResolutionBadgeLabel(
-    videoFormat: VideoFormat,
-    videoTracks: List<PlayerTrack>,
-    autoResolutionLabel: String
-): String? {
-    if (videoFormat.isEmpty) return null
-    val selectedTrack = videoTracks.firstOrNull(PlayerTrack::isSelected)
-    return if (selectedTrack == null || selectedTrack.id == PLAYER_TRACK_AUTO_ID) {
-        autoResolutionLabel
-    } else {
-        selectedTrack.name
-    }
 }
 
 @Composable

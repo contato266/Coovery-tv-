@@ -2,6 +2,12 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.32]
+
+### Changed
+
+- Removed the aspect ratio toast, buffering overlay, and resolution badge that appeared on top of playback.
+
 ## [1.0.31]
 
 ### Fixed
