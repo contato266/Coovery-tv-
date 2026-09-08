@@ -2,6 +2,13 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.28]
+
+### Fixed
+
+- Fixed movies and series failing to start playback after the v1.0.27 player navigation change.
+- Player requests from the previous screen are now resolved synchronously before the player opens.
+
 ## [1.0.27]
 
 ### Fixed

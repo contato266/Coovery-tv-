@@ -14,6 +14,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.dropUnlessResumed
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
 import androidx.navigation.NavOptionsBuilder
 import androidx.navigation.NavType
@@ -289,6 +290,17 @@ private fun NavHostController.navigateToPlayer(request: PlayerNavigationRequest)
     navigate(Routes.PLAYER) { launchSingleTop = true }
     return true
 }
+
+private fun NavBackStackEntry.resolvePlayerNavigationRequest(
+    navController: NavHostController
+): PlayerNavigationRequest? =
+    savedStateHandle.get<PlayerNavigationRequest>(PLAYER_REQUEST_KEY)
+        ?: navController.previousBackStackEntry
+            ?.savedStateHandle
+            ?.get<PlayerNavigationRequest>(PLAYER_REQUEST_KEY)
+            ?.also { inheritedRequest ->
+                savedStateHandle[PLAYER_REQUEST_KEY] = inheritedRequest
+            }
 
 private fun NavHostController.navigateToMovieDetail(movie: Movie, returnRoute: String? = null): Boolean {
     if (currentBackStackEntry?.lifecycle?.currentState?.isAtLeast(Lifecycle.State.RESUMED) != true) return false
@@ -859,22 +871,16 @@ fun AppNavigation(mainActivity: MainActivity) {
         }
 
         composable(route = Routes.PLAYER) { backStackEntry ->
-            val playerRequest by backStackEntry.savedStateHandle
-                .getStateFlow<PlayerNavigationRequest?>(PLAYER_REQUEST_KEY, null)
-                .collectAsStateWithLifecycle()
-            LaunchedEffect(backStackEntry, playerRequest) {
-                if (playerRequest == null) {
-                    navController.previousBackStackEntry
-                        ?.savedStateHandle
-                        ?.get<PlayerNavigationRequest>(PLAYER_REQUEST_KEY)
-                        ?.let { inheritedRequest ->
-                            backStackEntry.savedStateHandle[PLAYER_REQUEST_KEY] = inheritedRequest
-                        }
-                }
+            val initialPlayerRequest = remember(backStackEntry.id) {
+                backStackEntry.resolvePlayerNavigationRequest(navController)
             }
+            val playerRequest by backStackEntry.savedStateHandle
+                .getStateFlow<PlayerNavigationRequest?>(PLAYER_REQUEST_KEY, initialPlayerRequest)
+                .collectAsStateWithLifecycle()
             val safePlayerRequest = safePlayerNavigationRequest(playerRequest)
             if (safePlayerRequest == null) {
-                LaunchedEffect(playerRequest) {
+                LaunchedEffect(initialPlayerRequest, playerRequest) {
+                    if (initialPlayerRequest != null || playerRequest != null) return@LaunchedEffect
                     Log.w(TAG, "Missing or invalid player request; returning to previous destination")
                     if (!navController.popBackStack()) {
                         navController.navigate(Routes.HOME) {
