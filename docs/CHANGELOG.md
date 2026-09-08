@@ -2,6 +2,13 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.31]
+
+### Fixed
+
+- Fixed app crash (`StackOverflowError`) when a series episode finishes playback.
+- `PlayerHistoryCoordinator.markAsWatched()` no longer calls itself recursively; it now delegates to the `MarkAsWatched` use case.
+
 ## [1.0.30]
 
 ### Fixed

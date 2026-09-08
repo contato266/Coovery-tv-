@@ -15,7 +15,7 @@ class PlayerHistoryCoordinator @Inject constructor(
     private val repository: PlaybackHistoryRepository,
     private val watchNextManager: WatchNextManager,
     private val launcherRecommendationsManager: LauncherRecommendationsManager,
-    private val markAsWatched: MarkAsWatched
+    private val markAsWatchedUseCase: MarkAsWatched
 ) {
     internal fun recentlyWatchedByProvider(providerId: Long, limit: Int): Flow<List<PlaybackHistory>> =
         repository.getRecentlyWatchedByProvider(providerId, limit)
@@ -40,7 +40,7 @@ class PlayerHistoryCoordinator @Inject constructor(
         repository.recordPlayback(history)
 
     internal suspend fun markAsWatched(history: PlaybackHistory): Result<Unit> =
-        markAsWatched(history)
+        markAsWatchedUseCase(history)
 
     internal suspend fun updateResumePosition(history: PlaybackHistory): Result<Unit> =
         repository.updateResumePosition(history)
