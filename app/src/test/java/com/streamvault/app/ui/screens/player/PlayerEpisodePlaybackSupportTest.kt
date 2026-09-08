@@ -36,6 +36,26 @@ class PlayerEpisodePlaybackSupportTest {
     }
 
     @Test
+    fun `resolve next episode across merged catalogs uses season and episode numbers`() {
+        val persisted = listOf(
+            episode(id = 101L, season = 1, number = 1),
+            episode(id = 102L, season = 1, number = 2)
+        )
+
+        val next = resolveNextEpisodeAcrossCatalogs(
+            persistedEpisodes = persisted,
+            series = null,
+            currentEpisode = null,
+            seasonNumber = 1,
+            episodeNumber = 1,
+            contentId = -1L,
+            stableEpisodeId = null
+        )
+
+        assertThat(next?.id).isEqualTo(102L)
+    }
+
+    @Test
     fun `can confirm last episode only when persisted catalog confirms final position`() {
         val persistedEpisodes = listOf(
             episode(id = 101L, season = 1, number = 1),
@@ -69,6 +89,15 @@ class PlayerEpisodePlaybackSupportTest {
                 currentEpisode = middleEpisode,
                 seasonNumber = 1,
                 episodeNumber = 2
+            )
+        ).isFalse()
+        assertThat(
+            canConfirmSeriesEpisodeIsLast(
+                series = series,
+                currentEpisode = episode(id = 201L, season = 2, number = 1),
+                seasonNumber = 2,
+                episodeNumber = 1,
+                persistedEpisodes = listOf(episode(id = 201L, season = 2, number = 1))
             )
         ).isFalse()
     }

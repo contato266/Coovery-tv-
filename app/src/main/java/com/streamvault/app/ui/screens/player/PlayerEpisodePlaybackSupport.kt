@@ -88,6 +88,69 @@ internal fun findNextEpisodeFromOrderedList(
     return orderedEpisodes.getOrNull(currentIndex + 1)
 }
 
+internal fun mergeSeriesEpisodes(
+    persistedEpisodes: List<Episode>,
+    series: Series?
+): List<Episode> {
+    val merged = LinkedHashMap<Long, Episode>()
+    fun addEpisode(episode: Episode) {
+        val identity = episode.playbackEpisodeIdentity()
+        if (identity <= 0L) return
+        merged.putIfAbsent(identity, episode)
+    }
+    persistedEpisodes.forEach(::addEpisode)
+    series?.seasons
+        ?.sanitizedForPlayer()
+        ?.forEach { season -> season.episodes.forEach(::addEpisode) }
+    return merged.values.sortedWith(compareBy({ it.seasonNumber }, { it.episodeNumber }))
+}
+
+internal fun findNextEpisodeByNumbersInList(
+    episodes: List<Episode>,
+    seasonNumber: Int,
+    episodeNumber: Int
+): Episode? {
+    if (episodes.isEmpty()) return null
+    val ordered = episodes.sortedWith(compareBy({ it.seasonNumber }, { it.episodeNumber }))
+    val currentIndex = ordered.indexOfFirst {
+        it.seasonNumber == seasonNumber && it.episodeNumber == episodeNumber
+    }
+    if (currentIndex >= 0) return ordered.getOrNull(currentIndex + 1)
+    return ordered.firstOrNull {
+        it.seasonNumber > seasonNumber ||
+            (it.seasonNumber == seasonNumber && it.episodeNumber > episodeNumber)
+    }
+}
+
+internal fun resolveNextEpisodeAcrossCatalogs(
+    persistedEpisodes: List<Episode>,
+    series: Series?,
+    currentEpisode: Episode?,
+    seasonNumber: Int?,
+    episodeNumber: Int?,
+    contentId: Long,
+    stableEpisodeId: Long?
+): Episode? {
+    val catalog = mergeSeriesEpisodes(persistedEpisodes, series)
+    if (catalog.isEmpty()) return null
+    return findNextEpisodeFromOrderedList(
+        episodes = catalog,
+        currentEpisode = currentEpisode,
+        seasonNumber = seasonNumber,
+        episodeNumber = episodeNumber,
+        contentId = contentId,
+        stableEpisodeId = stableEpisodeId
+    ) ?: if (seasonNumber != null && episodeNumber != null) {
+        findNextEpisodeByNumbersInList(
+            episodes = catalog,
+            seasonNumber = seasonNumber,
+            episodeNumber = episodeNumber
+        )
+    } else {
+        null
+    }
+}
+
 internal fun canConfirmSeriesEpisodeIsLast(
     series: Series?,
     currentEpisode: Episode?,
@@ -97,7 +160,7 @@ internal fun canConfirmSeriesEpisodeIsLast(
     contentId: Long = -1L,
     stableEpisodeId: Long? = null
 ): Boolean {
-    if (persistedEpisodes.isEmpty()) return false
+    if (persistedEpisodes.size < 2) return false
     val catalogEpisodes = persistedEpisodes.sortedWith(compareBy({ it.seasonNumber }, { it.episodeNumber }))
     val currentIndex = findCurrentEpisodeIndex(
         episodes = catalogEpisodes,

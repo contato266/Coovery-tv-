@@ -366,6 +366,7 @@ class PlayerViewModel @Inject constructor(
     internal var combinedCategoriesById: Map<Long, CombinedCategory> = emptyMap()
     internal var lastObservedPlaybackState: PlaybackState = PlaybackState.IDLE
     internal var seriesAutoPlayHandlingInFlight: Boolean = false
+    internal var seriesAutoPlayAwaitingRequestVersion: Long? = null
 
     internal var playlistJob: Job? = null
     internal var recentChannelsJob: Job? = null
@@ -508,7 +509,10 @@ class PlayerViewModel @Inject constructor(
                 ) {
                     handlePlaybackEnded()
                 }
-                lastObservedPlaybackState = state
+                onSeriesEpisodeAutoPlayPlaybackProgress(state)
+                if (!seriesAutoPlayHandlingInFlight) {
+                    lastObservedPlaybackState = state
+                }
                 if (state == PlaybackState.READY && readySideEffectsRequestVersion == prepareRequestVersion) {
                     zapBufferWatchdogJob?.cancel()
                     dismissRecoveredNoticeIfPresent()
@@ -895,7 +899,9 @@ class PlayerViewModel @Inject constructor(
         lastRecordedVodVariantObservationSignature = null
         livePlaybackReadyForCurrentSession = false
         readySideEffectsRequestVersion = null
-        lastObservedPlaybackState = PlaybackState.IDLE
+        if (!seriesAutoPlayHandlingInFlight) {
+            lastObservedPlaybackState = PlaybackState.IDLE
+        }
         playerEngine.setScrubbingMode(false)
         return sessionId
     }

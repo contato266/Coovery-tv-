@@ -2,6 +2,15 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.30]
+
+### Fixed
+
+- Fixed series auto-play closing the player right after an episode ends.
+- Prevented duplicate end-of-playback handling while the next episode is still loading.
+- Improved next-episode detection by merging in-memory and local catalog data with season/episode fallbacks.
+- The player only returns to the series screen when the local catalog confirms the final episode.
+
 ## [1.0.29]
 
 ### Fixed

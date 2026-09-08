@@ -64,13 +64,25 @@ internal suspend fun PlayerViewModel.loadPersistedSeriesEpisodes(): List<Episode
 }
 
 internal suspend fun PlayerViewModel.resolveSeriesEpisodeContinuation(): SeriesEpisodeContinuation {
-    fun resolveFromLoadedCatalog(): Episode? = resolveNextEpisodeForAutoPlay(
-        nextEpisode = nextEpisode.value,
-        currentSeries = currentSeries.value,
-        currentEpisode = currentEpisode.value,
-        currentSeasonNumber = currentSeasonNumber,
-        currentEpisodeNumber = currentEpisodeNumber
-    )
+    fun resolveFromLoadedCatalog(persistedEpisodes: List<Episode> = emptyList()): Episode? {
+        resolveNextEpisodeForAutoPlay(
+            nextEpisode = nextEpisode.value,
+            currentSeries = currentSeries.value,
+            currentEpisode = currentEpisode.value,
+            currentSeasonNumber = currentSeasonNumber,
+            currentEpisodeNumber = currentEpisodeNumber
+        )?.let { return it }
+
+        return resolveNextEpisodeAcrossCatalogs(
+            persistedEpisodes = persistedEpisodes,
+            series = currentSeries.value,
+            currentEpisode = currentEpisode.value,
+            seasonNumber = currentSeasonNumber,
+            episodeNumber = currentEpisodeNumber,
+            contentId = currentContentId,
+            stableEpisodeId = currentStableEpisodeId
+        )
+    }
 
     val initial = resolveFromLoadedCatalog()
     if (initial != null) {
@@ -92,26 +104,11 @@ internal suspend fun PlayerViewModel.resolveSeriesEpisodeContinuation(): SeriesE
         )
     }
 
-    val afterRefresh = resolveFromLoadedCatalog()
+    val persistedEpisodes = loadPersistedSeriesEpisodes()
+    val afterRefresh = resolveFromLoadedCatalog(persistedEpisodes)
     if (afterRefresh != null) {
         return SeriesEpisodeContinuation(
             nextEpisode = afterRefresh,
-            shouldReturnToSeriesScreen = false
-        )
-    }
-
-    val persistedEpisodes = loadPersistedSeriesEpisodes()
-    val fromDatabase = findNextEpisodeFromOrderedList(
-        episodes = persistedEpisodes,
-        currentEpisode = currentEpisode.value,
-        seasonNumber = currentSeasonNumber,
-        episodeNumber = currentEpisodeNumber,
-        contentId = currentContentId,
-        stableEpisodeId = currentStableEpisodeId
-    )
-    if (fromDatabase != null) {
-        return SeriesEpisodeContinuation(
-            nextEpisode = fromDatabase,
             shouldReturnToSeriesScreen = false
         )
     }
@@ -175,12 +172,12 @@ internal fun PlayerViewModel.handlePlaybackEnded() {
         val continuation = resolveSeriesEpisodeContinuation()
         when {
             continuation.nextEpisode != null && autoPlayNextEpisodeEnabled -> {
-                seriesAutoPlayHandlingInFlight = true
-                lastObservedPlaybackState = PlaybackState.ENDED
+                beginSeriesEpisodeAutoPlayTransition()
                 try {
                     playNextSeriesEpisode(continuation.nextEpisode)
-                } finally {
-                    seriesAutoPlayHandlingInFlight = false
+                    seriesAutoPlayAwaitingRequestVersion = prepareRequestVersion
+                } catch (_: Exception) {
+                    completeSeriesEpisodeAutoPlayTransition()
                 }
             }
             continuation.shouldReturnToSeriesScreen -> {
@@ -188,6 +185,30 @@ internal fun PlayerViewModel.handlePlaybackEnded() {
             }
         }
     }
+}
+
+internal fun PlayerViewModel.beginSeriesEpisodeAutoPlayTransition() {
+    seriesAutoPlayHandlingInFlight = true
+    lastObservedPlaybackState = PlaybackState.ENDED
+}
+
+internal fun PlayerViewModel.completeSeriesEpisodeAutoPlayTransition() {
+    seriesAutoPlayHandlingInFlight = false
+    seriesAutoPlayAwaitingRequestVersion = null
+}
+
+internal fun PlayerViewModel.onSeriesEpisodeAutoPlayPlaybackProgress(state: PlaybackState) {
+    if (!seriesAutoPlayHandlingInFlight) return
+    val awaitingVersion = seriesAutoPlayAwaitingRequestVersion ?: return
+    if (prepareRequestVersion != awaitingVersion) return
+    if (state != PlaybackState.READY &&
+        state != PlaybackState.BUFFERING &&
+        state != PlaybackState.ERROR
+    ) {
+        return
+    }
+    completeSeriesEpisodeAutoPlayTransition()
+    lastObservedPlaybackState = state
 }
 
 internal fun PlayerViewModel.requestSeriesEpisodeContinuation(episode: Episode) {
