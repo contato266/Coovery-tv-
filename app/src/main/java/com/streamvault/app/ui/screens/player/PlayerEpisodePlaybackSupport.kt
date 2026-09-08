@@ -97,32 +97,18 @@ internal fun canConfirmSeriesEpisodeIsLast(
     contentId: Long = -1L,
     stableEpisodeId: Long? = null
 ): Boolean {
-    val catalogEpisodes = when {
-        persistedEpisodes.isNotEmpty() -> persistedEpisodes
-        series != null -> series.seasons
-            .sanitizedForPlayer()
-            .sortedBy { it.seasonNumber }
-            .flatMap { season -> season.episodes.sortedBy { it.episodeNumber } }
-        else -> emptyList()
-    }
-    if (catalogEpisodes.isEmpty()) return false
-    val hasCurrentEpisode = findCurrentEpisodeIndex(
+    if (persistedEpisodes.isEmpty()) return false
+    val catalogEpisodes = persistedEpisodes.sortedWith(compareBy({ it.seasonNumber }, { it.episodeNumber }))
+    val currentIndex = findCurrentEpisodeIndex(
         episodes = catalogEpisodes,
         currentEpisode = currentEpisode,
         seasonNumber = seasonNumber,
         episodeNumber = episodeNumber,
         contentId = contentId,
         stableEpisodeId = stableEpisodeId
-    ) >= 0
-    if (!hasCurrentEpisode) return false
-    return findNextEpisodeFromOrderedList(
-        episodes = catalogEpisodes,
-        currentEpisode = currentEpisode,
-        seasonNumber = seasonNumber,
-        episodeNumber = episodeNumber,
-        contentId = contentId,
-        stableEpisodeId = stableEpisodeId
-    ) == null
+    )
+    if (currentIndex < 0) return false
+    return currentIndex == catalogEpisodes.lastIndex
 }
 
 private fun findCurrentEpisodeIndex(

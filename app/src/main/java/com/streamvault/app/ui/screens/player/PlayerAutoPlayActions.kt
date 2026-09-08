@@ -4,6 +4,7 @@ import androidx.lifecycle.viewModelScope
 import com.streamvault.domain.model.ContentType
 import com.streamvault.domain.model.Episode
 import com.streamvault.domain.model.Series
+import com.streamvault.player.PlaybackState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -49,6 +50,19 @@ internal data class SeriesEpisodeContinuation(
     val shouldReturnToSeriesScreen: Boolean
 )
 
+internal suspend fun PlayerViewModel.loadPersistedSeriesEpisodes(): List<Episode> {
+    val candidateSeriesIds = listOfNotNull(
+        currentSeriesId,
+        currentSeries.value?.id,
+        currentEpisode.value?.seriesId
+    ).distinct().filter { it > 0L }
+    for (seriesId in candidateSeriesIds) {
+        val episodes = playerContentResolver.getEpisodesForSeries(seriesId)
+        if (episodes.isNotEmpty()) return episodes
+    }
+    return emptyList()
+}
+
 internal suspend fun PlayerViewModel.resolveSeriesEpisodeContinuation(): SeriesEpisodeContinuation {
     fun resolveFromLoadedCatalog(): Episode? = resolveNextEpisodeForAutoPlay(
         nextEpisode = nextEpisode.value,
@@ -86,10 +100,7 @@ internal suspend fun PlayerViewModel.resolveSeriesEpisodeContinuation(): SeriesE
         )
     }
 
-    val persistedEpisodes = seriesId
-        ?.takeIf { it > 0L }
-        ?.let { playerContentResolver.getEpisodesForSeries(it) }
-        .orEmpty()
+    val persistedEpisodes = loadPersistedSeriesEpisodes()
     val fromDatabase = findNextEpisodeFromOrderedList(
         episodes = persistedEpisodes,
         currentEpisode = currentEpisode.value,
@@ -148,7 +159,9 @@ internal fun shouldHandleSeriesEpisodeEnded(
 
 internal fun PlayerViewModel.handlePlaybackEnded() {
     if (currentContentType == ContentType.LIVE) return
+    if (seriesAutoPlayHandlingInFlight) return
     viewModelScope.launch {
+        if (seriesAutoPlayHandlingInFlight) return@launch
         persistPlaybackCompletion()
         if (currentContentType != ContentType.SERIES_EPISODE) return@launch
         if (!shouldHandleSeriesEpisodeEnded(
@@ -162,7 +175,13 @@ internal fun PlayerViewModel.handlePlaybackEnded() {
         val continuation = resolveSeriesEpisodeContinuation()
         when {
             continuation.nextEpisode != null && autoPlayNextEpisodeEnabled -> {
-                requestSeriesEpisodeContinuation(continuation.nextEpisode)
+                seriesAutoPlayHandlingInFlight = true
+                lastObservedPlaybackState = PlaybackState.ENDED
+                try {
+                    playNextSeriesEpisode(continuation.nextEpisode)
+                } finally {
+                    seriesAutoPlayHandlingInFlight = false
+                }
             }
             continuation.shouldReturnToSeriesScreen -> {
                 requestSeriesPlaybackExit()

@@ -36,14 +36,21 @@ class PlayerEpisodePlaybackSupportTest {
     }
 
     @Test
-    fun `can confirm last episode only when catalog and current episode are known`() {
+    fun `can confirm last episode only when persisted catalog confirms final position`() {
+        val persistedEpisodes = listOf(
+            episode(id = 101L, season = 1, number = 1),
+            episode(id = 102L, season = 1, number = 2),
+            episode(id = 201L, season = 2, number = 1)
+        )
         val middleEpisode = episode(id = 102L, season = 1, number = 2)
         assertThat(
             canConfirmSeriesEpisodeIsLast(
                 series = series,
                 currentEpisode = middleEpisode,
                 seasonNumber = 1,
-                episodeNumber = 2
+                episodeNumber = 2,
+                persistedEpisodes = persistedEpisodes,
+                contentId = 102L
             )
         ).isFalse()
         assertThat(
@@ -51,12 +58,14 @@ class PlayerEpisodePlaybackSupportTest {
                 series = series,
                 currentEpisode = episode(id = 201L, season = 2, number = 1),
                 seasonNumber = 2,
-                episodeNumber = 1
+                episodeNumber = 1,
+                persistedEpisodes = persistedEpisodes,
+                contentId = 201L
             )
         ).isTrue()
         assertThat(
             canConfirmSeriesEpisodeIsLast(
-                series = null,
+                series = series,
                 currentEpisode = middleEpisode,
                 seasonNumber = 1,
                 episodeNumber = 2

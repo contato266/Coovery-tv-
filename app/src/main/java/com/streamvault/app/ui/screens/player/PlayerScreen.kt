@@ -133,7 +133,7 @@ fun PlayerScreen(
     returnRoute: String? = null,
     onBack: () -> Unit,
     onNavigate: ((String) -> Unit)? = null,
-    onContinueEpisode: ((Episode) -> Unit)? = null,
+    onContinueEpisode: ((Episode) -> Boolean)? = null,
     viewModel: PlayerViewModel = hiltViewModel()
 ) {
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
@@ -285,11 +285,14 @@ fun PlayerScreen(
     LaunchedEffect(seriesEpisodeContinueEvent) {
         val episode = seriesEpisodeContinueEvent ?: return@LaunchedEffect
         viewModel.consumeSeriesEpisodeContinueEvent()
-        onContinueEpisode?.invoke(episode) ?: viewModel.playEpisode(
-            episode = episode,
-            showResumePrompt = false,
-            showEntryOverlay = false
-        )
+        val continued = onContinueEpisode?.invoke(episode) == true
+        if (!continued) {
+            viewModel.playEpisode(
+                episode = episode,
+                showResumePrompt = false,
+                showEntryOverlay = false
+            )
+        }
     }
 
     LaunchedEffect(audioVideoSyncEnabled) {

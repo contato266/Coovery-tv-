@@ -364,7 +364,8 @@ class PlayerViewModel @Inject constructor(
     internal var isVirtualCategory: Boolean = false
     internal var currentCombinedProfileMembers: List<CombinedM3uProfileMember> = emptyList()
     internal var combinedCategoriesById: Map<Long, CombinedCategory> = emptyMap()
-    private var lastObservedPlaybackState: PlaybackState = PlaybackState.IDLE
+    internal var lastObservedPlaybackState: PlaybackState = PlaybackState.IDLE
+    internal var seriesAutoPlayHandlingInFlight: Boolean = false
 
     internal var playlistJob: Job? = null
     internal var recentChannelsJob: Job? = null
@@ -501,7 +502,10 @@ class PlayerViewModel @Inject constructor(
         viewModelScope.launch {
             activePlayerEngineFlow.flatMapLatest { it.playbackState }.collect { state ->
                 _playerDiagnostics.update { it.copy(playbackStateLabel = state.name.replace('_', ' ')) }
-                if (state == PlaybackState.ENDED && lastObservedPlaybackState != PlaybackState.ENDED) {
+                if (state == PlaybackState.ENDED &&
+                    lastObservedPlaybackState != PlaybackState.ENDED &&
+                    !seriesAutoPlayHandlingInFlight
+                ) {
                     handlePlaybackEnded()
                 }
                 lastObservedPlaybackState = state
@@ -1203,37 +1207,21 @@ class PlayerViewModel @Inject constructor(
                 var playbackLogicalUrl = streamUrl
                 var playbackContentId = internalChannelId
                 if (currentContentType == ContentType.SERIES_EPISODE && providerId > 0 && currentSeriesId != null) {
-                    val providerType = playerProviderCoordinator.getProvider(providerId)?.type
-                    val shouldAwaitRefreshedEpisode = providerType == ProviderType.STALKER_PORTAL ||
-                        playerContentResolver.isInternalStreamUrl(streamUrl)
-                    if (shouldAwaitRefreshedEpisode) {
-                        val resolvedEpisode = loadSeriesEpisodeContext(
-                            requestVersion = requestVersion,
-                            providerId = providerId,
-                            seriesId = currentSeriesId ?: -1L,
-                            episodeId = currentStableEpisodeId?.takeIf { it > 0 } ?: internalChannelId,
-                            seasonNumber = seasonNumber,
-                            episodeNumber = episodeNumber
-                        )
-                        if (!isActivePlaybackSession(requestVersion, streamUrl)) return@launch
-                        resolvedEpisode?.streamUrl
-                            ?.takeIf { it.isNotBlank() }
-                            ?.let { refreshedUrl -> playbackLogicalUrl = refreshedUrl }
-                        resolvedEpisode?.id
-                            ?.takeIf { it > 0L }
-                            ?.let { resolvedId -> playbackContentId = resolvedId }
-                    } else {
-                        launch {
-                            loadSeriesEpisodeContext(
-                                requestVersion = requestVersion,
-                                providerId = providerId,
-                                seriesId = currentSeriesId ?: -1L,
-                                episodeId = currentStableEpisodeId?.takeIf { it > 0 } ?: internalChannelId,
-                                seasonNumber = seasonNumber,
-                                episodeNumber = episodeNumber
-                            )
-                        }
-                    }
+                    val resolvedEpisode = loadSeriesEpisodeContext(
+                        requestVersion = requestVersion,
+                        providerId = providerId,
+                        seriesId = currentSeriesId ?: -1L,
+                        episodeId = currentStableEpisodeId?.takeIf { it > 0 } ?: internalChannelId,
+                        seasonNumber = seasonNumber,
+                        episodeNumber = episodeNumber
+                    )
+                    if (!isActivePlaybackSession(requestVersion, streamUrl)) return@launch
+                    resolvedEpisode?.streamUrl
+                        ?.takeIf { it.isNotBlank() }
+                        ?.let { refreshedUrl -> playbackLogicalUrl = refreshedUrl }
+                    resolvedEpisode?.id
+                        ?.takeIf { it > 0L }
+                        ?.let { resolvedId -> playbackContentId = resolvedId }
                 }
                 val resolution = resolvePlaybackStreamResolution(
                     playbackLogicalUrl,

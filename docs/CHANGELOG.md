@@ -2,6 +2,15 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.29]
+
+### Fixed
+
+- Fixed series episodes closing the player after playback instead of continuing to the next episode.
+- Auto-play now uses the local episode catalog before deciding the current episode is the last one.
+- Series episode context is always loaded before playback starts so next-episode detection is ready.
+- Prevented duplicate end-of-playback handling from closing the player during episode transitions.
+
 ## [1.0.28]
 
 ### Fixed
