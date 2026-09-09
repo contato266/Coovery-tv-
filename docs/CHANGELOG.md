@@ -2,6 +2,13 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.34]
+
+### Fixed
+
+- Movie titles now appear below cards in category grids (e.g. Lançamentos-2026, Ação).
+- Series titles now appear below cards instead of inside the poster, including category grids.
+
 ## [1.0.33]
 
 ### Changed

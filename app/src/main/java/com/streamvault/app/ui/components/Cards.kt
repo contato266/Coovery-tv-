@@ -510,97 +510,113 @@ fun SeriesCard(
             append(stringResource(R.string.a11y_favorite))
         }
     }
-    FocusableCard(
-        onClick = onClick,
-        onLongClick = onLongClick,
-        modifier = modifier,
-        width = width,
-        height = height,
-        isReorderMode = isReorderMode,
-        isDragging = isDragging,
-        semanticsDescription = seriesDescription,
-        semanticsStateDescription = if (isLocked) stringResource(R.string.a11y_locked) else null
-    ) {
-        if (!isLocked) {
-            SeriesPosterCard(
-                series = series,
-                modifier = Modifier.fillMaxSize()
-            )
-        } else {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(SurfaceElevated),
-                contentAlignment = Alignment.Center
-            ) {
-                StatusPill(
-                    label = if (isLocked) stringResource(R.string.home_locked_short) else stringResource(R.string.badge_series),
-                    containerColor = SurfaceHighlight,
-                    cornerRadius = 4.dp,
-                    horizontalPadding = 6.dp,
-                    verticalPadding = 2.dp
+    Column(modifier = modifier.width(width)) {
+        FocusableCard(
+            onClick = onClick,
+            onLongClick = onLongClick,
+            modifier = Modifier.fillMaxWidth(),
+            width = width,
+            height = height,
+            isReorderMode = isReorderMode,
+            isDragging = isDragging,
+            semanticsDescription = seriesDescription,
+            semanticsStateDescription = if (isLocked) stringResource(R.string.a11y_locked) else null
+        ) {
+            if (!isLocked) {
+                SeriesPosterCard(
+                    series = series,
+                    modifier = Modifier.fillMaxSize(),
+                    showTitleOverlay = false
                 )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(SurfaceElevated),
+                    contentAlignment = Alignment.Center
+                ) {
+                    StatusPill(
+                        label = if (isLocked) stringResource(R.string.home_locked_short) else stringResource(R.string.badge_series),
+                        containerColor = SurfaceHighlight,
+                        cornerRadius = 4.dp,
+                        horizontalPadding = 6.dp,
+                        verticalPadding = 2.dp
+                    )
+                }
+            }
+
+            if (watchProgress > 0f && !isLocked) {
+                LinearProgressIndicator(
+                    progress = { watchProgress.coerceIn(0f, 1f) },
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .fillMaxWidth()
+                        .height(3.dp),
+                    color = Primary,
+                    trackColor = Color.Transparent
+                )
+            }
+
+            if (!isLocked) {
+                if (showTypeBadge) {
+                    StatusPill(
+                        label = stringResource(R.string.badge_series),
+                        containerColor = Color.Black.copy(alpha = 0.72f),
+                        cornerRadius = 4.dp,
+                        horizontalPadding = 6.dp,
+                        verticalPadding = 2.dp,
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .padding(start = 8.dp, bottom = 8.dp)
+                    )
+                }
+
+                if (series.rating > 0f) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .padding(8.dp)
+                            .background(Color.Black.copy(alpha = 0.6f), RoundedCornerShape(4.dp))
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                    ) {
+                        Text(
+                            text = formatVodRatingLabel(series.rating),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = AccentAmber
+                        )
+                    }
+                }
+
+                if (series.isFavorite) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(6.dp)
+                            .background(Color.Black.copy(alpha = 0.55f), RoundedCornerShape(4.dp))
+                            .padding(4.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Star,
+                            contentDescription = null,
+                            tint = AccentAmber,
+                            modifier = Modifier.size(12.dp)
+                        )
+                    }
+                }
             }
         }
 
-        if (watchProgress > 0f && !isLocked) {
-            LinearProgressIndicator(
-                progress = { watchProgress.coerceIn(0f, 1f) },
+        if (!isLocked) {
+            Text(
+                text = series.name,
                 modifier = Modifier
-                    .align(Alignment.BottomCenter)
                     .fillMaxWidth()
-                    .height(3.dp),
-                color = Primary,
-                trackColor = Color.Transparent
+                    .padding(top = 6.dp),
+                style = MaterialTheme.typography.labelMedium,
+                color = TextPrimary,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
             )
-        }
-
-        if (!isLocked) {
-            if (showTypeBadge) {
-                StatusPill(
-                    label = stringResource(R.string.badge_series),
-                    containerColor = Color.Black.copy(alpha = 0.72f),
-                    cornerRadius = 4.dp,
-                    horizontalPadding = 6.dp,
-                    verticalPadding = 2.dp,
-                    modifier = Modifier
-                        .align(Alignment.BottomStart)
-                        .padding(start = 8.dp, bottom = 8.dp)
-                )
-            }
-
-            if (series.rating > 0f) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopStart)
-                        .padding(8.dp)
-                        .background(Color.Black.copy(alpha = 0.6f), RoundedCornerShape(4.dp))
-                        .padding(horizontal = 6.dp, vertical = 2.dp)
-                ) {
-                    Text(
-                        text = formatVodRatingLabel(series.rating),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = AccentAmber
-                    )
-                }
-            }
-
-            if (series.isFavorite) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(6.dp)
-                        .background(Color.Black.copy(alpha = 0.55f), RoundedCornerShape(4.dp))
-                        .padding(4.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Star,
-                        contentDescription = null,
-                        tint = AccentAmber,
-                        modifier = Modifier.size(12.dp)
-                    )
-                }
-            }
         }
     }
 }

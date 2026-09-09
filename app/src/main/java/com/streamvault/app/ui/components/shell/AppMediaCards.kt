@@ -377,12 +377,17 @@ fun MoviePosterCard(
 }
 
 @Composable
-fun SeriesPosterCard(series: Series, modifier: Modifier = Modifier) {
+fun SeriesPosterCard(
+    series: Series,
+    modifier: Modifier = Modifier,
+    showTitleOverlay: Boolean = true
+) {
     PosterCard(
         imageUrl = series.posterUrl,
         title = series.name,
         subtitle = series.releaseDate ?: series.genre,
-        modifier = modifier
+        modifier = modifier,
+        showTitleOverlay = showTitleOverlay
     )
 }
 

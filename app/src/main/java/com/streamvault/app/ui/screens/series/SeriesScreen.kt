@@ -894,7 +894,6 @@ private fun SeriesVodContent(
                     isDragging = isDraggingThis,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .aspectRatio(2f / 3f)
                         .then(if (!showSearchBar && series.id == initialGridSeriesId) Modifier.focusRequester(initialFocusRequester) else Modifier),
                     onClick = {
                         if (uiState.isReorderMode) {
@@ -1242,7 +1241,6 @@ private fun SeriesVodClassicContent(
                             isDragging = isDraggingThis,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .aspectRatio(2f / 3f)
                                 .then(if (!showSearchBar && series.id == initialGridSeriesId) Modifier.focusRequester(initialFocusRequester) else Modifier),
                             onClick = {
                                 if (uiState.isReorderMode) {

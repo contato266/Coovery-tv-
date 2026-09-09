@@ -882,7 +882,6 @@ private fun MoviesVodContent(
                     isDragging = isDraggingThis,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .aspectRatio(2f / 3f)
                         .then(if (!showSearchBar && movie.id == initialGridMovieId) Modifier.focusRequester(initialFocusRequester) else Modifier),
                     onClick = {
                         if (uiState.isReorderMode) {
@@ -1229,7 +1228,6 @@ private fun MoviesVodClassicContent(
                             isDragging = isDraggingThis,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .aspectRatio(2f / 3f)
                                 .then(if (!showSearchBar && movie.id == initialGridMovieId) Modifier.focusRequester(initialFocusRequester) else Modifier),
                             onClick = {
                                 if (uiState.isReorderMode) {
