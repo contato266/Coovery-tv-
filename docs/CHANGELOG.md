@@ -2,6 +2,12 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.33]
+
+### Changed
+
+- Movie and series cards without a loaded cover now show the Coovery placeholder artwork instead of the blue letter fallback.
+
 ## [1.0.32]
 
 ### Changed

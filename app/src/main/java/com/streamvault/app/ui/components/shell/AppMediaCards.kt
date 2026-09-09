@@ -2,6 +2,7 @@ package com.streamvault.app.ui.components.shell
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.size
@@ -50,6 +51,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -506,29 +508,18 @@ private fun PosterCard(
     showTitleOverlay: Boolean = true
 ) {
     val posterShape = RoundedCornerShape(12.dp)
-    var imageLoaded by remember(imageUrl) { mutableStateOf(false) }
     var imageFailed by remember(imageUrl) { mutableStateOf(false) }
-    val showFallback = imageUrl.isNullOrBlank() || imageFailed || !imageLoaded
 
     Box(
-        modifier = modifier
-            .clip(posterShape)
-            .background(AppColors.SurfaceEmphasis)
+        modifier = modifier.clip(posterShape)
     ) {
-        // Fallback letter: only shown while no URL, still loading, or load failed
-        if (showFallback) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = title.take(1).uppercase(),
-                    style = MaterialTheme.typography.titleLarge,
-                    color = AppColors.TextSecondary
-                )
-            }
-        }
-        if (!imageUrl.isNullOrBlank()) {
+        Image(
+            painter = painterResource(R.drawable.poster_placeholder),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+        if (!imageUrl.isNullOrBlank() && !imageFailed) {
             AsyncImage(
                 model = rememberCrossfadeImageModel(imageUrl),
                 contentDescription = title,
@@ -536,7 +527,6 @@ private fun PosterCard(
                     .fillMaxSize()
                     .clip(posterShape),
                 contentScale = ContentScale.Fit,
-                onSuccess = { imageLoaded = true },
                 onError = { imageFailed = true }
             )
         }
