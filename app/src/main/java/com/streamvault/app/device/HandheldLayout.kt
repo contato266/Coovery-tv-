@@ -25,9 +25,23 @@ fun rememberUseHandheldStackedLayout(): Boolean {
 fun rememberIsHandheldDevice(): Boolean = !rememberIsTelevisionDevice()
 
 fun ComponentActivity.applyPlatformScreenOrientation() {
-    requestedOrientation = if (isTelevisionDevice()) {
-        ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+    if (isTelevisionDevice()) {
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
     } else {
-        ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
+        applyHandheldBrowseOrientation()
+    }
+}
+
+/** Portrait for app browsing on phones; no-op on TV. */
+fun ComponentActivity.applyHandheldBrowseOrientation() {
+    if (!isTelevisionDevice()) {
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
+    }
+}
+
+/** Landscape while watching movies, series, or live channels on phones; no-op on TV. */
+fun ComponentActivity.applyHandheldPlayerOrientation() {
+    if (!isTelevisionDevice()) {
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
     }
 }

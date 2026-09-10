@@ -16,15 +16,18 @@ internal fun HomeLiveBrowseSplit(
     stacked: Boolean,
     sidebarWidth: Dp,
     modifier: Modifier = Modifier,
+    claroHandheldLayout: Boolean = false,
     sidebar: @Composable () -> Unit,
     content: @Composable () -> Unit
 ) {
     if (stacked) {
+        val sidebarWeight = if (claroHandheldLayout) 0.22f else 0.4f
+        val contentWeight = if (claroHandheldLayout) 0.78f else 0.6f
         Column(modifier = modifier.fillMaxSize()) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(0.4f)
+                    .weight(sidebarWeight)
                     .fillMaxHeight()
             ) {
                 sidebar()
@@ -32,7 +35,7 @@ internal fun HomeLiveBrowseSplit(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(0.6f)
+                    .weight(contentWeight)
                     .fillMaxHeight()
             ) {
                 content()

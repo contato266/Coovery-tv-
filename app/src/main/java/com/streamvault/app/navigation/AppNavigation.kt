@@ -40,6 +40,8 @@ import com.streamvault.app.ui.screens.settings.SettingsScreen
 import com.streamvault.app.ui.screens.welcome.WelcomeScreen
 import com.streamvault.app.ui.screens.downloads.DownloadsScreen
 import com.streamvault.app.MainActivity
+import com.streamvault.app.device.applyHandheldBrowseOrientation
+import com.streamvault.app.device.applyHandheldPlayerOrientation
 import com.streamvault.domain.model.AppLandingDestination
 import com.streamvault.domain.model.AppTopLevelDestination
 import com.streamvault.domain.model.ContentType
@@ -372,6 +374,14 @@ internal fun AppTopLevelDestination.toAppRoute(): String = when (this) {
 fun AppNavigation(mainActivity: MainActivity) {
     val navController = rememberNavController()
     val currentBackStackEntry = navController.currentBackStackEntryAsState().value
+    LaunchedEffect(currentBackStackEntry?.destination?.route) {
+        val route = currentBackStackEntry?.destination?.route
+        if (route != null && (route == Routes.PLAYER || route.startsWith("${Routes.PLAYER}?"))) {
+            mainActivity.applyHandheldPlayerOrientation()
+        } else {
+            mainActivity.applyHandheldBrowseOrientation()
+        }
+    }
     val activeProvider = mainActivity.providerRepository.getActiveProvider()
         .collectAsStateWithLifecycle(initialValue = null)
         .value

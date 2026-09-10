@@ -7,6 +7,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.grid.items
@@ -664,6 +665,7 @@ fun HomeScreen(
                 ) {
                 HomeLiveBrowseSplit(
                     stacked = useHandheldStackedLayout,
+                    claroHandheldLayout = useHandheldStackedLayout,
                     sidebarWidth = sidebarWidth,
                     modifier = Modifier
                         .fillMaxSize()
@@ -931,6 +933,36 @@ fun HomeScreen(
                             }
                         }
 
+                        if (useHandheldStackedLayout) {
+                            LazyRow(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 8.dp),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                contentPadding = PaddingValues(start = 10.dp, end = 10.dp, bottom = 8.dp)
+                            ) {
+                                items(
+                                    items = visibleCategories,
+                                    key = { it.id }
+                                ) { category ->
+                                    val isLocked = isCategoryLocked(category)
+                                    HandheldRoundCategoryChip(
+                                        category = category,
+                                        isSelected = category.id == uiState.selectedCategory?.id,
+                                        isLocked = isLocked,
+                                        onClick = {
+                                            if (isReorderMode) return@HandheldRoundCategoryChip
+                                            if (isLocked) {
+                                                pendingUnlockCategory = category
+                                                showPinDialog = true
+                                            } else {
+                                                viewModel.selectCategory(category)
+                                            }
+                                        }
+                                    )
+                                }
+                            }
+                        } else {
                         LazyColumn(
                             modifier = Modifier.fillMaxWidth(),
                             contentPadding = PaddingValues(bottom = 16.dp)
@@ -1000,9 +1032,22 @@ fun HomeScreen(
                             )
                         }
                     }
+                        }
                 }
                     },
                     content = {
+                if (useHandheldStackedLayout) {
+                    LivePreviewPane(
+                        channel = previewChannel,
+                        playerEngine = uiState.previewPlayerEngine,
+                        isLoading = uiState.isPreviewLoading,
+                        errorMessage = uiState.previewErrorMessage,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp, vertical = 6.dp)
+                            .height(172.dp)
+                    )
+                }
                 // Content - Channel Grid / Pro Preview
                 Row(
                     modifier = Modifier.fillMaxSize(),
@@ -1380,7 +1425,7 @@ fun HomeScreen(
                         } // Crossfade
                     }
 
-                    if (isProMode) {
+                    if (isProMode && !useHandheldStackedLayout) {
                         LivePreviewPane(
                             channel = previewChannel,
                             playerEngine = uiState.previewPlayerEngine,
