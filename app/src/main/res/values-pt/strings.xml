@@ -7,10 +7,10 @@
     <string name="nav_series">Série</string>
     <string name="nav_epg">Guia</string>
     <string name="nav_settings">Configurações</string>
-    <string name="nav_handheld_home">INÍCIO</string>
-    <string name="nav_handheld_live_tv">TV AO VIVO</string>
-    <string name="nav_handheld_movies">FILMES</string>
-    <string name="nav_handheld_series">SÉRIES</string>
+    <string name="nav_handheld_home">Início</string>
+    <string name="nav_handheld_live_tv">TV ao Vivo</string>
+    <string name="nav_handheld_movies">Filmes</string>
+    <string name="nav_handheld_series">Séries</string>
     <string name="nav_handheld_account">Conta</string>
     <string name="nav_handheld_account_settings">Configurações</string>
     <string name="nav_handheld_account_guide">Guia</string>

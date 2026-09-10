@@ -220,8 +220,8 @@ fun AppScreenScaffold(
                 }
             }
         } else {
-            val handheldContentTopPadding = if (topBarVisible) MobileHandheldTopBarHeight else 0.dp
-            val handheldContentBottomPadding = if (topBarVisible) MobileHandheldBottomBarHeight else 0.dp
+            val (handheldContentTopPadding, handheldContentBottomPadding) =
+                rememberHandheldChromeContentPadding(topBarVisible)
             Box(modifier = Modifier.fillMaxSize()) {
                 Column(
                     modifier = Modifier
@@ -264,7 +264,6 @@ fun AppScreenScaffold(
                         modifier = Modifier
                             .align(Alignment.TopCenter)
                             .fillMaxWidth()
-                            .statusBarsPadding()
                     )
                     MobileHandheldBottomBar(
                         currentRoute = currentRoute,

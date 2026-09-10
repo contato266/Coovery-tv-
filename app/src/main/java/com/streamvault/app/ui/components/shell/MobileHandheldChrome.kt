@@ -7,10 +7,15 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
@@ -21,12 +26,14 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
@@ -35,6 +42,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.tv.material3.ClickableSurfaceDefaults
@@ -47,7 +55,34 @@ import com.streamvault.app.ui.design.AppColors
 import com.streamvault.app.ui.interaction.rememberTvInteractionSounds
 
 internal val MobileHandheldTopBarHeight = 52.dp
-internal val MobileHandheldBottomBarHeight = 64.dp
+private val MobileHandheldBottomBarContentHeight = 58.dp
+private val MobileHandheldBottomBarVerticalMargin = 10.dp
+private val MobileHandheldBottomBarHorizontalMargin = 18.dp
+
+/** Space reserved above the system navigation bar (floating pill + margins). */
+internal val MobileHandheldBottomBarReservedHeight: Dp
+    get() = MobileHandheldBottomBarContentHeight + MobileHandheldBottomBarVerticalMargin * 2
+
+private val HandheldHeaderBackground = Color(0xFF0A0A0A)
+private val HandheldNavPillBackground = Color(0xFF1E1E1E).copy(alpha = 0.94f)
+private val HandheldNavSelectedPill = Color.White.copy(alpha = 0.16f)
+
+@Composable
+internal fun rememberHandheldChromeContentPadding(
+    topBarVisible: Boolean
+): Pair<Dp, Dp> {
+    val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    val navigationBarBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    return remember(topBarVisible, statusBarTop, navigationBarBottom) {
+        if (!topBarVisible) {
+            0.dp to 0.dp
+        } else {
+            val top = statusBarTop + MobileHandheldTopBarHeight
+            val bottom = navigationBarBottom + MobileHandheldBottomBarReservedHeight
+            top to bottom
+        }
+    }
+}
 
 private data class HandheldBottomNavItem(
     val route: String,
@@ -89,72 +124,80 @@ fun MobileHandheldTopBar(
     var accountMenuExpanded by remember { mutableStateOf(false) }
     val sounds = rememberTvInteractionSounds()
 
-    Row(
+    val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    Column(
         modifier = modifier
             .fillMaxWidth()
-            .height(MobileHandheldTopBarHeight)
-            .padding(horizontal = 16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
+            .background(HandheldHeaderBackground)
     ) {
-        Image(
-            painter = painterResource(R.drawable.coovery_brand_logo),
-            contentDescription = stringResource(R.string.app_name),
-            modifier = Modifier.height(28.dp),
-            contentScale = ContentScale.Fit
-        )
-
+        Spacer(modifier = Modifier.height(statusBarTop))
         Row(
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-            verticalAlignment = Alignment.CenterVertically
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(MobileHandheldTopBarHeight)
+                .padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            if (additionalActions != null) {
-                additionalActions()
-            }
-            Box {
-                Surface(
-                    onClick = {
-                        sounds.playSelect()
-                        accountMenuExpanded = true
-                    },
-                    shape = ClickableSurfaceDefaults.shape(RoundedCornerShape(999.dp)),
-                    colors = ClickableSurfaceDefaults.colors(
-                        containerColor = Color.White.copy(alpha = 0.12f),
-                        focusedContainerColor = Color.White.copy(alpha = 0.2f)
-                    )
-                ) {
-                    Text(
-                        text = stringResource(R.string.nav_handheld_account),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = AppColors.TextPrimary,
-                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
-                    )
+            Image(
+                painter = painterResource(R.drawable.coovery_brand_logo),
+                contentDescription = stringResource(R.string.app_name),
+                modifier = Modifier.height(30.dp),
+                contentScale = ContentScale.Fit
+            )
+
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (additionalActions != null) {
+                    additionalActions()
                 }
-                DropdownMenu(
-                    expanded = accountMenuExpanded,
-                    onDismissRequest = { accountMenuExpanded = false }
-                ) {
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.nav_handheld_account_settings)) },
+                Box {
+                    Surface(
                         onClick = {
-                            accountMenuExpanded = false
-                            onNavigate(Routes.SETTINGS)
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.nav_handheld_account_guide)) },
-                        onClick = {
-                            accountMenuExpanded = false
-                            onNavigate(Routes.EPG)
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.nav_handheld_epg)) },
-                        onClick = {
-                            accountMenuExpanded = false
-                            onNavigate(Routes.EPG)
-                        }
-                    )
+                            sounds.playSelect()
+                            accountMenuExpanded = true
+                        },
+                        shape = ClickableSurfaceDefaults.shape(RoundedCornerShape(999.dp)),
+                        colors = ClickableSurfaceDefaults.colors(
+                            containerColor = Color.White.copy(alpha = 0.14f),
+                            focusedContainerColor = Color.White.copy(alpha = 0.22f)
+                        )
+                    ) {
+                        Text(
+                            text = stringResource(R.string.nav_handheld_account),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = AppColors.TextPrimary,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = accountMenuExpanded,
+                        onDismissRequest = { accountMenuExpanded = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.nav_handheld_account_settings)) },
+                            onClick = {
+                                accountMenuExpanded = false
+                                onNavigate(Routes.SETTINGS)
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.nav_handheld_account_guide)) },
+                            onClick = {
+                                accountMenuExpanded = false
+                                onNavigate(Routes.EPG)
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.nav_handheld_epg)) },
+                            onClick = {
+                                accountMenuExpanded = false
+                                onNavigate(Routes.EPG)
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -168,68 +211,70 @@ fun MobileHandheldBottomBar(
     modifier: Modifier = Modifier
 ) {
     val sounds = rememberTvInteractionSounds()
+    val pillShape = RoundedCornerShape(32.dp)
 
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .background(Color(0xFF141414))
+            .padding(
+                start = MobileHandheldBottomBarHorizontalMargin,
+                end = MobileHandheldBottomBarHorizontalMargin,
+                bottom = MobileHandheldBottomBarVerticalMargin
+            )
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(MobileHandheldBottomBarHeight)
-                .padding(horizontal = 4.dp, vertical = 6.dp),
+                .shadow(elevation = 12.dp, shape = pillShape, clip = false)
+                .clip(pillShape)
+                .background(HandheldNavPillBackground)
+                .height(MobileHandheldBottomBarContentHeight)
+                .padding(horizontal = 6.dp, vertical = 4.dp),
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
         ) {
             handheldBottomNavItems.forEach { item ->
                 val selected = isHandheldBottomTabSelected(item.route, currentRoute)
                 val label = stringResource(item.labelRes)
-                Column(
+                Surface(
+                    onClick = {
+                        sounds.playSelect()
+                        if (!selected) onNavigate(item.route)
+                    },
+                    shape = ClickableSurfaceDefaults.shape(RoundedCornerShape(24.dp)),
+                    colors = ClickableSurfaceDefaults.colors(
+                        containerColor = if (selected) HandheldNavSelectedPill else Color.Transparent,
+                        focusedContainerColor = Color.White.copy(alpha = 0.22f)
+                    ),
                     modifier = Modifier
                         .weight(1f)
-                        .padding(horizontal = 2.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
+                        .padding(horizontal = 2.dp)
                 ) {
-                    Surface(
-                        onClick = {
-                            sounds.playSelect()
-                            if (!selected) onNavigate(item.route)
-                        },
-                        shape = ClickableSurfaceDefaults.shape(RoundedCornerShape(22.dp)),
-                        colors = ClickableSurfaceDefaults.colors(
-                            containerColor = if (selected) Color.White.copy(alpha = 0.14f) else Color.Transparent,
-                            focusedContainerColor = Color.White.copy(alpha = 0.2f)
-                        ),
-                        modifier = Modifier.fillMaxWidth()
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 6.dp, horizontal = 2.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(3.dp)
                     ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 6.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(2.dp)
-                        ) {
-                            Icon(
-                                imageVector = item.icon,
-                                contentDescription = label,
-                                tint = if (selected) Color.White else Color.White.copy(alpha = 0.55f),
-                                modifier = Modifier.size(22.dp)
-                            )
-                            Text(
-                                text = label,
-                                style = MaterialTheme.typography.labelSmall.copy(
-                                    fontSize = 10.sp,
-                                    fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-                                    letterSpacing = 0.2.sp
-                                ),
-                                color = if (selected) Color.White else Color.White.copy(alpha = 0.55f),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                textAlign = TextAlign.Center
-                            )
-                        }
+                        Icon(
+                            imageVector = item.icon,
+                            contentDescription = label,
+                            tint = if (selected) Color.White else Color.White.copy(alpha = 0.58f),
+                            modifier = Modifier.size(22.dp)
+                        )
+                        Text(
+                            text = label,
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontSize = 10.sp,
+                                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
+                                letterSpacing = 0.1.sp
+                            ),
+                            color = if (selected) Color.White else Color.White.copy(alpha = 0.58f),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            textAlign = TextAlign.Center
+                        )
                     }
                 }
             }

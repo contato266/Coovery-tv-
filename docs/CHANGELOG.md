@@ -2,6 +2,12 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.41]
+
+### Changed
+
+- Refined handheld-only header (dark bar, logo, Conta) and floating translucent bottom navigation pill. Android TV unchanged.
+
 ## [1.0.40]
 
 ### Changed
