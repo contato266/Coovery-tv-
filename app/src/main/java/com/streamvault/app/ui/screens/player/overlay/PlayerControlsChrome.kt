@@ -31,7 +31,15 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.ui.draw.clip
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.AspectRatio
+import androidx.compose.material.icons.filled.Cast
+import androidx.compose.material.icons.filled.ClosedCaption
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Replay
+import androidx.compose.material.icons.filled.VolumeOff
+import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -160,8 +168,36 @@ fun PlayerControlsOverlay(
     onSeekPreviewPositionChanged: (Long?) -> Unit = {},
     clockLabelOverride: String? = null,
     onUserInteraction: () -> Unit = {},
+    subtitle: String? = null,
+    videoQualityLabel: String? = null,
+    onBack: (() -> Unit)? = null,
+    onWatchAgain: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    val isVodLayout = contentType != "LIVE" || isCatchUpPlayback
+    var showVodMoreMenu by remember { mutableStateOf(false) }
+
+    if (showVodMoreMenu && isVodLayout) {
+        PlayerVodMoreOptionsDialog(
+            isMuted = isMuted,
+            isCastConnected = isCastConnected,
+            audioVideoSyncEnabled = audioVideoSyncEnabled,
+            sleepTimerUiState = sleepTimerUiState,
+            showExternalPlayerAction = showExternalPlayerAction,
+            onDismiss = { showVodMoreMenu = false },
+            onToggleMute = onToggleMute,
+            onCast = onCast,
+            onStopCasting = onStopCasting,
+            onOpenStopPlaybackTimer = onOpenStopPlaybackTimer,
+            onOpenIdleStandbyTimer = onOpenIdleStandbyTimer,
+            onOpenAudioVideoSync = onOpenAudioVideoSync,
+            onEnterPictureInPicture = onEnterPictureInPicture,
+            onOpenExternalPlayer = onOpenExternalPlayer,
+            onOpenAudioTracks = onOpenAudioTracks,
+            audioTrackCount = audioTrackCount
+        )
+    }
+
     AnimatedVisibility(
         visible = visible,
         enter = fadeIn() + expandVertically(),
@@ -185,13 +221,28 @@ fun PlayerControlsOverlay(
                     false
                 }
         ) {
-            PlayerTopBar(
-                title = title,
-                contentType = contentType,
-                clockLabelOverride = clockLabelOverride,
-                onClose = onClose,
-                modifier = Modifier.align(Alignment.TopCenter)
-            )
+            if (isVodLayout) {
+                PlayerVodTopBar(
+                    title = title,
+                    subtitle = subtitle,
+                    isCastConnected = isCastConnected,
+                    subtitleTrackCount = subtitleTrackCount,
+                    onBack = onBack ?: onClose,
+                    onCast = onCast,
+                    onStopCasting = onStopCasting,
+                    onOpenSubtitleTracks = onOpenSubtitleTracks,
+                    onOpenMoreMenu = { showVodMoreMenu = true },
+                    modifier = Modifier.align(Alignment.TopCenter)
+                )
+            } else {
+                PlayerTopBar(
+                    title = title,
+                    contentType = contentType,
+                    clockLabelOverride = clockLabelOverride,
+                    onClose = onClose,
+                    modifier = Modifier.align(Alignment.TopCenter)
+                )
+            }
 
             PlayerBottomBar(
                 title = title,
@@ -251,7 +302,10 @@ fun PlayerControlsOverlay(
                 seekPreview = seekPreview,
                 onSeekPreviewPositionChanged = onSeekPreviewPositionChanged,
                 showExternalPlayerAction = showExternalPlayerAction,
-                onOpenExternalPlayer = onOpenExternalPlayer
+                onOpenExternalPlayer = onOpenExternalPlayer,
+                subtitle = subtitle,
+                videoQualityLabel = videoQualityLabel,
+                onWatchAgain = onWatchAgain
             )
         }
     }
@@ -585,51 +639,84 @@ private fun PlayerBottomBar(
     onSeekPreviewPositionChanged: (Long?) -> Unit,
     showExternalPlayerAction: Boolean,
     onOpenExternalPlayer: () -> Unit,
+    subtitle: String? = null,
+    videoQualityLabel: String? = null,
+    onWatchAgain: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val isVod = contentType != "LIVE" || isCatchUpPlayback
-    val bottomBarWidthFraction = if (isVod) 0.78f else 1f
     Box(
         modifier = modifier
             .fillMaxWidth()
             .background(
                 Brush.verticalGradient(
-                    colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.84f))
+                    colors = listOf(
+                        Color.Transparent,
+                        Color.Black.copy(alpha = if (isVod) 0.72f else 0.84f),
+                        Color.Black.copy(alpha = if (isVod) 0.92f else 0.84f)
+                    )
                 )
             )
             .padding(
-                horizontal = if (isVod) 14.dp else 32.dp,
-                vertical = if (isVod) 10.dp else 24.dp
+                horizontal = if (isVod) 20.dp else 32.dp,
+                vertical = if (isVod) 16.dp else 24.dp
             )
     ) {
-        Surface(
-            modifier = if (isVod) {
-                Modifier
-                    .fillMaxWidth(bottomBarWidthFraction)
-                    .widthIn(max = 980.dp)
-                    .align(Alignment.Center)
-            } else {
-                Modifier.fillMaxWidth()
-            },
-            shape = RoundedCornerShape(if (isVod) 20.dp else 28.dp),
-            colors = SurfaceDefaults.colors(containerColor = Color(0xFF0C1624).copy(alpha = 0.92f))
-        ) {
-            Column(
+        if (isVod) {
+            PlayerVodInfo(
+                title = title,
+                contentType = contentType,
+                isPlaying = isPlaying,
+                currentPosition = currentPosition,
+                duration = duration,
+                aspectRatioLabel = aspectRatioLabel,
+                subtitleTrackCount = subtitleTrackCount,
+                audioTrackCount = audioTrackCount,
+                videoQualityCount = videoQualityCount,
+                videoQualityLabel = videoQualityLabel,
+                isMuted = isMuted,
+                playbackSpeed = playbackSpeed,
+                playButtonFocusRequester = playButtonFocusRequester,
+                quickActionsFocusRequester = quickActionsFocusRequester,
+                onSeekToPosition = onSeekToPosition,
+                onSetScrubbingMode = onSetScrubbingMode,
+                onToggleAspectRatio = onToggleAspectRatio,
+                onOpenSubtitleTracks = onOpenSubtitleTracks,
+                onOpenAudioTracks = onOpenAudioTracks,
+                onOpenVideoTracks = onOpenVideoTracks,
+                onOpenPlaybackSpeed = onOpenPlaybackSpeed,
+                showEpisodesAction = showEpisodesAction,
+                onOpenEpisodes = onOpenEpisodes,
+                onToggleMute = onToggleMute,
+                onTogglePlayPause = onTogglePlayPause,
+                onSeekBackward = onSeekBackward,
+                onSeekForward = onSeekForward,
+                onWatchAgain = onWatchAgain,
+                seekPreview = seekPreview,
+                onSeekPreviewPositionChanged = onSeekPreviewPositionChanged,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(
-                        Brush.horizontalGradient(
-                            colors = listOf(
-                                Primary.copy(alpha = 0.10f),
-                                Color.Transparent
+                    .align(Alignment.BottomCenter)
+            )
+        } else {
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(28.dp),
+                colors = SurfaceDefaults.colors(containerColor = Color(0xFF0C1624).copy(alpha = 0.92f))
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            Brush.horizontalGradient(
+                                colors = listOf(
+                                    Primary.copy(alpha = 0.10f),
+                                    Color.Transparent
+                                )
                             )
                         )
-                    )
-                    .padding(
-                        horizontal = if (isVod) 14.dp else 24.dp,
-                        vertical = if (isVod) 12.dp else 22.dp
-                    )
-            ) {
+                        .padding(horizontal = 24.dp, vertical = 22.dp)
+                ) {
                 if (contentType == "LIVE") {
                     PlayerLiveInfo(
                         currentProgram = currentProgram,
@@ -680,48 +767,7 @@ private fun PlayerBottomBar(
                         showExternalPlayerAction = showExternalPlayerAction,
                         onOpenExternalPlayer = onOpenExternalPlayer
                     )
-                } else {
-                    PlayerVodInfo(
-                        title = title,
-                        contentType = contentType,
-                        isPlaying = isPlaying,
-                        currentPosition = currentPosition,
-                        duration = duration,
-                        aspectRatioLabel = aspectRatioLabel,
-                        subtitleTrackCount = subtitleTrackCount,
-                        audioTrackCount = audioTrackCount,
-                        videoQualityCount = videoQualityCount,
-                        isMuted = isMuted,
-                        playbackSpeed = playbackSpeed,
-                        sleepTimerUiState = sleepTimerUiState,
-                        playButtonFocusRequester = playButtonFocusRequester,
-                        quickActionsFocusRequester = quickActionsFocusRequester,
-                        onSeekToPosition = onSeekToPosition,
-                        onSetScrubbingMode = onSetScrubbingMode,
-                        onToggleAspectRatio = onToggleAspectRatio,
-                        onOpenSubtitleTracks = onOpenSubtitleTracks,
-                        onOpenAudioTracks = onOpenAudioTracks,
-                        onOpenVideoTracks = onOpenVideoTracks,
-                        onOpenPlaybackSpeed = onOpenPlaybackSpeed,
-                        onOpenStopPlaybackTimer = onOpenStopPlaybackTimer,
-                        onOpenIdleStandbyTimer = onOpenIdleStandbyTimer,
-                        onOpenAudioVideoSync = onOpenAudioVideoSync,
-                        audioVideoSyncEnabled = audioVideoSyncEnabled,
-                        showEpisodesAction = showEpisodesAction,
-                        onOpenEpisodes = onOpenEpisodes,
-                        onEnterPictureInPicture = onEnterPictureInPicture,
-                        onToggleMute = onToggleMute,
-                        isCastConnected = isCastConnected,
-                        onCast = onCast,
-                        onStopCasting = onStopCasting,
-                        onTogglePlayPause = onTogglePlayPause,
-                        onSeekBackward = onSeekBackward,
-                        onSeekForward = onSeekForward,
-                        seekPreview = seekPreview,
-                        onSeekPreviewPositionChanged = onSeekPreviewPositionChanged,
-                        showExternalPlayerAction = showExternalPlayerAction,
-                        onOpenExternalPlayer = onOpenExternalPlayer
-                    )
+                }
                 }
             }
         }
@@ -983,6 +1029,94 @@ private fun PlayerLiveInfo(
 }
 
 @Composable
+private fun PlayerVodTopBar(
+    title: String,
+    subtitle: String?,
+    isCastConnected: Boolean,
+    subtitleTrackCount: Int,
+    onBack: () -> Unit,
+    onCast: () -> Unit,
+    onStopCasting: () -> Unit,
+    onOpenSubtitleTracks: () -> Unit,
+    onOpenMoreMenu: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(Color.Black.copy(alpha = 0.78f), Color.Transparent)
+                )
+            )
+            .padding(horizontal = 16.dp, vertical = 14.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            TvIconButton(onClick = onBack) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = stringResource(R.string.player_back),
+                    tint = Color.White
+                )
+            }
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleLarge,
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                subtitle?.takeIf { it.isNotBlank() }?.let {
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.White.copy(alpha = 0.72f),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                TvIconButton(onClick = if (isCastConnected) onStopCasting else onCast) {
+                    Icon(
+                        imageVector = Icons.Default.Cast,
+                        contentDescription = stringResource(
+                            if (isCastConnected) R.string.player_stop_casting else R.string.player_cast
+                        ),
+                        tint = Color.White
+                    )
+                }
+                if (subtitleTrackCount > 0) {
+                    TvIconButton(onClick = onOpenSubtitleTracks) {
+                        Icon(
+                            imageVector = Icons.Default.ClosedCaption,
+                            contentDescription = stringResource(R.string.player_track_subs),
+                            tint = Color.White
+                        )
+                    }
+                }
+                TvIconButton(onClick = onOpenMoreMenu) {
+                    Icon(
+                        imageVector = Icons.Default.MoreVert,
+                        contentDescription = stringResource(R.string.player_more_options),
+                        tint = Color.White
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
 private fun PlayerVodInfo(
     title: String,
     contentType: String,
@@ -993,10 +1127,9 @@ private fun PlayerVodInfo(
     subtitleTrackCount: Int,
     audioTrackCount: Int,
     videoQualityCount: Int,
+    videoQualityLabel: String?,
     isMuted: Boolean,
     playbackSpeed: Float,
-    sleepTimerUiState: SleepTimerUiState,
-    audioVideoSyncEnabled: Boolean,
     playButtonFocusRequester: FocusRequester,
     quickActionsFocusRequester: FocusRequester,
     onSeekToPosition: (Long) -> Unit,
@@ -1006,118 +1139,38 @@ private fun PlayerVodInfo(
     onOpenAudioTracks: () -> Unit,
     onOpenVideoTracks: () -> Unit,
     onOpenPlaybackSpeed: () -> Unit,
-    onOpenStopPlaybackTimer: () -> Unit,
-    onOpenIdleStandbyTimer: () -> Unit,
-    onOpenAudioVideoSync: () -> Unit,
     showEpisodesAction: Boolean,
     onOpenEpisodes: () -> Unit,
-    onEnterPictureInPicture: () -> Unit,
     onToggleMute: () -> Unit,
-    isCastConnected: Boolean,
-    onCast: () -> Unit,
-    onStopCasting: () -> Unit,
     onTogglePlayPause: () -> Unit,
     onSeekBackward: () -> Unit,
     onSeekForward: () -> Unit,
+    onWatchAgain: () -> Unit,
     seekPreview: SeekPreviewState,
     onSeekPreviewPositionChanged: (Long?) -> Unit,
-    showExternalPlayerAction: Boolean,
-    onOpenExternalPlayer: () -> Unit
+    modifier: Modifier = Modifier
 ) {
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
     val isTelevisionDevice = rememberIsTelevisionDevice()
     val compactControls = screenWidth < 700.dp
     val tabletControls = !isTelevisionDevice && screenWidth >= 700.dp && screenWidth < 1280.dp
     val transportButtonSize = when {
+        compactControls -> 44.dp
+        tabletControls -> 48.dp
+        else -> 52.dp
+    }
+    val playIconSize = when {
         compactControls -> 42.dp
         tabletControls -> 46.dp
         else -> 50.dp
-    }
-    val playButtonSize = when {
-        compactControls -> 54.dp
-        tabletControls -> 58.dp
-        else -> 62.dp
-    }
-    val playIconSize = when {
-        compactControls -> 24.dp
-        tabletControls -> 26.dp
-        else -> 30.dp
     }
     val seekPreviewWidth = when {
         compactControls -> 148.dp
         tabletControls -> 168.dp
         else -> 188.dp
     }
-    val outerSpacing = when {
-        compactControls -> 8.dp
-        tabletControls -> 10.dp
-        else -> 12.dp
-    }
-    val transportGroupHorizontalPadding = when {
-        compactControls -> 5.dp
-        tabletControls -> 6.dp
-        else -> 7.dp
-    }
-
     val playbackLabel = stringResource(R.string.player_playback_label)
-    val actions = buildList {
-        add(PlayerActionSpec(
-            stringResource(if (isMuted) R.string.player_unmute else R.string.player_mute),
-            onToggleMute
-        ))
-        if (subtitleTrackCount > 0) {
-            add(PlayerActionSpec(stringResource(R.string.player_subs), onOpenSubtitleTracks))
-        }
-        if (videoQualityCount > 0) {
-            add(PlayerActionSpec(stringResource(R.string.player_video_quality), onOpenVideoTracks))
-        }
-        if (showEpisodesAction) {
-            add(PlayerActionSpec(stringResource(R.string.player_episodes), onOpenEpisodes))
-        }
-        if (showExternalPlayerAction) {
-            add(PlayerActionSpec(stringResource(R.string.player_open_in_external_player), onOpenExternalPlayer))
-        }
-        if (audioTrackCount > 0) {
-            add(PlayerActionSpec(stringResource(R.string.player_audio), onOpenAudioTracks))
-        }
-        add(
-            PlayerActionSpec(
-                stringResource(R.string.player_playback_speed_value, formatPlaybackSpeedLabel(playbackSpeed)),
-                onOpenPlaybackSpeed
-            )
-        )
-        if (audioVideoSyncEnabled && !isCastConnected) {
-            add(PlayerActionSpec(stringResource(R.string.player_av_sync_short), onOpenAudioVideoSync))
-        }
-        add(PlayerActionSpec(
-            sleepTimerActionLabel(
-                title = stringResource(R.string.player_stop_playback_after),
-                activeLabel = stringResource(
-                    R.string.player_stop_timer_status,
-                    formatTimerRemaining(sleepTimerUiState.stopRemainingMs)
-                ),
-                active = sleepTimerUiState.stopTimerActive
-            ),
-            onOpenStopPlaybackTimer
-        ))
-        add(PlayerActionSpec(
-            sleepTimerActionLabel(
-                title = stringResource(R.string.player_idle_standby_after),
-                activeLabel = stringResource(
-                    R.string.player_idle_timer_status,
-                    formatTimerRemaining(sleepTimerUiState.idleRemainingMs)
-                ),
-                active = sleepTimerUiState.idleTimerActive
-            ),
-            onOpenIdleStandbyTimer
-        ))
-        add(PlayerActionSpec(
-            stringResource(if (isCastConnected) R.string.player_stop_casting else R.string.player_cast),
-            if (isCastConnected) onStopCasting else onCast
-        ))
-        add(PlayerActionSpec(stringResource(R.string.player_picture_in_picture), onEnterPictureInPicture))
-        add(PlayerActionSpec(stringResource(R.string.player_aspect_ratio_label, aspectRatioLabel), onToggleAspectRatio))
-    }
+    val netflixRed = Color(0xFFE50914)
     var sliderValue by remember(duration, currentPosition) {
         mutableStateOf(if (duration > 0) currentPosition.toFloat() / duration.toFloat() else 0f)
     }
@@ -1132,217 +1185,299 @@ private fun PlayerVodInfo(
         }
     }
 
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(
-            when {
-                compactControls -> 8.dp
-                tabletControls -> 10.dp
-                else -> 12.dp
-            }
-        )
-    ) {
-        PlayerMetaPill(
-            text = if (contentType == "MOVIE") {
-                stringResource(R.string.player_type_movie)
-            } else {
-                stringResource(R.string.player_type_series)
-            },
-            accent = true
-        )
-        if (isMuted) {
-            PlayerMetaPill(text = stringResource(R.string.player_muted_badge))
+    val bottomActions = buildList {
+        if (videoQualityCount > 0) {
+            val resolvedQualityLabel = videoQualityLabel?.takeIf { it.isNotBlank() }
+            add(
+                PlayerVodActionPillSpec(
+                    label = resolvedQualityLabel?.let {
+                        stringResource(R.string.player_quality_value, it)
+                    } ?: stringResource(R.string.player_quality_short),
+                    onClick = onOpenVideoTracks
+                )
+            )
         }
-        Text(
-            text = title,
-            style = MaterialTheme.typography.bodyMedium,
-            color = Color.White.copy(alpha = 0.82f),
-            maxLines = 1
+        if (subtitleTrackCount > 0 || audioTrackCount > 0) {
+            add(
+                PlayerVodActionPillSpec(
+                    label = stringResource(R.string.player_audio_and_subtitles),
+                    onClick = {
+                        if (subtitleTrackCount > 0) onOpenSubtitleTracks() else onOpenAudioTracks()
+                    }
+                )
+            )
+        }
+        if (showEpisodesAction) {
+            add(
+                PlayerVodActionPillSpec(
+                    label = stringResource(R.string.player_episodes),
+                    onClick = onOpenEpisodes
+                )
+            )
+        }
+        add(
+            PlayerVodActionPillSpec(
+                label = stringResource(
+                    R.string.player_playback_speed_value,
+                    formatPlaybackSpeedLabel(playbackSpeed)
+                ),
+                onClick = onOpenPlaybackSpeed
+            )
+        )
+        add(
+            PlayerVodActionPillSpec(
+                label = stringResource(R.string.player_watch_again),
+                onClick = onWatchAgain
+            )
         )
     }
 
-    Spacer(modifier = Modifier.height(10.dp))
-
-    Surface(
-        shape = RoundedCornerShape(18.dp),
-        colors = SurfaceDefaults.colors(containerColor = Color.White.copy(alpha = 0.06f))
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
+        if (seekPreview.visible) {
+            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                PlayerSeekPreviewCard(
+                    preview = seekPreview,
+                    previewHeight = when {
+                        compactControls -> 96.dp
+                        tabletControls -> 106.dp
+                        else -> 118.dp
+                    },
+                    modifier = Modifier.width(seekPreviewWidth)
+                )
+            }
+        }
+
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 10.dp),
-            horizontalArrangement = Arrangement.spacedBy(outerSpacing),
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Surface(
-                shape = RoundedCornerShape(999.dp),
-                colors = SurfaceDefaults.colors(containerColor = Color.Black.copy(alpha = 0.24f))
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = transportGroupHorizontalPadding, vertical = 6.dp),
-                    horizontalArrangement = Arrangement.spacedBy(
-                        when {
-                            compactControls -> 6.dp
-                            tabletControls -> 7.dp
-                            else -> 8.dp
-                        }
-                    ),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    PlayerTransportButton(
-                        label = "\u23EA",
-                        contentDescription = stringResource(R.string.player_rewind),
-                        onClick = onSeekBackward,
-                        buttonSize = transportButtonSize,
-                        modifier = Modifier.focusProperties {
-                            down = quickActionsFocusRequester
-                        }
-                    )
-                    TvClickableSurface(
-                        onClick = onTogglePlayPause,
-                        shape = ClickableSurfaceDefaults.shape(RoundedCornerShape(50)),
-                        colors = ClickableSurfaceDefaults.colors(
-                            containerColor = Primary.copy(alpha = 0.84f),
-                            focusedContainerColor = Primary
-                        ),
-                        modifier = Modifier
-                            .size(playButtonSize)
-                            .focusRequester(playButtonFocusRequester)
-                            .focusProperties {
-                                down = quickActionsFocusRequester
-                            }
-                            .semantics { contentDescription = playbackLabel }
-                    ) {
-                        Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                            if (isPlaying) {
-                                Text(
-                                    text = "II",
-                                    style = MaterialTheme.typography.headlineMedium,
-                                    color = Color.White
-                                )
-                            } else {
-                                Icon(
-                                    imageVector = Icons.Default.PlayArrow,
-                                    contentDescription = stringResource(R.string.player_play),
-                                    tint = Color.White,
-                                    modifier = Modifier.size(playIconSize)
-                                )
-                            }
-                        }
+            Text(
+                text = formatDuration(
+                    if (isScrubbing && duration > 0) {
+                        (sliderValue * duration).toLong()
+                    } else {
+                        currentPosition
                     }
-                    PlayerTransportButton(
-                        label = "\u23E9",
-                        contentDescription = stringResource(R.string.player_forward),
-                        onClick = onSeekForward,
-                        buttonSize = transportButtonSize,
-                        modifier = Modifier.focusProperties {
-                            down = quickActionsFocusRequester
-                        }
-                    )
+                ),
+                style = MaterialTheme.typography.labelMedium,
+                color = Color.White
+            )
+            Slider(
+                value = sliderValue,
+                onValueChange = { newValue ->
+                    val clampedValue = newValue.coerceIn(0f, 1f)
+                    if (!isScrubbing) {
+                        isScrubbing = true
+                        latestScrubbingCallback(true)
+                    }
+                    sliderValue = clampedValue
+                    if (duration > 0) {
+                        latestSeekPreviewPositionChanged((clampedValue * duration).toLong())
+                    }
+                },
+                onValueChangeFinished = {
+                    if (duration > 0) {
+                        latestSeekCallback((sliderValue.coerceIn(0f, 1f) * duration).toLong())
+                    }
+                    if (isScrubbing) {
+                        latestScrubbingCallback(false)
+                        isScrubbing = false
+                    }
+                    latestSeekPreviewPositionChanged(null)
+                },
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(horizontal = 12.dp)
+                    .focusProperties {
+                        down = quickActionsFocusRequester
+                    }
+                    .semantics { contentDescription = playbackLabel },
+                enabled = duration > 0,
+                colors = SliderDefaults.colors(
+                    thumbColor = netflixRed,
+                    activeTrackColor = netflixRed,
+                    inactiveTrackColor = Color.White.copy(alpha = 0.28f)
+                )
+            )
+            Text(
+                text = formatDuration(duration),
+                style = MaterialTheme.typography.labelMedium,
+                color = Color.White
+            )
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            PlayerSeek10Button(
+                label = stringResource(R.string.player_seek_back_10),
+                contentDescription = stringResource(R.string.player_rewind),
+                onClick = onSeekBackward,
+                buttonSize = transportButtonSize,
+                modifier = Modifier.focusProperties { down = quickActionsFocusRequester }
+            )
+
+            TvClickableSurface(
+                onClick = onTogglePlayPause,
+                shape = ClickableSurfaceDefaults.shape(RoundedCornerShape(50)),
+                colors = ClickableSurfaceDefaults.colors(
+                    containerColor = Color.Transparent,
+                    focusedContainerColor = Color.White.copy(alpha = 0.12f)
+                ),
+                modifier = Modifier
+                    .size(playIconSize)
+                    .focusRequester(playButtonFocusRequester)
+                    .focusProperties { down = quickActionsFocusRequester }
+                    .semantics { contentDescription = playbackLabel }
+            ) {
+                Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                    if (isPlaying) {
+                        Text(
+                            text = "II",
+                            style = MaterialTheme.typography.displaySmall,
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.PlayArrow,
+                            contentDescription = stringResource(R.string.player_play),
+                            tint = Color.White,
+                            modifier = Modifier.size(playIconSize * 0.72f)
+                        )
+                    }
                 }
             }
 
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                AnimatedVisibility(visible = seekPreview.visible) {
-                    PlayerSeekPreviewCard(
-                        preview = seekPreview,
-                        previewHeight = when {
-                            compactControls -> 96.dp
-                            tabletControls -> 106.dp
-                            else -> 118.dp
-                        },
-                        modifier = Modifier.width(seekPreviewWidth)
-                    )
-                }
+            PlayerSeek10Button(
+                label = stringResource(R.string.player_seek_forward_10),
+                contentDescription = stringResource(R.string.player_forward),
+                onClick = onSeekForward,
+                buttonSize = transportButtonSize,
+                modifier = Modifier.focusProperties { down = quickActionsFocusRequester }
+            )
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = playbackLabel,
-                        style = MaterialTheme.typography.labelLarge,
-                        color = Color.White.copy(alpha = 0.78f)
-                    )
-                    Text(
-                        text = title,
-                        style = MaterialTheme.typography.labelMedium,
-                        color = Color.White.copy(alpha = 0.58f),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = formatDuration(
-                            if (isScrubbing && duration > 0) {
-                                (sliderValue * duration).toLong()
-                            } else {
-                                currentPosition
-                            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TvIconButton(onClick = onToggleMute) {
+                    Icon(
+                        imageVector = if (isMuted) Icons.Default.VolumeOff else Icons.Default.VolumeUp,
+                        contentDescription = stringResource(
+                            if (isMuted) R.string.player_unmute else R.string.player_mute
                         ),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = Color.White
+                        tint = Color.White
                     )
-                    Slider(
-                        value = sliderValue,
-                        onValueChange = { newValue ->
-                            val clampedValue = newValue.coerceIn(0f, 1f)
-                            if (!isScrubbing) {
-                                isScrubbing = true
-                                latestScrubbingCallback(true)
-                            }
-                            sliderValue = clampedValue
-                            if (duration > 0) {
-                                latestSeekPreviewPositionChanged((clampedValue * duration).toLong())
-                            }
-                        },
-                        onValueChangeFinished = {
-                            if (duration > 0) {
-                                latestSeekCallback((sliderValue.coerceIn(0f, 1f) * duration).toLong())
-                            }
-                            if (isScrubbing) {
-                                latestScrubbingCallback(false)
-                                isScrubbing = false
-                            }
-                            latestSeekPreviewPositionChanged(null)
-                        },
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(horizontal = 12.dp)
-                            .focusProperties {
-                                down = quickActionsFocusRequester
-                            }
-                            .semantics { contentDescription = playbackLabel },
-                        enabled = duration > 0,
-                        colors = SliderDefaults.colors(
-                            activeTrackColor = Primary,
-                            inactiveTrackColor = Color.White.copy(alpha = 0.2f)
-                        )
-                    )
-                    Text(
-                        text = formatDuration(duration),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = Color.White
+                }
+                TvIconButton(onClick = onToggleAspectRatio) {
+                    Icon(
+                        imageVector = Icons.Default.AspectRatio,
+                        contentDescription = stringResource(R.string.player_aspect_ratio_label, aspectRatioLabel),
+                        tint = Color.White
                     )
                 }
             }
         }
-    }
 
-    PlayerQuickActionRows(
-        primaryActions = actions,
-        secondaryActions = emptyList(),
-        firstActionFocusRequester = quickActionsFocusRequester,
-        primaryActionsUpFocusRequester = playButtonFocusRequester,
-        singleRow = true,
-        compactButtons = true
-    )
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            contentPadding = PaddingValues(end = 4.dp)
+        ) {
+            itemsIndexed(bottomActions) { index, action ->
+                PlayerVodActionPill(
+                    label = action.label,
+                    onClick = action.onClick,
+                    modifier = Modifier
+                        .then(
+                            if (index == 0) {
+                                Modifier.focusRequester(quickActionsFocusRequester)
+                            } else {
+                                Modifier
+                            }
+                        )
+                        .focusProperties {
+                            if (index == 0) {
+                                up = playButtonFocusRequester
+                            }
+                        }
+                )
+            }
+        }
+    }
+}
+
+private data class PlayerVodActionPillSpec(
+    val label: String,
+    val onClick: () -> Unit
+)
+
+@Composable
+private fun PlayerSeek10Button(
+    label: String,
+    contentDescription: String,
+    onClick: () -> Unit,
+    buttonSize: androidx.compose.ui.unit.Dp,
+    modifier: Modifier = Modifier
+) {
+    TvClickableSurface(
+        onClick = onClick,
+        shape = ClickableSurfaceDefaults.shape(RoundedCornerShape(50)),
+        colors = ClickableSurfaceDefaults.colors(
+            containerColor = Color.Transparent,
+            focusedContainerColor = Color.White.copy(alpha = 0.14f)
+        ),
+        modifier = modifier
+            .size(buttonSize)
+            .semantics { this.contentDescription = contentDescription }
+    ) {
+        Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = Color.White,
+                fontWeight = FontWeight.Bold
+            )
+        }
+    }
+}
+
+@Composable
+private fun PlayerVodActionPill(
+    label: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    TvClickableSurface(
+        onClick = onClick,
+        shape = ClickableSurfaceDefaults.shape(RoundedCornerShape(10.dp)),
+        colors = ClickableSurfaceDefaults.colors(
+            containerColor = Color.White.copy(alpha = 0.14f),
+            focusedContainerColor = Color.White.copy(alpha = 0.24f)
+        ),
+        modifier = modifier
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelMedium,
+                color = Color.White,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Text(
+                text = "\u203A",
+                style = MaterialTheme.typography.titleMedium,
+                color = Color.White.copy(alpha = 0.72f)
+            )
+        }
+    }
 }
 
 @Composable

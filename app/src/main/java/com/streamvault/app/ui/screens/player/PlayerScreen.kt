@@ -181,7 +181,23 @@ fun PlayerScreen(
     }
     val canOpenEpisodePicker = contentType == "SERIES_EPISODE" &&
         currentSeriesSeasons?.any { it.episodes.isNotEmpty() } == true
-    
+    val vodControlsTitle = remember(contentType, currentSeries, playbackTitle, title) {
+        when (contentType) {
+            "SERIES_EPISODE" -> currentSeries?.name ?: playbackTitle.ifBlank { title }
+            else -> playbackTitle.ifBlank { title }
+        }
+    }
+    val episode = currentEpisode
+    val vodPlaybackSubtitle = when {
+        contentType == "SERIES_EPISODE" && episode != null -> {
+            val episodeLabel = episode.title.takeIf { it.isNotBlank() }
+                ?: stringResource(R.string.label_episode_full, episode.episodeNumber)
+            "T${episode.seasonNumber}:E${episode.episodeNumber} • $episodeLabel"
+        }
+        contentType == "SERIES_EPISODE" && seasonNumber != null && episodeNumber != null ->
+            "T$seasonNumber:E$episodeNumber"
+        else -> null
+    }
     val isCatchUpPlayback by viewModel.isCatchUpPlayback.collectAsStateWithLifecycle()
     val showChannelListOverlay by viewModel.showChannelListOverlay.collectAsStateWithLifecycle()
     val showCategoryListOverlay by viewModel.showCategoryListOverlay.collectAsStateWithLifecycle()
@@ -200,6 +216,10 @@ fun PlayerScreen(
     val availableAudioTracks by viewModel.availableAudioTracks.collectAsStateWithLifecycle()
     val availableSubtitleTracks by viewModel.availableSubtitleTracks.collectAsStateWithLifecycle()
     val availableVideoQualities by viewModel.availableVideoQualities.collectAsStateWithLifecycle()
+    val vodVideoQualityLabel = remember(videoFormat, availableVideoQualities) {
+        availableVideoQualities.firstOrNull { it.isSelected }?.name?.takeIf { it.isNotBlank() }
+            ?: videoFormat.resolutionLabel.takeIf { !videoFormat.isEmpty && it.isNotBlank() }
+    }
     val liveTranslationAvailable by viewModel.liveTranslationAvailable.collectAsStateWithLifecycle()
     val liveTranslationActive by viewModel.liveTranslationActive.collectAsStateWithLifecycle()
     val aspectRatio by viewModel.aspectRatio.collectAsStateWithLifecycle()
@@ -976,7 +996,14 @@ fun PlayerScreen(
         PlayerControlsOverlayHost(
             playerEngine = playerEngine,
             visible = showControls,
-            title = playbackTitle.ifBlank { title },
+            title = vodControlsTitle,
+            subtitle = vodPlaybackSubtitle,
+            videoQualityLabel = vodVideoQualityLabel,
+            onBack = onBack,
+            onWatchAgain = {
+                viewModel.seekTo(0)
+                viewModel.play()
+            },
             contentType = contentType,
             isCatchUpPlayback = isCatchUpPlayback,
             isPlaying = isPlaying,
@@ -1421,7 +1448,11 @@ private fun PlayerControlsOverlayHost(
     onSetScrubbingMode: (Boolean) -> Unit,
     seekPreview: SeekPreviewState,
     onSeekPreviewPositionChanged: (Long?) -> Unit,
-    onUserInteraction: () -> Unit
+    onUserInteraction: () -> Unit,
+    subtitle: String? = null,
+    videoQualityLabel: String? = null,
+    onBack: (() -> Unit)? = null,
+    onWatchAgain: () -> Unit = {}
 ) {
     val currentPosition by playerEngine.currentPosition.collectAsStateWithLifecycle()
     val duration by playerEngine.duration.collectAsStateWithLifecycle()
@@ -1429,6 +1460,10 @@ private fun PlayerControlsOverlayHost(
     PlayerControlsOverlay(
         visible = visible,
         title = title,
+        subtitle = subtitle,
+        videoQualityLabel = videoQualityLabel,
+        onBack = onBack,
+        onWatchAgain = onWatchAgain,
         contentType = contentType,
         isCatchUpPlayback = isCatchUpPlayback,
         isPlaying = isPlaying,

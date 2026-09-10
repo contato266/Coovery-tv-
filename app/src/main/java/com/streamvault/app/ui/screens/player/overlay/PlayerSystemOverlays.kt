@@ -251,6 +251,140 @@ fun PlayerErrorOverlay(
 }
 
 @Composable
+fun PlayerVodMoreOptionsDialog(
+    isMuted: Boolean,
+    isCastConnected: Boolean,
+    audioVideoSyncEnabled: Boolean,
+    sleepTimerUiState: SleepTimerUiState,
+    showExternalPlayerAction: Boolean,
+    audioTrackCount: Int,
+    onDismiss: () -> Unit,
+    onToggleMute: () -> Unit,
+    onCast: () -> Unit,
+    onStopCasting: () -> Unit,
+    onOpenStopPlaybackTimer: () -> Unit,
+    onOpenIdleStandbyTimer: () -> Unit,
+    onOpenAudioVideoSync: () -> Unit,
+    onEnterPictureInPicture: () -> Unit,
+    onOpenExternalPlayer: () -> Unit,
+    onOpenAudioTracks: () -> Unit
+) {
+    val firstItemFocusRequester = remember { FocusRequester() }
+    val options = buildList {
+        add(
+            OptionItem(
+                label = stringResource(if (isMuted) R.string.player_unmute else R.string.player_mute),
+                onClick = onToggleMute
+            )
+        )
+        if (audioTrackCount > 0) {
+            add(
+                OptionItem(
+                    label = stringResource(R.string.player_audio),
+                    onClick = onOpenAudioTracks
+                )
+            )
+        }
+        add(
+            OptionItem(
+                label = stringResource(if (isCastConnected) R.string.player_stop_casting else R.string.player_cast),
+                onClick = if (isCastConnected) onStopCasting else onCast
+            )
+        )
+        add(
+            OptionItem(
+                label = stringResource(R.string.player_stop_playback_after),
+                onClick = onOpenStopPlaybackTimer
+            )
+        )
+        add(
+            OptionItem(
+                label = stringResource(R.string.player_idle_standby_after),
+                onClick = onOpenIdleStandbyTimer
+            )
+        )
+        if (audioVideoSyncEnabled && !isCastConnected) {
+            add(
+                OptionItem(
+                    label = stringResource(R.string.player_av_sync_short),
+                    onClick = onOpenAudioVideoSync
+                )
+            )
+        }
+        add(
+            OptionItem(
+                label = stringResource(R.string.player_picture_in_picture),
+                onClick = onEnterPictureInPicture
+            )
+        )
+        if (showExternalPlayerAction) {
+            add(
+                OptionItem(
+                    label = stringResource(R.string.player_open_in_external_player),
+                    onClick = onOpenExternalPlayer
+                )
+            )
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        firstItemFocusRequester.requestFocusSafely(
+            tag = "PlayerVodMoreOptionsDialog",
+            target = "First more option"
+        )
+    }
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.8f))
+                .clickable(onClick = onDismiss),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                modifier = Modifier
+                    .widthIn(min = 300.dp, max = 420.dp)
+                    .background(SurfaceElevated, RoundedCornerShape(12.dp))
+                    .padding(24.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.player_more_options),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = Color.White,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+                LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    itemsIndexed(options, key = { _, option -> option.label }) { index, option ->
+                        TrackSelectionItem(
+                            name = option.label,
+                            isSelected = false,
+                            onClick = {
+                                option.onClick()
+                                onDismiss()
+                            },
+                            modifier = if (index == 0) {
+                                Modifier.focusRequester(firstItemFocusRequester)
+                            } else {
+                                Modifier
+                            }
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+private data class OptionItem(
+    val label: String,
+    val onClick: () -> Unit
+)
+
+@Composable
 fun PlayerTrackSelectionDialog(
     trackType: TrackType?,
     audioTracks: List<PlayerTrack>,

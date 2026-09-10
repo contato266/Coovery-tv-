@@ -1171,6 +1171,12 @@
     <string name="player_type_movie">Movie</string>
     <string name="player_type_series">Series</string>
     <string name="player_close">Close</string>
+    <string name="player_back">Back</string>
+    <string name="player_audio_and_subtitles">Audio &amp; subtitles</string>
+    <string name="player_watch_again">Watch again</string>
+    <string name="player_speed_short">Speed</string>
+    <string name="player_quality_value">Quality %1$s</string>
+    <string name="player_more_options">More options</string>
     <string name="player_play">Play</string>
     <string name="player_pause">Pause</string>
     <string name="player_playback_label">Playback</string>

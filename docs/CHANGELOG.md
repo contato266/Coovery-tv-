@@ -2,6 +2,13 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.35]
+
+### Changed
+
+- Redesigned movie and series player controls to a cleaner streaming-style layout with top navigation, red progress bar, centered transport controls, and bottom action pills.
+- All existing player options remain available through the new layout and the More options menu.
+
 ## [1.0.34]
 
 ### Fixed
