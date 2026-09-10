@@ -1186,17 +1186,6 @@ private fun PlayerVodInfo(
     }
 
     val bottomActions = buildList {
-        if (videoQualityCount > 0) {
-            val resolvedQualityLabel = videoQualityLabel?.takeIf { it.isNotBlank() }
-            add(
-                PlayerVodActionPillSpec(
-                    label = resolvedQualityLabel?.let {
-                        stringResource(R.string.player_quality_value, it)
-                    } ?: stringResource(R.string.player_quality_short),
-                    onClick = onOpenVideoTracks
-                )
-            )
-        }
         if (subtitleTrackCount > 0 || audioTrackCount > 0) {
             add(
                 PlayerVodActionPillSpec(
@@ -1382,28 +1371,30 @@ private fun PlayerVodInfo(
             }
         }
 
-        LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-            contentPadding = PaddingValues(end = 4.dp)
+        Box(
+            modifier = Modifier.fillMaxWidth(),
+            contentAlignment = Alignment.Center
         ) {
-            itemsIndexed(bottomActions) { index, action ->
-                PlayerVodActionPill(
-                    label = action.label,
-                    onClick = action.onClick,
-                    modifier = Modifier
-                        .then(
-                            if (index == 0) {
-                                Modifier.focusRequester(quickActionsFocusRequester)
-                            } else {
-                                Modifier
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                bottomActions.forEachIndexed { index, action ->
+                    PlayerVodActionPill(
+                        label = action.label,
+                        onClick = action.onClick,
+                        modifier = Modifier
+                            .then(
+                                if (index == 0) {
+                                    Modifier.focusRequester(quickActionsFocusRequester)
+                                } else {
+                                    Modifier
+                                }
+                            )
+                            .focusProperties {
+                                if (index == 0) {
+                                    up = playButtonFocusRequester
+                                }
                             }
-                        )
-                        .focusProperties {
-                            if (index == 0) {
-                                up = playButtonFocusRequester
-                            }
-                        }
-                )
+                    )
+                }
             }
         }
     }

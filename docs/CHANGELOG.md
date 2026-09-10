@@ -2,6 +2,13 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.36]
+
+### Changed
+
+- Removed the Quality pill from movie and series player controls.
+- Centered the remaining bottom action pills (audio/subtitles, episodes, speed, watch again).
+
 ## [1.0.35]
 
 ### Changed
