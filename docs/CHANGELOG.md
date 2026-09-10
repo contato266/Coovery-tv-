@@ -2,6 +2,13 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.43]
+
+### Changed
+
+- Handheld playback (movies, series, live channels) switches to landscape on the player screen; browsing stays portrait.
+- Handheld Live TV: category carousel with round chips, channel preview above the list (Claro tv+ style). Android TV unchanged.
+
 ## [1.0.42]
 
 ### Fixed
