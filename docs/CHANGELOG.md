@@ -2,6 +2,13 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.39]
+
+### Added
+
+- Handheld (phone) support in the same APK: portrait orientation, bottom navigation, tighter spacing, stacked Live TV browse, and horizontal settings categories on narrow/portrait layouts.
+- Android TV behavior unchanged: landscape lock, top navigation bar, and existing layouts preserved via `isTelevisionDevice()` detection.
+
 ## [1.0.38]
 
 ### Changed

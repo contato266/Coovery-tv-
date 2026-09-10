@@ -8,6 +8,7 @@ import com.streamvault.app.ui.design.AppColors
 import com.streamvault.app.ui.design.AppShapes
 import com.streamvault.app.ui.design.LocalAppShapes
 import com.streamvault.app.ui.design.LocalAppSpacing
+import com.streamvault.app.ui.design.rememberAppSpacing
 import com.streamvault.app.ui.design.rememberAppTypography
 
 private val DarkColorScheme = darkColorScheme(
@@ -26,8 +27,9 @@ private val DarkColorScheme = darkColorScheme(
 @Composable
 fun StreamVaultTheme(content: @Composable () -> Unit) {
     val typography = rememberAppTypography()
+    val spacing = rememberAppSpacing()
     CompositionLocalProvider(
-        LocalAppSpacing provides com.streamvault.app.ui.design.AppSpacing(),
+        LocalAppSpacing provides spacing,
         LocalAppShapes provides AppShapes()
     ) {
         MaterialTheme(

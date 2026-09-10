@@ -43,6 +43,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LinearProgressIndicator
 import com.streamvault.app.device.rememberIsTelevisionDevice
+import com.streamvault.app.device.rememberUseHandheldStackedLayout
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.lifecycle.Lifecycle
@@ -163,6 +164,7 @@ fun HomeScreen(
     val isDenseMode = uiState.liveTvChannelMode != LiveTvChannelMode.COMFORTABLE
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
     val isTelevisionDevice = rememberIsTelevisionDevice()
+    val useHandheldStackedLayout = rememberUseHandheldStackedLayout()
     val sidebarWidth = if (screenWidth < 900.dp) {
         (screenWidth * 0.36f).coerceIn(188.dp, 220.dp)
     } else if (!isTelevisionDevice && screenWidth < 1280.dp) {
@@ -660,7 +662,9 @@ fun HomeScreen(
                         }
                     }
                 ) {
-                Row(
+                HomeLiveBrowseSplit(
+                    stacked = useHandheldStackedLayout,
+                    sidebarWidth = sidebarWidth,
                     modifier = Modifier
                         .fillMaxSize()
                         .onPreviewKeyEvent { event ->
@@ -710,16 +714,15 @@ fun HomeScreen(
                                 null -> null
                             } ?: return@onPreviewKeyEvent false
                             dispatchLiveBrowseRemoteShortcut(action, handler)
-                        }
-                ) {
+                        },
+                    sidebar = {
                     // Sidebar - Categories
                     val categorySearchFocusRequester = remember { FocusRequester() }
                     val focusManager = LocalFocusManager.current
                     
                     Column(
                         modifier = Modifier
-                            .width(sidebarWidth)
-                            .fillMaxHeight()
+                            .fillMaxSize()
                             .background(SurfaceElevated.copy(alpha = 0.88f), RoundedCornerShape(20.dp))
                             .padding(top = 10.dp)
                             .focusGroup()
@@ -998,12 +1001,11 @@ fun HomeScreen(
                         }
                     }
                 }
-
+                    },
+                    content = {
                 // Content - Channel Grid / Pro Preview
                 Row(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxHeight(),
+                    modifier = Modifier.fillMaxSize(),
                     horizontalArrangement = Arrangement.spacedBy(if (isProMode) 12.dp else 0.dp)
                 ) {
                     Column(
@@ -1083,7 +1085,11 @@ fun HomeScreen(
                                 placeholder = stringResource(R.string.home_search_channels),
                                 onSearch = {},
                                 focusRequester = channelSearchFocusRequester,
-                                modifier = Modifier.width(channelSearchWidth),
+                                modifier = if (useHandheldStackedLayout) {
+                                    Modifier.fillMaxWidth()
+                                } else {
+                                    Modifier.width(channelSearchWidth)
+                                },
                                 enabled = !isReorderMode
                             )
                         }
@@ -1386,9 +1392,10 @@ fun HomeScreen(
                         )
                     }
                 }
+                    }
+                )
                 }
             }
-        }
         }
 
         SnackbarHost(

@@ -38,13 +38,19 @@ internal fun SettingsContentPane(
     onDrivePush: () -> Unit,
     onDrivePull: () -> Unit,
     onOpenUri: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    handheldLayout: Boolean = false
 ) {
     LazyColumn(
         modifier = modifier
             .fillMaxHeight()
             .imePadding(),
-        contentPadding = PaddingValues(start = 20.dp, top = 76.dp, end = 20.dp, bottom = 32.dp),
+        contentPadding = PaddingValues(
+            start = 20.dp,
+            top = if (handheldLayout) 12.dp else 76.dp,
+            end = 20.dp,
+            bottom = 32.dp
+        ),
         verticalArrangement = Arrangement.spacedBy(10.dp),
         userScrollEnabled = !uiState.isSyncing
     ) {

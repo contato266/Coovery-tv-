@@ -24,6 +24,7 @@ import androidx.documentfile.provider.DocumentFile
 import com.streamvault.app.backup.BackupFileBridge
 import com.streamvault.app.device.isFireTvDevice
 import com.streamvault.app.device.isTelevisionDevice
+import com.streamvault.app.device.rememberUseHandheldStackedLayout
 import com.streamvault.app.device.removableAppStorageDirs
 import java.io.File
 import com.streamvault.app.diagnostics.CrashReportStore
@@ -64,6 +65,7 @@ fun SettingsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val settingsNavFocusRequester = remember { FocusRequester() }
+    val useHandheldStackedLayout = rememberUseHandheldStackedLayout()
 
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -366,21 +368,7 @@ fun SettingsScreen(
                 )
             }
         ) {
-            Row(modifier = Modifier.fillMaxSize()) {
-                SettingsNavigationRail(
-                    selectedCategory = dialogState.selectedCategory,
-                    focusRequester = settingsNavFocusRequester,
-                    onCategorySelected = { dialogState.selectedCategory = it }
-                )
-
-                // Thin vertical separator
-                Box(
-                    Modifier
-                        .width(1.dp)
-                        .fillMaxHeight()
-                        .background(Color.White.copy(alpha = 0.07f))
-                )
-
+            val settingsContentPane: @Composable (Modifier) -> Unit = { paneModifier ->
                 SettingsContentPane(
                     uiState = uiState,
                     viewModel = viewModel,
@@ -388,6 +376,7 @@ fun SettingsScreen(
                     screenLabels = screenLabels,
                     dialogState = dialogState,
                     providerState = providerState,
+                    handheldLayout = useHandheldStackedLayout,
                     onAddProvider = onAddProvider,
                     onEditProvider = onEditProvider,
                     onNavigateToParentalControl = onNavigateToParentalControl,
@@ -475,8 +464,35 @@ fun SettingsScreen(
                     onDrivePush = viewModel::pushToDrive,
                     onDrivePull = viewModel::pullFromDrive,
                     onOpenUri = uriHandler::openUri,
-                    modifier = Modifier.weight(1f)
+                    modifier = paneModifier
                 )
+            }
+
+            if (useHandheldStackedLayout) {
+                Column(modifier = Modifier.fillMaxSize()) {
+                    SettingsHandheldCategoryBar(
+                        selectedCategory = dialogState.selectedCategory,
+                        onCategorySelected = { dialogState.selectedCategory = it }
+                    )
+                    settingsContentPane(Modifier.weight(1f))
+                }
+            } else {
+                Row(modifier = Modifier.fillMaxSize()) {
+                    SettingsNavigationRail(
+                        selectedCategory = dialogState.selectedCategory,
+                        focusRequester = settingsNavFocusRequester,
+                        onCategorySelected = { dialogState.selectedCategory = it }
+                    )
+
+                    Box(
+                        Modifier
+                            .width(1.dp)
+                            .fillMaxHeight()
+                            .background(Color.White.copy(alpha = 0.07f))
+                    )
+
+                    settingsContentPane(Modifier.weight(1f))
+                }
             }
         }
 

@@ -13,6 +13,7 @@ import androidx.lifecycle.lifecycleScope
 import com.streamvault.app.cast.CastManager
 import com.streamvault.app.cast.CastRouteChooserActivity
 import com.streamvault.app.backup.BackupFileBridge
+import com.streamvault.app.device.applyPlatformScreenOrientation
 import com.streamvault.app.device.isTelevisionDevice
 import com.streamvault.app.localization.resolveAppLocale
 import com.streamvault.app.navigation.AppNavigation
@@ -144,6 +145,7 @@ class MainActivity : ComponentActivity() {
             )
         }
         super.onCreate(savedInstanceState)
+        applyPlatformScreenOrientation()
         // Disable legacy window-fitting so Compose receives IME insets directly.
         // This fixes keyboard-covers-input-field on API 30+ where adjustResize is
         // ignored when the theme sets windowFullscreen=true.

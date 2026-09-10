@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -78,6 +79,7 @@ import androidx.tv.material3.SurfaceDefaults
 import androidx.tv.material3.Text
 import com.streamvault.app.R
 import com.streamvault.app.MainActivity
+import com.streamvault.app.device.rememberIsTelevisionDevice
 import com.streamvault.app.navigation.toAppRoute
 import com.streamvault.app.navigation.Routes
 import com.streamvault.app.ui.design.AppColors
@@ -94,6 +96,12 @@ import com.streamvault.domain.model.CatalogLayout
 enum class AppNavigationChrome {
     Rail,
     TopBar
+}
+
+private enum class ResolvedAppNavigationChrome {
+    Rail,
+    TopBar,
+    BottomBar
 }
 
 @Composable
@@ -113,13 +121,19 @@ fun AppScreenScaffold(
     content: @Composable ColumnScope.() -> Unit
 ) {
     val spacing = LocalAppSpacing.current
+    val isTelevisionDevice = rememberIsTelevisionDevice()
+    val resolvedChrome = when (navigationChrome) {
+        AppNavigationChrome.Rail -> ResolvedAppNavigationChrome.Rail
+        AppNavigationChrome.TopBar ->
+            if (isTelevisionDevice) ResolvedAppNavigationChrome.TopBar else ResolvedAppNavigationChrome.BottomBar
+    }
 
     Box(
         modifier = modifier
             .fillMaxSize()
             .background(AppColors.Canvas)
     ) {
-        if (navigationChrome == AppNavigationChrome.Rail) {
+        if (resolvedChrome == ResolvedAppNavigationChrome.Rail) {
             Row(modifier = Modifier.fillMaxSize()) {
                 DestinationRail(
                     currentRoute = currentRoute,
@@ -163,7 +177,7 @@ fun AppScreenScaffold(
                     }
                 }
             }
-        } else {
+        } else if (resolvedChrome == ResolvedAppNavigationChrome.TopBar) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -202,6 +216,54 @@ fun AppScreenScaffold(
                         .padding(contentPadding)
                 ) {
                     content()
+                }
+            }
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 12.dp, vertical = 8.dp)
+            ) {
+                if (topBarActions != null) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically,
+                        content = topBarActions
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                }
+                if (showScreenHeader) {
+                    AppScreenHeader(
+                        title = title,
+                        subtitle = subtitle,
+                        modifier = Modifier.fillMaxWidth(),
+                        compact = true
+                    )
+                    if (header != null) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        header()
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                } else if (header != null) {
+                    header()
+                }
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .padding(contentPadding)
+                ) {
+                    content()
+                }
+                if (topBarVisible) {
+                    MobileBottomNavigationBar(
+                        currentRoute = currentRoute,
+                        onNavigate = onNavigate,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .navigationBarsPadding()
+                    )
                 }
             }
         }
@@ -314,6 +376,71 @@ private fun TopNavigationBar(
                     verticalAlignment = Alignment.CenterVertically,
                     content = actions
                 )
+            }
+        }
+    }
+}
+
+@Composable
+private fun MobileBottomNavigationBar(
+    currentRoute: String,
+    onNavigate: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val items = rememberDestinationItems()
+    val scrollState = rememberScrollState()
+    val sounds = rememberTvInteractionSounds()
+
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp),
+        colors = SurfaceDefaults.colors(containerColor = AppColors.CinemaBlack)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(scrollState)
+                .padding(horizontal = 6.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            items.forEach { item ->
+                val selected = currentRoute.startsWith(item.route)
+                val label = stringResource(item.labelRes)
+                Surface(
+                    onClick = {
+                        sounds.playSelect()
+                        if (!selected) onNavigate(item.route)
+                    },
+                    modifier = Modifier
+                        .height(52.dp)
+                        .wrapContentWidth(),
+                    shape = ClickableSurfaceDefaults.shape(RoundedCornerShape(14.dp)),
+                    colors = ClickableSurfaceDefaults.colors(
+                        containerColor = if (selected) AppColors.BrandMuted else Color.Transparent,
+                        focusedContainerColor = AppColors.SurfaceEmphasis
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(2.dp)
+                    ) {
+                        Icon(
+                            imageVector = item.icon,
+                            contentDescription = label,
+                            tint = if (selected) AppColors.Brand else AppColors.TextSecondary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Text(
+                            text = label,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = if (selected) AppColors.TextPrimary else AppColors.TextSecondary,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
             }
         }
     }
