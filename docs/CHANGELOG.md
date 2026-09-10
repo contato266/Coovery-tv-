@@ -2,6 +2,12 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.38]
+
+### Changed
+
+- Removed developer attribution, GitHub, and Ko-fi links from Settings → About.
+
 ## [1.0.37]
 
 ### Changed
