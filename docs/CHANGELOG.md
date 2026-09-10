@@ -2,6 +2,12 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.37]
+
+### Changed
+
+- Centered movie and series transport controls (volume, -10s, play/pause, +10s) above the bottom action pills, with aspect ratio kept on the right.
+
 ## [1.0.36]
 
 ### Changed

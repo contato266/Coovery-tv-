@@ -13,6 +13,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -1159,10 +1160,20 @@ private fun PlayerVodInfo(
         tabletControls -> 48.dp
         else -> 52.dp
     }
+    val playButtonSize = when {
+        compactControls -> 56.dp
+        tabletControls -> 60.dp
+        else -> 64.dp
+    }
     val playIconSize = when {
-        compactControls -> 42.dp
-        tabletControls -> 46.dp
-        else -> 50.dp
+        compactControls -> 30.dp
+        tabletControls -> 32.dp
+        else -> 34.dp
+    }
+    val transportClusterSpacing = when {
+        compactControls -> 10.dp
+        tabletControls -> 12.dp
+        else -> 14.dp
     }
     val seekPreviewWidth = when {
         compactControls -> 148.dp
@@ -1298,84 +1309,92 @@ private fun PlayerVodInfo(
             )
         }
 
-        Row(
+        Column(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            PlayerSeek10Button(
-                label = stringResource(R.string.player_seek_back_10),
-                contentDescription = stringResource(R.string.player_rewind),
-                onClick = onSeekBackward,
-                buttonSize = transportButtonSize,
-                modifier = Modifier.focusProperties { down = quickActionsFocusRequester }
-            )
-
-            TvClickableSurface(
-                onClick = onTogglePlayPause,
-                shape = ClickableSurfaceDefaults.shape(RoundedCornerShape(50)),
-                colors = ClickableSurfaceDefaults.colors(
-                    containerColor = Color.Transparent,
-                    focusedContainerColor = Color.White.copy(alpha = 0.12f)
-                ),
-                modifier = Modifier
-                    .size(playIconSize)
-                    .focusRequester(playButtonFocusRequester)
-                    .focusProperties { down = quickActionsFocusRequester }
-                    .semantics { contentDescription = playbackLabel }
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center
             ) {
-                Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                    if (isPlaying) {
-                        Text(
-                            text = "II",
-                            style = MaterialTheme.typography.displaySmall,
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold
-                        )
-                    } else {
-                        Icon(
-                            imageVector = Icons.Default.PlayArrow,
-                            contentDescription = stringResource(R.string.player_play),
-                            tint = Color.White,
-                            modifier = Modifier.size(playIconSize * 0.72f)
-                        )
-                    }
-                }
-            }
-
-            PlayerSeek10Button(
-                label = stringResource(R.string.player_seek_forward_10),
-                contentDescription = stringResource(R.string.player_forward),
-                onClick = onSeekForward,
-                buttonSize = transportButtonSize,
-                modifier = Modifier.focusProperties { down = quickActionsFocusRequester }
-            )
-
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                TvIconButton(onClick = onToggleMute) {
-                    Icon(
-                        imageVector = if (isMuted) Icons.Default.VolumeOff else Icons.Default.VolumeUp,
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(transportClusterSpacing),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    PlayerVodCircleButton(
+                        onClick = onToggleMute,
+                        buttonSize = transportButtonSize,
                         contentDescription = stringResource(
                             if (isMuted) R.string.player_unmute else R.string.player_mute
                         ),
-                        tint = Color.White
+                        modifier = Modifier.focusProperties { down = quickActionsFocusRequester }
+                    ) {
+                        Icon(
+                            imageVector = if (isMuted) Icons.Default.VolumeOff else Icons.Default.VolumeUp,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(transportButtonSize * 0.46f)
+                        )
+                    }
+                    PlayerSeek10Button(
+                        label = stringResource(R.string.player_seek_back_10),
+                        contentDescription = stringResource(R.string.player_rewind),
+                        onClick = onSeekBackward,
+                        buttonSize = transportButtonSize,
+                        modifier = Modifier.focusProperties { down = quickActionsFocusRequester }
+                    )
+                    PlayerVodCircleButton(
+                        onClick = onTogglePlayPause,
+                        buttonSize = playButtonSize,
+                        contentDescription = playbackLabel,
+                        modifier = Modifier
+                            .focusRequester(playButtonFocusRequester)
+                            .focusProperties { down = quickActionsFocusRequester }
+                    ) {
+                        if (isPlaying) {
+                            Text(
+                                text = "II",
+                                style = MaterialTheme.typography.titleLarge,
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Default.PlayArrow,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(playIconSize)
+                            )
+                        }
+                    }
+                    PlayerSeek10Button(
+                        label = stringResource(R.string.player_seek_forward_10),
+                        contentDescription = stringResource(R.string.player_forward),
+                        onClick = onSeekForward,
+                        buttonSize = transportButtonSize,
+                        modifier = Modifier.focusProperties { down = quickActionsFocusRequester }
                     )
                 }
-                TvIconButton(onClick = onToggleAspectRatio) {
+                PlayerVodCircleButton(
+                    onClick = onToggleAspectRatio,
+                    buttonSize = transportButtonSize,
+                    contentDescription = stringResource(R.string.player_aspect_ratio_label, aspectRatioLabel),
+                    modifier = Modifier.align(Alignment.CenterEnd)
+                ) {
                     Icon(
                         imageVector = Icons.Default.AspectRatio,
-                        contentDescription = stringResource(R.string.player_aspect_ratio_label, aspectRatioLabel),
-                        tint = Color.White
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(transportButtonSize * 0.46f)
                     )
                 }
             }
-        }
 
-        Box(
-            modifier = Modifier.fillMaxWidth(),
-            contentAlignment = Alignment.Center
-        ) {
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 bottomActions.forEachIndexed { index, action ->
                     PlayerVodActionPill(
                         label = action.label,
@@ -1400,6 +1419,33 @@ private fun PlayerVodInfo(
     }
 }
 
+@Composable
+private fun PlayerVodCircleButton(
+    onClick: () -> Unit,
+    buttonSize: androidx.compose.ui.unit.Dp,
+    contentDescription: String,
+    modifier: Modifier = Modifier,
+    content: @Composable BoxScope.() -> Unit
+) {
+    TvClickableSurface(
+        onClick = onClick,
+        shape = ClickableSurfaceDefaults.shape(RoundedCornerShape(50)),
+        colors = ClickableSurfaceDefaults.colors(
+            containerColor = Color(0xFF243B5C).copy(alpha = 0.94f),
+            focusedContainerColor = Color(0xFF31527A)
+        ),
+        modifier = modifier
+            .size(buttonSize)
+            .semantics { this.contentDescription = contentDescription }
+    ) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier.fillMaxSize(),
+            content = content
+        )
+    }
+}
+
 private data class PlayerVodActionPillSpec(
     val label: String,
     val onClick: () -> Unit
@@ -1413,25 +1459,18 @@ private fun PlayerSeek10Button(
     buttonSize: androidx.compose.ui.unit.Dp,
     modifier: Modifier = Modifier
 ) {
-    TvClickableSurface(
+    PlayerVodCircleButton(
         onClick = onClick,
-        shape = ClickableSurfaceDefaults.shape(RoundedCornerShape(50)),
-        colors = ClickableSurfaceDefaults.colors(
-            containerColor = Color.Transparent,
-            focusedContainerColor = Color.White.copy(alpha = 0.14f)
-        ),
+        buttonSize = buttonSize,
+        contentDescription = contentDescription,
         modifier = modifier
-            .size(buttonSize)
-            .semantics { this.contentDescription = contentDescription }
     ) {
-        Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelSmall,
-                color = Color.White,
-                fontWeight = FontWeight.Bold
-            )
-        }
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = Color.White,
+            fontWeight = FontWeight.Bold
+        )
     }
 }
 
