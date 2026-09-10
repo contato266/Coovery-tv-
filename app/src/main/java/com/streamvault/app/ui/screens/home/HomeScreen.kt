@@ -690,6 +690,7 @@ fun HomeScreen(
                                 playerEngine = uiState.previewPlayerEngine,
                                 isLoading = uiState.isPreviewLoading,
                                 errorMessage = uiState.previewErrorMessage,
+                                handheldMinimalChrome = true,
                                 modifier = Modifier
                                     .fillMaxSize()
                                     .padding(horizontal = 6.dp, vertical = 4.dp)

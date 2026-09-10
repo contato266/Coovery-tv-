@@ -125,7 +125,8 @@ internal fun LivePreviewPane(
     playerEngine: PlayerEngine?,
     isLoading: Boolean,
     errorMessage: String?,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    handheldMinimalChrome: Boolean = false
 ) {
     val renderSurfaceType by (playerEngine?.renderSurfaceType)?.collectAsStateWithLifecycle(
         initialValue = PlayerRenderSurfaceType.SURFACE_VIEW
@@ -133,9 +134,35 @@ internal fun LivePreviewPane(
 
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(18.dp),
-        colors = SurfaceDefaults.colors(containerColor = SurfaceElevated.copy(alpha = 0.72f))
+        shape = RoundedCornerShape(if (handheldMinimalChrome) 12.dp else 18.dp),
+        colors = SurfaceDefaults.colors(
+            containerColor = if (handheldMinimalChrome) Color.Black else SurfaceElevated.copy(alpha = 0.72f)
+        )
     ) {
+        if (handheldMinimalChrome) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black),
+                contentAlignment = Alignment.Center
+            ) {
+                if (playerEngine != null && errorMessage == null) {
+                    PlayerRenderView(
+                        playerEngine = playerEngine,
+                        resizeMode = PlayerSurfaceResizeMode.FIT,
+                        surfaceType = renderSurfaceType,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+                if (isLoading && channel != null) {
+                    CircularProgressIndicator(
+                        color = Primary,
+                        strokeWidth = 2.dp,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
+            }
+        } else {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -259,6 +286,7 @@ internal fun LivePreviewPane(
                     color = Primary
                 )
             }
+        }
         }
     }
 }

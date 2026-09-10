@@ -2,6 +2,12 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.45]
+
+### Changed
+
+- Handheld live channel preview: removed title and metadata list; video only, centered in the preview area. Android TV preview unchanged.
+
 ## [1.0.44]
 
 ### Changed
