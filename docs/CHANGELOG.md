@@ -2,6 +2,12 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.40]
+
+### Changed
+
+- Handheld UI: Netflix-style bottom bar with Início, TV ao vivo, Filmes, and Séries; transparent top bar with Coovery tv+ logo and Conta menu (Settings, Guide, EPG). Android TV unchanged.
+
 ## [1.0.39]
 
 ### Added

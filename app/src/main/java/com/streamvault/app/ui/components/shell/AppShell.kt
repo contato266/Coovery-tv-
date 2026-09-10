@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -219,49 +220,57 @@ fun AppScreenScaffold(
                 }
             }
         } else {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 12.dp, vertical = 8.dp)
-            ) {
-                if (topBarActions != null) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End,
-                        verticalAlignment = Alignment.CenterVertically,
-                        content = topBarActions
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                }
-                if (showScreenHeader) {
-                    AppScreenHeader(
-                        title = title,
-                        subtitle = subtitle,
-                        modifier = Modifier.fillMaxWidth(),
-                        compact = true
-                    )
-                    if (header != null) {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        header()
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                } else if (header != null) {
-                    header()
-                }
+            val handheldContentTopPadding = if (topBarVisible) MobileHandheldTopBarHeight else 0.dp
+            val handheldContentBottomPadding = if (topBarVisible) MobileHandheldBottomBarHeight else 0.dp
+            Box(modifier = Modifier.fillMaxSize()) {
                 Column(
                     modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth()
-                        .padding(contentPadding)
+                        .fillMaxSize()
+                        .padding(
+                            top = handheldContentTopPadding,
+                            bottom = handheldContentBottomPadding
+                        )
                 ) {
-                    content()
+                    if (showScreenHeader) {
+                        AppScreenHeader(
+                            title = title,
+                            subtitle = subtitle,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 12.dp),
+                            compact = true
+                        )
+                        if (header != null) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Column(Modifier.padding(horizontal = 12.dp)) { header() }
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                    } else if (header != null) {
+                        Column(Modifier.padding(horizontal = 12.dp)) { header() }
+                    }
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                            .padding(contentPadding)
+                    ) {
+                        content()
+                    }
                 }
                 if (topBarVisible) {
-                    MobileBottomNavigationBar(
+                    MobileHandheldTopBar(
+                        onNavigate = onNavigate,
+                        additionalActions = topBarActions,
+                        modifier = Modifier
+                            .align(Alignment.TopCenter)
+                            .fillMaxWidth()
+                            .statusBarsPadding()
+                    )
+                    MobileHandheldBottomBar(
                         currentRoute = currentRoute,
                         onNavigate = onNavigate,
                         modifier = Modifier
-                            .fillMaxWidth()
+                            .align(Alignment.BottomCenter)
                             .navigationBarsPadding()
                     )
                 }
@@ -376,71 +385,6 @@ private fun TopNavigationBar(
                     verticalAlignment = Alignment.CenterVertically,
                     content = actions
                 )
-            }
-        }
-    }
-}
-
-@Composable
-private fun MobileBottomNavigationBar(
-    currentRoute: String,
-    onNavigate: (String) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val items = rememberDestinationItems()
-    val scrollState = rememberScrollState()
-    val sounds = rememberTvInteractionSounds()
-
-    Surface(
-        modifier = modifier,
-        shape = RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp),
-        colors = SurfaceDefaults.colors(containerColor = AppColors.CinemaBlack)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(scrollState)
-                .padding(horizontal = 6.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            items.forEach { item ->
-                val selected = currentRoute.startsWith(item.route)
-                val label = stringResource(item.labelRes)
-                Surface(
-                    onClick = {
-                        sounds.playSelect()
-                        if (!selected) onNavigate(item.route)
-                    },
-                    modifier = Modifier
-                        .height(52.dp)
-                        .wrapContentWidth(),
-                    shape = ClickableSurfaceDefaults.shape(RoundedCornerShape(14.dp)),
-                    colors = ClickableSurfaceDefaults.colors(
-                        containerColor = if (selected) AppColors.BrandMuted else Color.Transparent,
-                        focusedContainerColor = AppColors.SurfaceEmphasis
-                    )
-                ) {
-                    Column(
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(2.dp)
-                    ) {
-                        Icon(
-                            imageVector = item.icon,
-                            contentDescription = label,
-                            tint = if (selected) AppColors.Brand else AppColors.TextSecondary,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Text(
-                            text = label,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = if (selected) AppColors.TextPrimary else AppColors.TextSecondary,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                }
             }
         }
     }
