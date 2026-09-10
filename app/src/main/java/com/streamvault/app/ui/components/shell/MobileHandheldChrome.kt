@@ -52,11 +52,13 @@ import androidx.tv.material3.Surface
 import com.streamvault.app.R
 import com.streamvault.app.navigation.Routes
 import com.streamvault.app.ui.design.AppColors
+import com.streamvault.app.ui.interaction.mouseClickable
 import com.streamvault.app.ui.interaction.rememberTvInteractionSounds
 
 internal val MobileHandheldTopBarHeight = 52.dp
 private val MobileHandheldBottomBarContentHeight = 58.dp
-private val MobileHandheldBottomBarVerticalMargin = 10.dp
+/** Extra lift above the system navigation bar (gesture / 3-button). */
+private val MobileHandheldBottomBarVerticalMargin = 18.dp
 private val MobileHandheldBottomBarHorizontalMargin = 18.dp
 
 /** Space reserved above the system navigation bar (floating pill + margins). */
@@ -130,7 +132,7 @@ fun MobileHandheldTopBar(
             .fillMaxWidth()
             .background(HandheldHeaderBackground)
     ) {
-        Spacer(modifier = Modifier.height(statusBarTop))
+        Spacer(modifier = Modifier.height(statusBarTop.coerceAtLeast(0.dp)))
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -154,16 +156,18 @@ fun MobileHandheldTopBar(
                     additionalActions()
                 }
                 Box {
+                    val openAccountMenu = {
+                        sounds.playSelect()
+                        accountMenuExpanded = true
+                    }
                     Surface(
-                        onClick = {
-                            sounds.playSelect()
-                            accountMenuExpanded = true
-                        },
+                        onClick = openAccountMenu,
                         shape = ClickableSurfaceDefaults.shape(RoundedCornerShape(999.dp)),
                         colors = ClickableSurfaceDefaults.colors(
                             containerColor = Color.White.copy(alpha = 0.14f),
                             focusedContainerColor = Color.White.copy(alpha = 0.22f)
-                        )
+                        ),
+                        modifier = Modifier.mouseClickable(onClick = openAccountMenu)
                     ) {
                         Text(
                             text = stringResource(R.string.nav_handheld_account),
@@ -236,11 +240,12 @@ fun MobileHandheldBottomBar(
             handheldBottomNavItems.forEach { item ->
                 val selected = isHandheldBottomTabSelected(item.route, currentRoute)
                 val label = stringResource(item.labelRes)
+                val navigateToTab = {
+                    sounds.playSelect()
+                    onNavigate(item.route)
+                }
                 Surface(
-                    onClick = {
-                        sounds.playSelect()
-                        if (!selected) onNavigate(item.route)
-                    },
+                    onClick = navigateToTab,
                     shape = ClickableSurfaceDefaults.shape(RoundedCornerShape(24.dp)),
                     colors = ClickableSurfaceDefaults.colors(
                         containerColor = if (selected) HandheldNavSelectedPill else Color.Transparent,
@@ -249,6 +254,7 @@ fun MobileHandheldBottomBar(
                     modifier = Modifier
                         .weight(1f)
                         .padding(horizontal = 2.dp)
+                        .mouseClickable(onClick = navigateToTab)
                 ) {
                     Column(
                         modifier = Modifier

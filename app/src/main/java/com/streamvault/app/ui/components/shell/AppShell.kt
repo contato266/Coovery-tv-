@@ -264,6 +264,7 @@ fun AppScreenScaffold(
                         modifier = Modifier
                             .align(Alignment.TopCenter)
                             .fillMaxWidth()
+                            .zIndex(20f)
                     )
                     MobileHandheldBottomBar(
                         currentRoute = currentRoute,
@@ -271,6 +272,8 @@ fun AppScreenScaffold(
                         modifier = Modifier
                             .align(Alignment.BottomCenter)
                             .navigationBarsPadding()
+                            .padding(bottom = 4.dp)
+                            .zIndex(20f)
                     )
                 }
             }

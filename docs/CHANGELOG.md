@@ -2,6 +2,12 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.42]
+
+### Fixed
+
+- Handheld header and bottom navigation tabs respond reliably to touch; chrome sits above content with safer insets above the system navigation bar.
+
 ## [1.0.41]
 
 ### Changed
