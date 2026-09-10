@@ -2,6 +2,12 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.46]
+
+### Changed
+
+- Handheld header: translucent black bar with extra status-bar inset, Coovery logo unchanged, account opens menu via person icon only. Android TV unchanged.
+
 ## [1.0.45]
 
 ### Changed

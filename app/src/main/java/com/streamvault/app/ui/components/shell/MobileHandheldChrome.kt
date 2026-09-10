@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
@@ -16,10 +17,12 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.DropdownMenu
@@ -56,6 +59,7 @@ import com.streamvault.app.ui.interaction.mouseClickable
 import com.streamvault.app.ui.interaction.rememberTvInteractionSounds
 
 internal val MobileHandheldTopBarHeight = 52.dp
+internal val MobileHandheldHeaderExtraTopInset = 8.dp
 private val MobileHandheldBottomBarContentHeight = 58.dp
 /** Extra lift above the system navigation bar (gesture / 3-button). */
 private val MobileHandheldBottomBarVerticalMargin = 18.dp
@@ -65,7 +69,7 @@ private val MobileHandheldBottomBarHorizontalMargin = 18.dp
 internal val MobileHandheldBottomBarReservedHeight: Dp
     get() = MobileHandheldBottomBarContentHeight + MobileHandheldBottomBarVerticalMargin * 2
 
-private val HandheldHeaderBackground = Color(0xFF0A0A0A)
+private val HandheldHeaderBackground = Color.Black.copy(alpha = 0.62f)
 private val HandheldNavPillBackground = Color(0xFF1E1E1E).copy(alpha = 0.94f)
 private val HandheldNavSelectedPill = Color.White.copy(alpha = 0.16f)
 
@@ -79,7 +83,7 @@ internal fun rememberHandheldChromeContentPadding(
         if (!topBarVisible) {
             0.dp to 0.dp
         } else {
-            val top = statusBarTop + MobileHandheldTopBarHeight
+            val top = statusBarTop + MobileHandheldHeaderExtraTopInset + MobileHandheldTopBarHeight
             val bottom = navigationBarBottom + MobileHandheldBottomBarReservedHeight
             top to bottom
         }
@@ -132,7 +136,11 @@ fun MobileHandheldTopBar(
             .fillMaxWidth()
             .background(HandheldHeaderBackground)
     ) {
-        Spacer(modifier = Modifier.height(statusBarTop.coerceAtLeast(0.dp)))
+        Spacer(
+            modifier = Modifier.height(
+                statusBarTop.coerceAtLeast(0.dp) + MobileHandheldHeaderExtraTopInset
+            )
+        )
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -160,21 +168,29 @@ fun MobileHandheldTopBar(
                         sounds.playSelect()
                         accountMenuExpanded = true
                     }
+                    val accountContentDescription = stringResource(R.string.nav_handheld_account)
                     Surface(
                         onClick = openAccountMenu,
-                        shape = ClickableSurfaceDefaults.shape(RoundedCornerShape(999.dp)),
+                        shape = ClickableSurfaceDefaults.shape(CircleShape),
                         colors = ClickableSurfaceDefaults.colors(
-                            containerColor = Color.White.copy(alpha = 0.14f),
-                            focusedContainerColor = Color.White.copy(alpha = 0.22f)
+                            containerColor = AppColors.Brand,
+                            focusedContainerColor = AppColors.Brand.copy(alpha = 0.88f)
                         ),
-                        modifier = Modifier.mouseClickable(onClick = openAccountMenu)
+                        modifier = Modifier
+                            .size(40.dp)
+                            .mouseClickable(onClick = openAccountMenu)
                     ) {
-                        Text(
-                            text = stringResource(R.string.nav_handheld_account),
-                            style = MaterialTheme.typography.labelLarge,
-                            color = AppColors.TextPrimary,
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
-                        )
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = accountContentDescription,
+                                tint = Color.White,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
                     }
                     DropdownMenu(
                         expanded = accountMenuExpanded,
