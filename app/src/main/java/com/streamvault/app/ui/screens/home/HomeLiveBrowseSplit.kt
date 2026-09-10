@@ -16,18 +16,49 @@ internal fun HomeLiveBrowseSplit(
     stacked: Boolean,
     sidebarWidth: Dp,
     modifier: Modifier = Modifier,
-    claroHandheldLayout: Boolean = false,
+    unitvHandheldLayout: Boolean = false,
+    topPreview: (@Composable () -> Unit)? = null,
     sidebar: @Composable () -> Unit,
     content: @Composable () -> Unit
 ) {
-    if (stacked) {
-        val sidebarWeight = if (claroHandheldLayout) 0.22f else 0.4f
-        val contentWeight = if (claroHandheldLayout) 0.78f else 0.6f
+    if (stacked && unitvHandheldLayout) {
+        Column(modifier = modifier.fillMaxSize()) {
+            if (topPreview != null) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(0.32f)
+                ) {
+                    topPreview()
+                }
+            }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(0.68f)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .weight(0.34f)
+                        .fillMaxHeight()
+                ) {
+                    sidebar()
+                }
+                Box(
+                    modifier = Modifier
+                        .weight(0.66f)
+                        .fillMaxHeight()
+                ) {
+                    content()
+                }
+            }
+        }
+    } else if (stacked) {
         Column(modifier = modifier.fillMaxSize()) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(sidebarWeight)
+                    .weight(0.4f)
                     .fillMaxHeight()
             ) {
                 sidebar()
@@ -35,7 +66,7 @@ internal fun HomeLiveBrowseSplit(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(contentWeight)
+                    .weight(0.6f)
                     .fillMaxHeight()
             ) {
                 content()

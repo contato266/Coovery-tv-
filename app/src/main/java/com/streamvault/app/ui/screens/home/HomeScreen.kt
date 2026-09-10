@@ -7,7 +7,6 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.grid.items
@@ -255,6 +254,24 @@ fun HomeScreen(
         uiState.showDialog || uiState.showDeleteGroupDialog ||
         uiState.showRenameGroupDialog || uiState.selectedCategoryForOptions != null ||
         isReorderMode
+
+    val handheldPreviewChannelIds = remember(uiState.filteredChannels) {
+        uiState.filteredChannels.map { it.id }
+    }
+    LaunchedEffect(
+        useHandheldStackedLayout,
+        uiState.selectedCategory?.id,
+        handheldPreviewChannelIds,
+        uiState.isLoading,
+        hasOverlay,
+        isReorderMode
+    ) {
+        if (!useHandheldStackedLayout || hasOverlay || isReorderMode || uiState.isLoading) return@LaunchedEffect
+        val firstChannel = uiState.filteredChannels.firstOrNull() ?: return@LaunchedEffect
+        if (uiState.previewChannelId != firstChannel.id) {
+            viewModel.previewChannel(firstChannel)
+        }
+    }
 
     BackHandler(enabled = hasOverlay) {
         when {
@@ -665,7 +682,22 @@ fun HomeScreen(
                 ) {
                 HomeLiveBrowseSplit(
                     stacked = useHandheldStackedLayout,
-                    claroHandheldLayout = useHandheldStackedLayout,
+                    unitvHandheldLayout = useHandheldStackedLayout,
+                    topPreview = if (useHandheldStackedLayout) {
+                        {
+                            LivePreviewPane(
+                                channel = previewChannel,
+                                playerEngine = uiState.previewPlayerEngine,
+                                isLoading = uiState.isPreviewLoading,
+                                errorMessage = uiState.previewErrorMessage,
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(horizontal = 6.dp, vertical = 4.dp)
+                            )
+                        }
+                    } else {
+                        null
+                    },
                     sidebarWidth = sidebarWidth,
                     modifier = Modifier
                         .fillMaxSize()
@@ -758,24 +790,26 @@ fun HomeScreen(
                                     )
                                 }
                             }
-                            SearchInput(
-                                value = uiState.categorySearchQuery,
-                                onValueChange = {
-                                    if (!isReorderMode) {
-                                        viewModel.updateCategorySearchQuery(it)
-                                    }
-                                },
-                                placeholder = stringResource(R.string.home_search_categories),
-                                focusRequester = categorySearchFocusRequester,
-                                modifier = Modifier.padding(bottom = 10.dp),
-                                enabled = !isReorderMode
-                            )
+                            if (!useHandheldStackedLayout) {
+                                SearchInput(
+                                    value = uiState.categorySearchQuery,
+                                    onValueChange = {
+                                        if (!isReorderMode) {
+                                            viewModel.updateCategorySearchQuery(it)
+                                        }
+                                    },
+                                    placeholder = stringResource(R.string.home_search_categories),
+                                    focusRequester = categorySearchFocusRequester,
+                                    modifier = Modifier.padding(bottom = 10.dp),
+                                    enabled = !isReorderMode
+                                )
+                            }
                             val shouldShowQuickFiltersControl = when (uiState.liveTvQuickFilterVisibilityMode) {
                                 LiveTvQuickFilterVisibilityMode.HIDE -> false
                                 LiveTvQuickFilterVisibilityMode.SHOW_WHEN_FILTERS_AVAILABLE -> uiState.savedCategoryFilters.isNotEmpty()
                                 LiveTvQuickFilterVisibilityMode.ALWAYS_VISIBLE -> true
                             }
-                            if (shouldShowQuickFiltersControl) {
+                            if (shouldShowQuickFiltersControl && !useHandheldStackedLayout) {
                                 val activeSavedFilter = uiState.activeCategoryFilter
                                 val filterSubtitle = when {
                                     uiState.categorySearchQuery.isBlank() -> {
@@ -933,36 +967,6 @@ fun HomeScreen(
                             }
                         }
 
-                        if (useHandheldStackedLayout) {
-                            LazyRow(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 8.dp),
-                                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                                contentPadding = PaddingValues(start = 10.dp, end = 10.dp, bottom = 8.dp)
-                            ) {
-                                items(
-                                    items = visibleCategories,
-                                    key = { it.id }
-                                ) { category ->
-                                    val isLocked = isCategoryLocked(category)
-                                    HandheldRoundCategoryChip(
-                                        category = category,
-                                        isSelected = category.id == uiState.selectedCategory?.id,
-                                        isLocked = isLocked,
-                                        onClick = {
-                                            if (isReorderMode) return@HandheldRoundCategoryChip
-                                            if (isLocked) {
-                                                pendingUnlockCategory = category
-                                                showPinDialog = true
-                                            } else {
-                                                viewModel.selectCategory(category)
-                                            }
-                                        }
-                                    )
-                                }
-                            }
-                        } else {
                         LazyColumn(
                             modifier = Modifier.fillMaxWidth(),
                             contentPadding = PaddingValues(bottom = 16.dp)
@@ -975,6 +979,22 @@ fun HomeScreen(
                             val isLocked = isCategoryLocked(category)
                             val categoryFocusRequester = categoryFocusRequesters.getOrPut(category.id) { FocusRequester() }
 
+                            if (useHandheldStackedLayout) {
+                                HandheldSideCategoryItem(
+                                    category = category,
+                                    isSelected = category.id == uiState.selectedCategory?.id,
+                                    isLocked = isLocked,
+                                    onClick = {
+                                        if (isReorderMode) return@HandheldSideCategoryItem
+                                        if (isLocked) {
+                                            pendingUnlockCategory = category
+                                            showPinDialog = true
+                                        } else {
+                                            viewModel.selectCategory(category)
+                                        }
+                                    }
+                                )
+                            } else {
                             CategoryItem(
                                 category = category,
                                 isSelected = category.id == uiState.selectedCategory?.id,
@@ -1030,24 +1050,12 @@ fun HomeScreen(
                                     }
                                 }
                             )
+                            }
                         }
                     }
-                        }
                 }
                     },
                     content = {
-                if (useHandheldStackedLayout) {
-                    LivePreviewPane(
-                        channel = previewChannel,
-                        playerEngine = uiState.previewPlayerEngine,
-                        isLoading = uiState.isPreviewLoading,
-                        errorMessage = uiState.previewErrorMessage,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 8.dp, vertical = 6.dp)
-                            .height(172.dp)
-                    )
-                }
                 // Content - Channel Grid / Pro Preview
                 Row(
                     modifier = Modifier.fillMaxSize(),

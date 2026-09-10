@@ -2,6 +2,12 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.44]
+
+### Changed
+
+- Handheld Live TV: Unitv-style layout with preview on top, categories in a side column, channels alongside, and automatic preview of the first channel in the list. Android TV unchanged.
+
 ## [1.0.43]
 
 ### Changed

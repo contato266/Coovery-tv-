@@ -59,8 +59,8 @@ android {
         applicationId = "com.coovery.app"
         minSdk = 25
         targetSdk = 36
-        versionCode = 44
-        versionName = "1.0.43"
+        versionCode = 45
+        versionName = "1.0.44"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         providers.gradleProperty("compatApi").orNull?.let { expectedApi ->
             testInstrumentationRunnerArguments["expected_api"] = expectedApi
