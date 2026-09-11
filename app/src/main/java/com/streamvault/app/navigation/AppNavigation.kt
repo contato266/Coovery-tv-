@@ -42,6 +42,7 @@ import com.streamvault.app.ui.screens.downloads.DownloadsScreen
 import com.streamvault.app.MainActivity
 import com.streamvault.app.device.applyHandheldBrowseOrientation
 import com.streamvault.app.device.applyHandheldPlayerOrientation
+import com.streamvault.app.device.isTelevisionDevice
 import com.streamvault.domain.model.AppLandingDestination
 import com.streamvault.domain.model.AppTopLevelDestination
 import com.streamvault.domain.model.ContentType
@@ -376,10 +377,14 @@ fun AppNavigation(mainActivity: MainActivity) {
     val currentBackStackEntry = navController.currentBackStackEntryAsState().value
     LaunchedEffect(currentBackStackEntry?.destination?.route) {
         val route = currentBackStackEntry?.destination?.route
-        if (route != null && (route == Routes.PLAYER || route.startsWith("${Routes.PLAYER}?"))) {
+        val onPlayerRoute = route != null &&
+            (route == Routes.PLAYER || route.startsWith("${Routes.PLAYER}?"))
+        if (onPlayerRoute) {
             mainActivity.applyHandheldPlayerOrientation()
+            mainActivity.setHandheldPlayerImmersiveActive(!mainActivity.isTelevisionDevice())
         } else {
             mainActivity.applyHandheldBrowseOrientation()
+            mainActivity.setHandheldPlayerImmersiveActive(false)
         }
     }
     val activeProvider = mainActivity.providerRepository.getActiveProvider()

@@ -2,6 +2,12 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.56]
+
+### Changed
+
+- Handheld player (live, movies, series): immersive full-screen playback without status/navigation bar insets; other screens unchanged. Android TV unchanged.
+
 ## [1.0.55]
 
 ### Fixed

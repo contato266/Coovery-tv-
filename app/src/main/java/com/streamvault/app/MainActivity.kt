@@ -134,6 +134,7 @@ class MainActivity : ComponentActivity() {
         _externalNavigationRequestFlow.asStateFlow()
 
     private var playerPictureInPictureState = PlayerPictureInPictureState()
+    private var handheldPlayerImmersiveActive = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         if (BuildConfig.DEBUG) {
@@ -294,9 +295,17 @@ class MainActivity : ComponentActivity() {
         return enterPlayerPictureInPictureModeIfEligible(requirePlaying = false)
     }
 
+    fun setHandheldPlayerImmersiveActive(active: Boolean) {
+        if (handheldPlayerImmersiveActive == active) return
+        handheldPlayerImmersiveActive = active
+        applyPlatformSystemUi()
+    }
+
     private fun applyPlatformSystemUi() {
         if (isTelevisionDevice()) {
             applyTelevisionImmersiveSystemUi()
+        } else if (handheldPlayerImmersiveActive) {
+            applyHandheldPlayerImmersiveSystemUi()
         } else {
             applyHandheldEdgeToEdgeSystemUi()
         }
@@ -305,6 +314,27 @@ class MainActivity : ComponentActivity() {
     @Suppress("DEPRECATION")
     private fun applyTelevisionImmersiveSystemUi() {
         val decorView = window.decorView
+        decorView.systemUiVisibility = (
+            View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                or View.SYSTEM_UI_FLAG_FULLSCREEN
+            )
+        WindowCompat.getInsetsController(window, decorView).apply {
+            systemBarsBehavior =
+                WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            hide(WindowInsetsCompat.Type.systemBars())
+        }
+    }
+
+    /** Handheld player: full-screen video under system bars (immersive). */
+    @Suppress("DEPRECATION")
+    private fun applyHandheldPlayerImmersiveSystemUi() {
+        val decorView = window.decorView
+        window.statusBarColor = android.graphics.Color.TRANSPARENT
+        window.navigationBarColor = android.graphics.Color.TRANSPARENT
         decorView.systemUiVisibility = (
             View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
                 or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
