@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -73,6 +72,8 @@ internal val MobileHandheldBottomBarReservedHeight: Dp
 
 private val HandheldNavPillBackground = Color(0xFF1E1E1E).copy(alpha = 0.94f)
 private val HandheldNavSelectedPill = Color.White.copy(alpha = 0.16f)
+/** Semi-transparent black bar behind logo/profile (status-bar zone included). */
+private val HandheldHeaderScrim = Color.Black.copy(alpha = 0.55f)
 
 @Composable
 internal fun rememberHandheldChromeContentPadding(
@@ -144,6 +145,7 @@ fun MobileHandheldTopBar(
     Column(
         modifier = modifier
             .fillMaxWidth()
+            .background(HandheldHeaderScrim)
             .statusBarsPadding()
     ) {
         Row(

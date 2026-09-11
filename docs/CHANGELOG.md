@@ -2,6 +2,16 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.49]
+
+### Changed
+
+- Handheld header: semi-transparent black scrim behind logo and profile (still below the status bar). Android TV unchanged.
+
+### Fixed
+
+- Handheld home: hide provider attention warning cards; warnings remain on Android TV.
+
 ## [1.0.48]
 
 ### Fixed

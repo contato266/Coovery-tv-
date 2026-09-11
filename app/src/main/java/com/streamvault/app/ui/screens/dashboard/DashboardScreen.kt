@@ -105,6 +105,7 @@ fun DashboardScreen(
     val recordingChannelIds by viewModel.recordingChannelIds.collectAsStateWithLifecycle()
     val scheduledChannelIds by viewModel.scheduledChannelIds.collectAsStateWithLifecycle()
     val provider = uiState.provider
+    val isTelevisionDevice = rememberIsTelevisionDevice()
     val snackbarHostState = remember { SnackbarHostState() }
     var showHomeCustomizationDialog by remember { mutableStateOf(false) }
 
@@ -168,7 +169,7 @@ fun DashboardScreen(
                         }
                     }
                 }
-                if (uiState.providerWarnings.isNotEmpty()) {
+                if (isTelevisionDevice && uiState.providerWarnings.isNotEmpty()) {
                     item(key = "provider_warnings") {
                         DashboardProviderWarningCard(
                             warnings = uiState.providerWarnings,
