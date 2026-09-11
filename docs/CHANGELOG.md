@@ -2,6 +2,12 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.51]
+
+### Changed
+
+- Handheld home: portrait hero carousel (5 cards, 3s interval, rounded corners, promo artwork) positioned below the header. Android TV carousel unchanged.
+
 ## [1.0.50]
 
 ### Changed

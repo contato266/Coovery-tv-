@@ -61,6 +61,7 @@ import com.streamvault.app.ui.components.MovieCard
 import com.streamvault.app.ui.components.rememberCrossfadeImageModel
 import com.streamvault.app.ui.components.SeriesCard
 import com.streamvault.app.ui.components.shell.AppNavigationChrome
+import com.streamvault.app.ui.components.shell.MobileHandheldTopBarHeight
 import com.streamvault.app.ui.components.shell.AppHeroHeader
 import com.streamvault.app.ui.components.shell.AppScreenScaffold
 import com.streamvault.app.ui.components.shell.StatusPill
@@ -189,7 +190,7 @@ fun DashboardScreen(
                 item(key = "home_hero_carousel") {
                     HomeHeroCarousel(
                         modifier = Modifier.padding(
-                            top = if (isTelevisionDevice) 8.dp else 0.dp,
+                            top = if (isTelevisionDevice) 8.dp else MobileHandheldTopBarHeight + 16.dp,
                             bottom = 6.dp
                         ),
                         onCardClick = { onNavigate(Routes.SERIES) }

@@ -4,6 +4,7 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -51,6 +52,8 @@ import kotlinx.coroutines.delay
 private const val HOME_CAROUSEL_CARD_COUNT = 5
 private const val HOME_CAROUSEL_AUTO_ADVANCE_MS = 3_000L
 private const val COOVERY_BANNER_ASPECT_RATIO = 2000f / 626f
+/** Portrait promo card (1200×1600) for handheld home carousel. */
+private const val HANDHELD_CAROUSEL_ASPECT_RATIO = 1200f / 1600f
 
 @DrawableRes
 private fun homeCarouselBannerRes(index: Int): Int = when (index) {
@@ -84,6 +87,10 @@ internal fun HomeHeroCarousel(
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val isTelevisionDevice = rememberIsTelevisionDevice()
+    if (!isTelevisionDevice && screenWidth < 700.dp) {
+        HandheldPortraitHeroCarousel(modifier = modifier, onCardClick = onCardClick)
+        return
+    }
     val horizontalPadding = when {
         screenWidth < 700.dp -> 16.dp
         !isTelevisionDevice && screenWidth < 1280.dp -> 20.dp
@@ -149,6 +156,50 @@ internal fun HomeHeroCarousel(
                         .clip(cardShape)
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun HandheldPortraitHeroCarousel(
+    modifier: Modifier = Modifier,
+    onCardClick: (Int) -> Unit = {}
+) {
+    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+    val horizontalPadding = 16.dp
+    val cardWidth = screenWidth - horizontalPadding * 2
+    val cardHeight = cardWidth / HANDHELD_CAROUSEL_ASPECT_RATIO
+    val cardShape = RoundedCornerShape(20.dp)
+    var currentIndex by remember { mutableIntStateOf(0) }
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(HOME_CAROUSEL_AUTO_ADVANCE_MS)
+            currentIndex = (currentIndex + 1) % HOME_CAROUSEL_CARD_COUNT
+        }
+    }
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = horizontalPadding),
+        contentAlignment = Alignment.Center
+    ) {
+        Crossfade(
+            targetState = currentIndex,
+            animationSpec = tween(durationMillis = 450),
+            label = "handheld_home_hero_carousel"
+        ) { index ->
+            Image(
+                painter = painterResource(R.drawable.coovery_handheld_carousel_promo),
+                contentDescription = stringResource(R.string.home_carousel_banner_content_description),
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .width(cardWidth)
+                    .height(cardHeight)
+                    .clip(cardShape)
+                    .clickable { onCardClick(index) }
+            )
         }
     }
 }
