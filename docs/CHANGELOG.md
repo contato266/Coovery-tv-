@@ -2,6 +2,12 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.54]
+
+### Fixed
+
+- Handheld: restore top content inset below the translucent header on all screens (status bar + toolbar). Header/footer chrome unchanged. Android TV unchanged.
+
 ## [1.0.53]
 
 ### Fixed

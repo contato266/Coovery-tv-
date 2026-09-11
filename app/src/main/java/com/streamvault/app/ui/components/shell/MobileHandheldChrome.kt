@@ -85,8 +85,12 @@ internal fun rememberHandheldChromeContentPadding(
     val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val navigationBarBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     return remember(topBarVisible, statusBarTop, navigationBarBottom) {
-        // Content scrolls under translucent header/footer chrome; never under the status bar.
-        val top = statusBarTop
+        val top = if (topBarVisible) {
+            // Every handheld screen starts below the floating header (status bar + toolbar).
+            statusBarTop + MobileHandheldTopBarHeight
+        } else {
+            statusBarTop
+        }
         top to navigationBarBottom
     }
 }
