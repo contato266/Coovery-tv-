@@ -108,6 +108,7 @@ fun DashboardScreen(
     val scheduledChannelIds by viewModel.scheduledChannelIds.collectAsStateWithLifecycle()
     val provider = uiState.provider
     val isTelevisionDevice = rememberIsTelevisionDevice()
+    val isHandheldPortraitHome = rememberHandheldPortraitHome()
     val handheldBottomScrollInset = rememberHandheldBottomScrollInset()
     val snackbarHostState = remember { SnackbarHostState() }
     var showHomeCustomizationDialog by remember { mutableStateOf(false) }
@@ -137,7 +138,7 @@ fun DashboardScreen(
                 )
                 return@AppScreenScaffold
             }
-            val orderedSections = rememberDashboardSections(uiState)
+            val orderedSections = rememberDashboardSections(uiState, isHandheldPortraitHome)
             val onContinueWatchingItemClick: (PlaybackHistory) -> Unit = { history ->
                 val rawSeriesId = history.seriesId ?: history.contentId
                 val presentedSeries = if (
@@ -258,29 +259,47 @@ fun DashboardScreen(
                         onItemClick = onContinueWatchingItemClick
                     )
 
-                    AppHomeDashboardShelf.RECENT_MOVIES -> CategoryRow(
-                        title = stringResource(R.string.dashboard_recent_movies),
-                        items = uiState.recentMovies,
-                        keySelector = { it.id },
-                        onSeeAll = { onNavigate(Routes.MOVIES) }
-                    ) { movie ->
-                        MovieCard(
-                            movie = movie,
-                            onClick = { onMovieClick(movie) }
+                    AppHomeDashboardShelf.RECENT_MOVIES -> if (isHandheldPortraitHome) {
+                        HandheldRecentMoviesShelfCarousel(
+                            title = stringResource(R.string.dashboard_handheld_recent_movies),
+                            movies = uiState.recentMovies,
+                            onSeeAll = { onNavigate(Routes.MOVIES) },
+                            onMovieClick = onMovieClick
                         )
+                    } else {
+                        CategoryRow(
+                            title = stringResource(R.string.dashboard_recent_movies),
+                            items = uiState.recentMovies,
+                            keySelector = { it.id },
+                            onSeeAll = { onNavigate(Routes.MOVIES) }
+                        ) { movie ->
+                            MovieCard(
+                                movie = movie,
+                                onClick = { onMovieClick(movie) }
+                            )
+                        }
                     }
 
-                    AppHomeDashboardShelf.RECENT_SERIES -> CategoryRow(
-                        title = stringResource(R.string.dashboard_recent_series),
-                        items = uiState.recentSeries,
-                        keySelector = { it.id },
-                        onSeeAll = { onNavigate(Routes.SERIES) }
-                    ) { series ->
-                        SeriesCard(
-                            series = series,
-                            subtitle = series.releaseDate ?: stringResource(R.string.dashboard_updated_series_badge),
-                            onClick = { onSeriesClick(series) }
+                    AppHomeDashboardShelf.RECENT_SERIES -> if (isHandheldPortraitHome) {
+                        HandheldRecentSeriesShelfCarousel(
+                            title = stringResource(R.string.dashboard_handheld_recent_series),
+                            seriesList = uiState.recentSeries,
+                            onSeeAll = { onNavigate(Routes.SERIES) },
+                            onSeriesClick = onSeriesClick
                         )
+                    } else {
+                        CategoryRow(
+                            title = stringResource(R.string.dashboard_recent_series),
+                            items = uiState.recentSeries,
+                            keySelector = { it.id },
+                            onSeeAll = { onNavigate(Routes.SERIES) }
+                        ) { series ->
+                            SeriesCard(
+                                series = series,
+                                subtitle = series.releaseDate ?: stringResource(R.string.dashboard_updated_series_badge),
+                                onClick = { onSeriesClick(series) }
+                            )
+                        }
                     }
 
                     AppHomeDashboardShelf.FAVORITE_MOVIES -> CategoryRow(
@@ -902,10 +921,21 @@ private fun EmptyDashboard(
 }
 
 @Composable
+private fun rememberHandheldPortraitHome(): Boolean {
+    val isTelevisionDevice = rememberIsTelevisionDevice()
+    val screenWidthDp = LocalConfiguration.current.screenWidthDp
+    return remember(isTelevisionDevice, screenWidthDp) {
+        !isTelevisionDevice && screenWidthDp < 700
+    }
+}
+
+@Composable
 private fun rememberDashboardSections(
-    uiState: DashboardUiState
+    uiState: DashboardUiState,
+    handheldPortraitHome: Boolean
 ): List<AppHomeDashboardShelf> {
     return remember(
+        handheldPortraitHome,
         uiState.homeDashboardShelves,
         uiState.liveShortcuts,
         uiState.favoriteChannels,
@@ -920,7 +950,7 @@ private fun rememberDashboardSections(
         uiState.topRatedMovies,
         uiState.recommendedMovies
     ) {
-        resolveVisibleDashboardShelves(uiState)
+        resolveVisibleDashboardShelves(uiState, handheldPortraitHome = handheldPortraitHome)
     }
 }
 

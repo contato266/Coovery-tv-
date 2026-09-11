@@ -47,4 +47,25 @@ class DashboardHomeShelvesTest {
             AppHomeDashboardShelf.FAVORITE_MOVIES
         ).inOrder()
     }
+
+    @Test
+    fun `handheld reorder places recent movies and series above recent channels`() {
+        val shelves = listOf(
+            AppHomeDashboardShelf.FAVORITE_CHANNELS,
+            AppHomeDashboardShelf.RECENT_CHANNELS,
+            AppHomeDashboardShelf.CONTINUE_WATCHING,
+            AppHomeDashboardShelf.RECENT_MOVIES,
+            AppHomeDashboardShelf.RECENT_SERIES
+        )
+
+        val reordered = reorderHandheldRecentShelvesAboveChannels(shelves)
+
+        assertThat(reordered).containsExactly(
+            AppHomeDashboardShelf.FAVORITE_CHANNELS,
+            AppHomeDashboardShelf.CONTINUE_WATCHING,
+            AppHomeDashboardShelf.RECENT_MOVIES,
+            AppHomeDashboardShelf.RECENT_SERIES,
+            AppHomeDashboardShelf.RECENT_CHANNELS
+        ).inOrder()
+    }
 }

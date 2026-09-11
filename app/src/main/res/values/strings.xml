@@ -119,6 +119,8 @@
     <string name="dashboard_favorite_series">Favorite Series</string>
     <string name="dashboard_recent_movies">Recently Added Movies</string>
     <string name="dashboard_recent_series">Recently Updated Series</string>
+    <string name="dashboard_handheld_recent_movies">Play it — it\'s on Coovery</string>
+    <string name="dashboard_handheld_recent_series">Your series on Coovery</string>
     <string name="dashboard_top_rated_movies">Top Rated Movies</string>
     <string name="dashboard_recommended_movies">Recommended Movies</string>
     <string name="dashboard_search_library">Search Library</string>

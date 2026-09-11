@@ -2,6 +2,12 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.58]
+
+### Changed
+
+- Handheld home: recent movies/series shelves use centered peek carousels with new titles; both shelves ordered above recent channels. Android TV unchanged.
+
 ## [1.0.57]
 
 ### Changed

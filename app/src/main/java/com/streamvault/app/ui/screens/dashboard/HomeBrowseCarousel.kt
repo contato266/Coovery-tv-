@@ -48,6 +48,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.annotation.DrawableRes
@@ -57,10 +58,17 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.streamvault.app.R
 import com.streamvault.app.device.rememberIsTelevisionDevice
+import com.streamvault.app.ui.components.MovieCard
+import com.streamvault.app.ui.components.SeriesCard
 import com.streamvault.app.ui.components.shell.AppSectionHeader
 import com.streamvault.app.ui.design.AppColors
 import com.streamvault.app.ui.interaction.TvClickableSurface
+import com.streamvault.app.ui.theme.OnSurface
+import com.streamvault.app.ui.theme.Primary
+import com.streamvault.app.ui.theme.SurfaceElevated
 import com.streamvault.domain.model.Category
+import com.streamvault.domain.model.Movie
+import com.streamvault.domain.model.Series
 import kotlinx.coroutines.delay
 import kotlin.math.absoluteValue
 
@@ -73,6 +81,8 @@ private const val HANDHELD_CAROUSEL_VIRTUAL_PAGE_COUNT = 10_000
 private const val HANDHELD_CAROUSEL_CENTERED_WIDTH_FRACTION = 0.72f
 private const val HANDHELD_CAROUSEL_SIDE_SCALE = 0.88f
 private const val HANDHELD_CAROUSEL_SIDE_ALPHA = 0.78f
+private const val HANDHELD_POSTER_WIDTH_HEIGHT_RATIO = 136f / 204f
+private const val HANDHELD_SHELF_POSTER_WIDTH_FRACTION = 0.64f
 
 @DrawableRes
 private fun homeCarouselBannerRes(index: Int): Int = when (index) {
@@ -184,54 +194,214 @@ private fun HandheldPortraitHeroCarousel(
     modifier: Modifier = Modifier,
     onCardClick: (Int) -> Unit = {}
 ) {
-    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
-    val pageWidth = screenWidth * HANDHELD_CAROUSEL_CENTERED_WIDTH_FRACTION
-    val sidePeekPadding = (screenWidth - pageWidth) / 2
-    val pageHeight = pageWidth / HANDHELD_CAROUSEL_ASPECT_RATIO
-    val pagerViewportHeight = pageHeight * 1.06f
     val cardShape = RoundedCornerShape(18.dp)
-    val pageCount = HOME_CAROUSEL_CARD_COUNT
+    HandheldCenteredPeekCarousel(
+        itemCount = HOME_CAROUSEL_CARD_COUNT,
+        widthHeightRatio = HANDHELD_CAROUSEL_ASPECT_RATIO,
+        modifier = modifier,
+        widthFraction = HANDHELD_CAROUSEL_CENTERED_WIDTH_FRACTION,
+        autoAdvance = true,
+        pagerExtraHeightFraction = 1.06f
+    ) { index, pageWidth, pageHeight, scale, alpha ->
+        Image(
+            painter = painterResource(R.drawable.coovery_handheld_carousel_promo),
+            contentDescription = stringResource(R.string.home_carousel_banner_content_description),
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .width(pageWidth)
+                .height(pageHeight)
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                    this.alpha = alpha
+                }
+                .clip(cardShape)
+                .clickable { onCardClick(index) }
+        )
+    }
+}
+
+@Composable
+internal fun HandheldRecentMoviesShelfCarousel(
+    title: String,
+    movies: List<Movie>,
+    onSeeAll: () -> Unit,
+    onMovieClick: (Movie) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    if (movies.isEmpty()) return
+    Column(modifier = modifier.fillMaxWidth()) {
+        HandheldDashboardShelfHeader(title = title, onSeeAll = onSeeAll)
+        HandheldCenteredPeekCarousel(
+            itemCount = movies.size,
+            widthHeightRatio = HANDHELD_POSTER_WIDTH_HEIGHT_RATIO,
+            widthFraction = HANDHELD_SHELF_POSTER_WIDTH_FRACTION,
+            pagerExtraHeightFraction = 1.12f
+        ) { index, pageWidth, pageHeight, scale, alpha ->
+            Box(
+                modifier = Modifier.graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                    this.alpha = alpha
+                }
+            ) {
+                MovieCard(
+                    movie = movies[index],
+                    onClick = { onMovieClick(movies[index]) },
+                    width = pageWidth,
+                    height = pageHeight
+                )
+            }
+        }
+    }
+}
+
+@Composable
+internal fun HandheldRecentSeriesShelfCarousel(
+    title: String,
+    seriesList: List<Series>,
+    onSeeAll: () -> Unit,
+    onSeriesClick: (Series) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val updatedBadge = stringResource(R.string.dashboard_updated_series_badge)
+    if (seriesList.isEmpty()) return
+    Column(modifier = modifier.fillMaxWidth()) {
+        HandheldDashboardShelfHeader(title = title, onSeeAll = onSeeAll)
+        HandheldCenteredPeekCarousel(
+            itemCount = seriesList.size,
+            widthHeightRatio = HANDHELD_POSTER_WIDTH_HEIGHT_RATIO,
+            widthFraction = HANDHELD_SHELF_POSTER_WIDTH_FRACTION,
+            pagerExtraHeightFraction = 1.12f
+        ) { index, pageWidth, pageHeight, scale, alpha ->
+            val series = seriesList[index]
+            Box(
+                modifier = Modifier.graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                    this.alpha = alpha
+                }
+            ) {
+                SeriesCard(
+                    series = series,
+                    subtitle = series.releaseDate ?: updatedBadge,
+                    onClick = { onSeriesClick(series) },
+                    width = pageWidth,
+                    height = pageHeight
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun HandheldDashboardShelfHeader(
+    title: String,
+    onSeeAll: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(start = 20.dp, end = 20.dp, top = 14.dp, bottom = 6.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        AppSectionHeader(title = title)
+        Text(
+            text = stringResource(R.string.category_see_all),
+            modifier = Modifier
+                .clip(RoundedCornerShape(999.dp))
+                .background(SurfaceElevated)
+                .clickable(onClick = onSeeAll)
+                .padding(horizontal = 12.dp, vertical = 7.dp),
+            style = MaterialTheme.typography.labelMedium,
+            color = Primary
+        )
+    }
+}
+
+@Composable
+private fun HandheldCenteredPeekCarousel(
+    itemCount: Int,
+    widthHeightRatio: Float,
+    modifier: Modifier = Modifier,
+    widthFraction: Float = HANDHELD_CAROUSEL_CENTERED_WIDTH_FRACTION,
+    pageSpacing: Dp = 10.dp,
+    autoAdvance: Boolean = false,
+    showIndicators: Boolean = true,
+    pagerExtraHeightFraction: Float = 1.06f,
+    content: @Composable (
+        index: Int,
+        pageWidth: Dp,
+        pageHeight: Dp,
+        scale: Float,
+        alpha: Float
+    ) -> Unit
+) {
+    if (itemCount <= 0) return
+    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+    val pageWidth = screenWidth * widthFraction
+    val sidePeekPadding = (screenWidth - pageWidth) / 2
+    val pageHeight = pageWidth / widthHeightRatio
+    val pagerViewportHeight = pageHeight * pagerExtraHeightFraction
+
+    if (itemCount == 1) {
+        Column(
+            modifier = modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(pagerViewportHeight),
+                contentAlignment = Alignment.Center
+            ) {
+                content(0, pageWidth, pageHeight, 1f, 1f)
+            }
+        }
+        return
+    }
+
     val virtualPageCount = HANDHELD_CAROUSEL_VIRTUAL_PAGE_COUNT
     val pagerState = rememberPagerState(
         initialPage = virtualPageCount / 2,
         pageCount = { virtualPageCount }
     )
-    val activeIndex by remember {
-        derivedStateOf { pagerState.currentPage % pageCount }
-    }
     val indicatorProgress by remember {
         derivedStateOf {
-            val logical = pagerState.currentPage % pageCount
+            val logical = pagerState.currentPage % itemCount
             val fraction = pagerState.currentPageOffsetFraction
             if (fraction >= 0f) {
-                (logical + fraction) % pageCount.toFloat()
+                (logical + fraction) % itemCount.toFloat()
             } else {
-                (logical + fraction + pageCount) % pageCount.toFloat()
+                (logical + fraction + itemCount) % itemCount.toFloat()
             }
         }
     }
 
-    LaunchedEffect(pagerState, pageCount, virtualPageCount) {
+    LaunchedEffect(pagerState, itemCount, virtualPageCount) {
         snapshotFlow { pagerState.currentPage }
             .distinctUntilChanged()
             .collect { page ->
-                val buffer = pageCount * 12
+                val buffer = itemCount * 12
                 val center = virtualPageCount / 2
                 if (page < buffer || page > virtualPageCount - buffer) {
-                    val logical = page % pageCount
+                    val logical = page % itemCount
                     pagerState.scrollToPage(center + logical)
                 }
             }
     }
 
-    LaunchedEffect(pagerState) {
-        while (true) {
-            delay(HOME_CAROUSEL_AUTO_ADVANCE_MS)
-            if (!pagerState.isScrollInProgress) {
-                pagerState.animateScrollToPage(
-                    page = pagerState.currentPage + 1,
-                    animationSpec = tween(durationMillis = 420, easing = FastOutSlowInEasing)
-                )
+    if (autoAdvance) {
+        LaunchedEffect(pagerState) {
+            while (true) {
+                delay(HOME_CAROUSEL_AUTO_ADVANCE_MS)
+                if (!pagerState.isScrollInProgress) {
+                    pagerState.animateScrollToPage(
+                        page = pagerState.currentPage + 1,
+                        animationSpec = tween(durationMillis = 420, easing = FastOutSlowInEasing)
+                    )
+                }
             }
         }
     }
@@ -246,46 +416,39 @@ private fun HandheldPortraitHeroCarousel(
                 .fillMaxWidth()
                 .height(pagerViewportHeight),
             contentPadding = PaddingValues(horizontal = sidePeekPadding),
-            pageSpacing = 10.dp,
+            pageSpacing = pageSpacing,
             beyondViewportPageCount = 2,
             pageSize = PageSize.Fixed(pageWidth),
             verticalAlignment = Alignment.CenterVertically
         ) { page ->
-            val index = page % pageCount
+            val index = page % itemCount
             val pageOffset = ((pagerState.currentPage - page) + pagerState.currentPageOffsetFraction)
                 .absoluteValue
                 .coerceIn(0f, 1f)
             val scale = lerp(1f, HANDHELD_CAROUSEL_SIDE_SCALE, pageOffset)
             val alpha = lerp(1f, HANDHELD_CAROUSEL_SIDE_ALPHA, pageOffset)
-            Image(
-                painter = painterResource(R.drawable.coovery_handheld_carousel_promo),
-                contentDescription = stringResource(R.string.home_carousel_banner_content_description),
-                contentScale = ContentScale.Crop,
+            Box(
                 modifier = Modifier
                     .width(pageWidth)
-                    .height(pageHeight)
-                    .graphicsLayer {
-                        scaleX = scale
-                        scaleY = scale
-                        this.alpha = alpha
-                    }
-                    .clip(cardShape)
-                    .clickable { onCardClick(index) }
+                    .height(pageHeight),
+                contentAlignment = Alignment.Center
+            ) {
+                content(index, pageWidth, pageHeight, scale, alpha)
+            }
+        }
+        if (showIndicators) {
+            Spacer(modifier = Modifier.height(12.dp))
+            HandheldCarouselPageIndicators(
+                pageCount = itemCount,
+                scrollProgress = indicatorProgress
             )
         }
-        Spacer(modifier = Modifier.height(12.dp))
-        HandheldCarouselPageIndicators(
-            pageCount = pageCount,
-            activeIndex = activeIndex,
-            scrollProgress = indicatorProgress
-        )
     }
 }
 
 @Composable
 private fun HandheldCarouselPageIndicators(
     pageCount: Int,
-    activeIndex: Int,
     scrollProgress: Float,
     modifier: Modifier = Modifier
 ) {
