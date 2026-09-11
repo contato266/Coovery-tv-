@@ -2,6 +2,13 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.52]
+
+### Changed
+
+- Handheld home carousel: infinite centered pager with side peek and page indicators (print-2 style).
+- Handheld shell: all screens reserve space below the header (status bar + toolbar). Android TV unchanged.
+
 ## [1.0.51]
 
 ### Changed

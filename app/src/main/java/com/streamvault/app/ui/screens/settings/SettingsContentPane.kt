@@ -47,7 +47,7 @@ internal fun SettingsContentPane(
             .imePadding(),
         contentPadding = PaddingValues(
             start = 20.dp,
-            top = if (handheldLayout) 12.dp else 76.dp,
+            top = if (handheldLayout) 0.dp else 76.dp,
             end = 20.dp,
             bottom = 32.dp
         ),

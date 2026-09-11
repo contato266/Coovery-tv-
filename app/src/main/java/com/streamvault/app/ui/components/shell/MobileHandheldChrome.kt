@@ -87,8 +87,9 @@ internal fun rememberHandheldChromeContentPadding(
         if (!topBarVisible) {
             statusBarTop to bottom
         } else {
-            // Content may scroll under the transparent header; never under the status bar.
-            statusBarTop to bottom
+            // All handheld screens start below the floating header (never under the status bar).
+            val top = statusBarTop + MobileHandheldTopBarHeight
+            top to bottom
         }
     }
 }
