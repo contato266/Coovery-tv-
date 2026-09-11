@@ -2,6 +2,12 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.47]
+
+### Changed
+
+- Handheld header only: fully transparent overlay on content, logo left and account (person) right, status-bar insets via WindowInsets (edge-to-edge). Android TV unchanged.
+
 ## [1.0.46]
 
 ### Changed

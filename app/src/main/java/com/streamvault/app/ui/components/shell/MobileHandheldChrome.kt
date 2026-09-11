@@ -8,15 +8,18 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -59,7 +62,6 @@ import com.streamvault.app.ui.interaction.mouseClickable
 import com.streamvault.app.ui.interaction.rememberTvInteractionSounds
 
 internal val MobileHandheldTopBarHeight = 52.dp
-internal val MobileHandheldHeaderExtraTopInset = 8.dp
 private val MobileHandheldBottomBarContentHeight = 58.dp
 /** Extra lift above the system navigation bar (gesture / 3-button). */
 private val MobileHandheldBottomBarVerticalMargin = 18.dp
@@ -69,7 +71,6 @@ private val MobileHandheldBottomBarHorizontalMargin = 18.dp
 internal val MobileHandheldBottomBarReservedHeight: Dp
     get() = MobileHandheldBottomBarContentHeight + MobileHandheldBottomBarVerticalMargin * 2
 
-private val HandheldHeaderBackground = Color.Black.copy(alpha = 0.62f)
 private val HandheldNavPillBackground = Color(0xFF1E1E1E).copy(alpha = 0.94f)
 private val HandheldNavSelectedPill = Color.White.copy(alpha = 0.16f)
 
@@ -83,10 +84,19 @@ internal fun rememberHandheldChromeContentPadding(
         if (!topBarVisible) {
             0.dp to 0.dp
         } else {
-            val top = statusBarTop + MobileHandheldHeaderExtraTopInset + MobileHandheldTopBarHeight
+            // Header overlays content; only reserve space for the bottom chrome.
             val bottom = navigationBarBottom + MobileHandheldBottomBarReservedHeight
-            top to bottom
+            0.dp to bottom
         }
+    }
+}
+
+/** Total height of the floating mobile header (status bar + toolbar) for optional content padding. */
+@Composable
+internal fun rememberHandheldHeaderOverlayHeight(): Dp {
+    val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    return remember(statusBarTop) {
+        statusBarTop + MobileHandheldTopBarHeight
     }
 }
 
@@ -130,25 +140,15 @@ fun MobileHandheldTopBar(
     var accountMenuExpanded by remember { mutableStateOf(false) }
     val sounds = rememberTvInteractionSounds()
 
-    val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-    Column(
+    Row(
         modifier = modifier
             .fillMaxWidth()
-            .background(HandheldHeaderBackground)
+            .windowInsetsPadding(WindowInsets.statusBars.only(WindowInsetsSides.Top))
+            .heightIn(min = MobileHandheldTopBarHeight)
+            .padding(horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Spacer(
-            modifier = Modifier.height(
-                statusBarTop.coerceAtLeast(0.dp) + MobileHandheldHeaderExtraTopInset
-            )
-        )
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(MobileHandheldTopBarHeight)
-                .padding(horizontal = 16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
             Image(
                 painter = painterResource(R.drawable.coovery_brand_logo),
                 contentDescription = stringResource(R.string.app_name),
@@ -221,7 +221,6 @@ fun MobileHandheldTopBar(
                 }
             }
         }
-    }
 }
 
 @Composable
