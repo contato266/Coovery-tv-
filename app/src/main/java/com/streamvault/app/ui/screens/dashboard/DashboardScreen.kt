@@ -188,7 +188,10 @@ fun DashboardScreen(
                 }
                 item(key = "home_hero_carousel") {
                     HomeHeroCarousel(
-                        modifier = Modifier.padding(top = 8.dp, bottom = 6.dp),
+                        modifier = Modifier.padding(
+                            top = if (isTelevisionDevice) 8.dp else 0.dp,
+                            bottom = 6.dp
+                        ),
                         onCardClick = { onNavigate(Routes.SERIES) }
                     )
                 }

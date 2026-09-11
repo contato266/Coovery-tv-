@@ -2,6 +2,12 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.50]
+
+### Changed
+
+- Handheld header: Netflix-style translucent black gradient; scrollable content passes under the header but stays below the system status bar (WindowInsets). Android TV unchanged.
+
 ## [1.0.49]
 
 ### Changed

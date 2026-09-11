@@ -39,6 +39,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
@@ -72,8 +73,8 @@ internal val MobileHandheldBottomBarReservedHeight: Dp
 
 private val HandheldNavPillBackground = Color(0xFF1E1E1E).copy(alpha = 0.94f)
 private val HandheldNavSelectedPill = Color.White.copy(alpha = 0.16f)
-/** Semi-transparent black bar behind logo/profile (status-bar zone included). */
-private val HandheldHeaderScrim = Color.Black.copy(alpha = 0.55f)
+/** Fade height for the floating header scrim (content scrolls underneath). */
+private val HandheldHeaderGradientHeight = 120.dp
 
 @Composable
 internal fun rememberHandheldChromeContentPadding(
@@ -86,9 +87,8 @@ internal fun rememberHandheldChromeContentPadding(
         if (!topBarVisible) {
             statusBarTop to bottom
         } else {
-            // Status bar → header → content (content must not draw under the status bar).
-            val top = statusBarTop + MobileHandheldTopBarHeight
-            top to bottom
+            // Content may scroll under the transparent header; never under the status bar.
+            statusBarTop to bottom
         }
     }
 }
@@ -142,12 +142,26 @@ fun MobileHandheldTopBar(
     var accountMenuExpanded by remember { mutableStateOf(false) }
     val sounds = rememberTvInteractionSounds()
 
-    Column(
+    Box(
         modifier = modifier
             .fillMaxWidth()
-            .background(HandheldHeaderScrim)
             .statusBarsPadding()
     ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(HandheldHeaderGradientHeight)
+                .align(Alignment.TopCenter)
+                .background(
+                    Brush.verticalGradient(
+                        colorStops = arrayOf(
+                            0f to Color.Black.copy(alpha = 0.72f),
+                            0.55f to Color.Black.copy(alpha = 0.28f),
+                            1f to Color.Transparent
+                        )
+                    )
+                )
+        )
         Row(
             modifier = Modifier
                 .fillMaxWidth()
