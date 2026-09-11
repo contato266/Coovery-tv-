@@ -1,7 +1,9 @@
 package com.streamvault.app.ui.screens.dashboard
 
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -18,6 +20,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.lazy.LazyRow
@@ -36,6 +39,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.util.lerp
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
@@ -57,6 +62,7 @@ import com.streamvault.app.ui.design.AppColors
 import com.streamvault.app.ui.interaction.TvClickableSurface
 import com.streamvault.domain.model.Category
 import kotlinx.coroutines.delay
+import kotlin.math.absoluteValue
 
 private const val HOME_CAROUSEL_CARD_COUNT = 5
 private const val HOME_CAROUSEL_AUTO_ADVANCE_MS = 3_000L
@@ -64,7 +70,9 @@ private const val COOVERY_BANNER_ASPECT_RATIO = 2000f / 626f
 /** Portrait promo card (1200×1600) for handheld home carousel. */
 private const val HANDHELD_CAROUSEL_ASPECT_RATIO = 1200f / 1600f
 private const val HANDHELD_CAROUSEL_VIRTUAL_PAGE_COUNT = 10_000
-private const val HANDHELD_CAROUSEL_CENTERED_WIDTH_FRACTION = 0.68f
+private const val HANDHELD_CAROUSEL_CENTERED_WIDTH_FRACTION = 0.72f
+private const val HANDHELD_CAROUSEL_SIDE_SCALE = 0.88f
+private const val HANDHELD_CAROUSEL_SIDE_ALPHA = 0.78f
 
 @DrawableRes
 private fun homeCarouselBannerRes(index: Int): Int = when (index) {
@@ -177,10 +185,11 @@ private fun HandheldPortraitHeroCarousel(
     onCardClick: (Int) -> Unit = {}
 ) {
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
-    val cardWidth = screenWidth * HANDHELD_CAROUSEL_CENTERED_WIDTH_FRACTION
-    val sidePeekPadding = (screenWidth - cardWidth) / 2
-    val cardHeight = cardWidth / HANDHELD_CAROUSEL_ASPECT_RATIO
-    val cardShape = RoundedCornerShape(20.dp)
+    val pageWidth = screenWidth * HANDHELD_CAROUSEL_CENTERED_WIDTH_FRACTION
+    val sidePeekPadding = (screenWidth - pageWidth) / 2
+    val pageHeight = pageWidth / HANDHELD_CAROUSEL_ASPECT_RATIO
+    val pagerViewportHeight = pageHeight * 1.06f
+    val cardShape = RoundedCornerShape(18.dp)
     val pageCount = HOME_CAROUSEL_CARD_COUNT
     val virtualPageCount = HANDHELD_CAROUSEL_VIRTUAL_PAGE_COUNT
     val pagerState = rememberPagerState(
@@ -189,6 +198,17 @@ private fun HandheldPortraitHeroCarousel(
     )
     val activeIndex by remember {
         derivedStateOf { pagerState.currentPage % pageCount }
+    }
+    val indicatorProgress by remember {
+        derivedStateOf {
+            val logical = pagerState.currentPage % pageCount
+            val fraction = pagerState.currentPageOffsetFraction
+            if (fraction >= 0f) {
+                (logical + fraction) % pageCount.toFloat()
+            } else {
+                (logical + fraction + pageCount) % pageCount.toFloat()
+            }
+        }
     }
 
     LaunchedEffect(pagerState, pageCount, virtualPageCount) {
@@ -207,8 +227,12 @@ private fun HandheldPortraitHeroCarousel(
     LaunchedEffect(pagerState) {
         while (true) {
             delay(HOME_CAROUSEL_AUTO_ADVANCE_MS)
-            val nextPage = pagerState.currentPage + 1
-            pagerState.animateScrollToPage(nextPage)
+            if (!pagerState.isScrollInProgress) {
+                pagerState.animateScrollToPage(
+                    page = pagerState.currentPage + 1,
+                    animationSpec = tween(durationMillis = 420, easing = FastOutSlowInEasing)
+                )
+            }
         }
     }
 
@@ -220,19 +244,31 @@ private fun HandheldPortraitHeroCarousel(
             state = pagerState,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(cardHeight),
+                .height(pagerViewportHeight),
             contentPadding = PaddingValues(horizontal = sidePeekPadding),
-            pageSpacing = 12.dp,
-            beyondViewportPageCount = 2
+            pageSpacing = 10.dp,
+            beyondViewportPageCount = 2,
+            pageSize = PageSize.Fixed(pageWidth),
+            verticalAlignment = Alignment.CenterVertically
         ) { page ->
             val index = page % pageCount
+            val pageOffset = ((pagerState.currentPage - page) + pagerState.currentPageOffsetFraction)
+                .absoluteValue
+                .coerceIn(0f, 1f)
+            val scale = lerp(1f, HANDHELD_CAROUSEL_SIDE_SCALE, pageOffset)
+            val alpha = lerp(1f, HANDHELD_CAROUSEL_SIDE_ALPHA, pageOffset)
             Image(
                 painter = painterResource(R.drawable.coovery_handheld_carousel_promo),
                 contentDescription = stringResource(R.string.home_carousel_banner_content_description),
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(cardHeight)
+                    .width(pageWidth)
+                    .height(pageHeight)
+                    .graphicsLayer {
+                        scaleX = scale
+                        scaleY = scale
+                        this.alpha = alpha
+                    }
                     .clip(cardShape)
                     .clickable { onCardClick(index) }
             )
@@ -240,7 +276,8 @@ private fun HandheldPortraitHeroCarousel(
         Spacer(modifier = Modifier.height(12.dp))
         HandheldCarouselPageIndicators(
             pageCount = pageCount,
-            activeIndex = activeIndex
+            activeIndex = activeIndex,
+            scrollProgress = indicatorProgress
         )
     }
 }
@@ -249,6 +286,7 @@ private fun HandheldPortraitHeroCarousel(
 private fun HandheldCarouselPageIndicators(
     pageCount: Int,
     activeIndex: Int,
+    scrollProgress: Float,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -257,16 +295,26 @@ private fun HandheldCarouselPageIndicators(
         verticalAlignment = Alignment.CenterVertically
     ) {
         repeat(pageCount) { index ->
-            val selected = index == activeIndex
+            val distance = minOf(
+                (index - scrollProgress).absoluteValue,
+                (index - scrollProgress + pageCount).absoluteValue,
+                (index - scrollProgress - pageCount).absoluteValue
+            )
+            val emphasis = (1f - distance).coerceIn(0f, 1f)
+            val targetWidth = lerp(6f, 18f, emphasis)
+            val animatedWidth by animateDpAsState(
+                targetValue = targetWidth.dp,
+                animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing),
+                label = "handheld_carousel_indicator_width_$index"
+            )
+            val dotAlpha = lerp(0.35f, 1f, emphasis)
             Box(
                 modifier = Modifier
                     .padding(horizontal = 3.dp)
                     .height(6.dp)
-                    .width(if (selected) 18.dp else 6.dp)
-                    .clip(if (selected) RoundedCornerShape(3.dp) else CircleShape)
-                    .background(
-                        if (selected) Color.White else Color.White.copy(alpha = 0.35f)
-                    )
+                    .width(animatedWidth)
+                    .clip(RoundedCornerShape(3.dp))
+                    .background(Color.White.copy(alpha = dotAlpha))
             )
         }
     }

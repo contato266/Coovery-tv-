@@ -2,6 +2,12 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.57]
+
+### Changed
+
+- Handheld home hero carousel: centered snap pager with side peek, scaled neighbors, swipe animation, and animated page indicators (reference-style). Android TV unchanged.
+
 ## [1.0.56]
 
 ### Changed
