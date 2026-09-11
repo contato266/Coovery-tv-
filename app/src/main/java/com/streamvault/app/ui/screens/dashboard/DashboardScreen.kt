@@ -63,6 +63,7 @@ import com.streamvault.app.ui.components.SeriesCard
 import com.streamvault.app.ui.components.shell.AppNavigationChrome
 import com.streamvault.app.ui.components.shell.AppHeroHeader
 import com.streamvault.app.ui.components.shell.AppScreenScaffold
+import com.streamvault.app.ui.components.shell.MobileHandheldTopBarHeight
 import com.streamvault.app.ui.components.shell.rememberHandheldBottomScrollInset
 import com.streamvault.app.ui.components.shell.StatusPill
 import com.streamvault.app.ui.design.AppColors
@@ -126,7 +127,8 @@ fun DashboardScreen(
             subtitle = provider?.name,
             navigationChrome = AppNavigationChrome.TopBar,
             compactHeader = true,
-            showScreenHeader = false
+            showScreenHeader = false,
+            handheldContentScrollsUnderHeader = true
         ) {
             if (provider == null) {
                 EmptyDashboard(
@@ -158,6 +160,7 @@ fun DashboardScreen(
             androidx.compose.foundation.lazy.LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(
+                    top = if (isTelevisionDevice) 0.dp else MobileHandheldTopBarHeight,
                     bottom = if (isTelevisionDevice) 28.dp else handheldBottomScrollInset + 12.dp
                 )
             ) {

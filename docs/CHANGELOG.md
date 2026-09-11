@@ -2,6 +2,12 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.55]
+
+### Fixed
+
+- Handheld home: scroll under translucent header (to status bar only); other screens keep layout below header. Footer area around nav pill uses solid black again. Android TV unchanged.
+
 ## [1.0.54]
 
 ### Fixed

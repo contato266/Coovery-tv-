@@ -76,20 +76,18 @@ private val HandheldNavPillBackground = Color(0xFF1E1E1E).copy(alpha = 0.94f)
 private val HandheldNavSelectedPill = Color.White.copy(alpha = 0.16f)
 /** Fade height below the status bar for the floating header scrim. */
 private val HandheldHeaderGradientHeight = 96.dp
-private val HandheldFooterGradientHeight = 120.dp
-
 @Composable
 internal fun rememberHandheldChromeContentPadding(
-    topBarVisible: Boolean
+    topBarVisible: Boolean,
+    contentScrollsUnderHeader: Boolean = false
 ): Pair<Dp, Dp> {
     val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val navigationBarBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-    return remember(topBarVisible, statusBarTop, navigationBarBottom) {
-        val top = if (topBarVisible) {
-            // Every handheld screen starts below the floating header (status bar + toolbar).
-            statusBarTop + MobileHandheldTopBarHeight
-        } else {
-            statusBarTop
+    return remember(topBarVisible, contentScrollsUnderHeader, statusBarTop, navigationBarBottom) {
+        val top = when {
+            !topBarVisible -> statusBarTop
+            contentScrollsUnderHeader -> statusBarTop
+            else -> statusBarTop + MobileHandheldTopBarHeight
         }
         top to navigationBarBottom
     }
@@ -264,23 +262,14 @@ fun MobileHandheldBottomBar(
     val sounds = rememberTvInteractionSounds()
     val pillShape = RoundedCornerShape(32.dp)
     val navigationBarBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-    val footerScrimHeight = HandheldFooterGradientHeight + navigationBarBottom
-
+    val footerBlackHeight = MobileHandheldBottomBarReservedHeight + navigationBarBottom
     Box(modifier = modifier.fillMaxWidth()) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(footerScrimHeight)
+                .height(footerBlackHeight)
                 .align(Alignment.BottomCenter)
-                .background(
-                    Brush.verticalGradient(
-                        colorStops = arrayOf(
-                            0f to Color.Transparent,
-                            0.45f to Color.Black.copy(alpha = 0.32f),
-                            1f to Color.Black.copy(alpha = 0.78f)
-                        )
-                    )
-                )
+                .background(Color.Black)
         )
         Box(
             modifier = Modifier

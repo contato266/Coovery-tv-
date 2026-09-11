@@ -119,6 +119,7 @@ fun AppScreenScaffold(
     header: (@Composable ColumnScope.() -> Unit)? = null,
     topBarActions: (@Composable RowScope.() -> Unit)? = null,
     contentPadding: PaddingValues = PaddingValues(),
+    handheldContentScrollsUnderHeader: Boolean = false,
     content: @Composable ColumnScope.() -> Unit
 ) {
     val spacing = LocalAppSpacing.current
@@ -221,7 +222,10 @@ fun AppScreenScaffold(
             }
         } else {
             val (handheldContentTopPadding, _) =
-                rememberHandheldChromeContentPadding(topBarVisible)
+                rememberHandheldChromeContentPadding(
+                    topBarVisible = topBarVisible,
+                    contentScrollsUnderHeader = handheldContentScrollsUnderHeader
+                )
             Box(modifier = Modifier.fillMaxSize()) {
                 Column(
                     modifier = Modifier
