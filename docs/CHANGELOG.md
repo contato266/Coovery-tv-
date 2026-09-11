@@ -2,6 +2,12 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.48]
+
+### Fixed
+
+- Handheld: stop applying TV immersive fullscreen on phones so the Android status bar stays visible; mobile header and content use status-bar WindowInsets (logo and profile below the system bar). Android TV unchanged.
+
 ## [1.0.47]
 
 ### Changed

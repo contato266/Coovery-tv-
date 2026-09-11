@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,6 +18,7 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -81,12 +81,13 @@ internal fun rememberHandheldChromeContentPadding(
     val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val navigationBarBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     return remember(topBarVisible, statusBarTop, navigationBarBottom) {
+        val bottom = navigationBarBottom + MobileHandheldBottomBarReservedHeight
         if (!topBarVisible) {
-            0.dp to 0.dp
+            statusBarTop to bottom
         } else {
-            // Header overlays content; only reserve space for the bottom chrome.
-            val bottom = navigationBarBottom + MobileHandheldBottomBarReservedHeight
-            0.dp to bottom
+            // Status bar → header → content (content must not draw under the status bar).
+            val top = statusBarTop + MobileHandheldTopBarHeight
+            top to bottom
         }
     }
 }
@@ -140,15 +141,19 @@ fun MobileHandheldTopBar(
     var accountMenuExpanded by remember { mutableStateOf(false) }
     val sounds = rememberTvInteractionSounds()
 
-    Row(
+    Column(
         modifier = modifier
             .fillMaxWidth()
-            .windowInsetsPadding(WindowInsets.statusBars.only(WindowInsetsSides.Top))
-            .heightIn(min = MobileHandheldTopBarHeight)
-            .padding(horizontal = 16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
+            .statusBarsPadding()
     ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = MobileHandheldTopBarHeight)
+                .padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
             Image(
                 painter = painterResource(R.drawable.coovery_brand_logo),
                 contentDescription = stringResource(R.string.app_name),
@@ -221,6 +226,7 @@ fun MobileHandheldTopBar(
                 }
             }
         }
+    }
 }
 
 @Composable

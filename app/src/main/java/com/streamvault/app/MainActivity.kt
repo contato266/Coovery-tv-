@@ -150,7 +150,7 @@ class MainActivity : ComponentActivity() {
         // This fixes keyboard-covers-input-field on API 30+ where adjustResize is
         // ignored when the theme sets windowFullscreen=true.
         WindowCompat.setDecorFitsSystemWindows(window, false)
-        applyImmersiveSystemUi()
+        applyPlatformSystemUi()
         _pictureInPictureModeFlow.value = isInPictureInPictureMode
         handleExternalIntent(intent)
         setContent {
@@ -231,13 +231,13 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        applyImmersiveSystemUi()
+        applyPlatformSystemUi()
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
         if (hasFocus) {
-            applyImmersiveSystemUi()
+            applyPlatformSystemUi()
         }
     }
 
@@ -294,8 +294,16 @@ class MainActivity : ComponentActivity() {
         return enterPlayerPictureInPictureModeIfEligible(requirePlaying = false)
     }
 
+    private fun applyPlatformSystemUi() {
+        if (isTelevisionDevice()) {
+            applyTelevisionImmersiveSystemUi()
+        } else {
+            applyHandheldEdgeToEdgeSystemUi()
+        }
+    }
+
     @Suppress("DEPRECATION")
-    private fun applyImmersiveSystemUi() {
+    private fun applyTelevisionImmersiveSystemUi() {
         val decorView = window.decorView
         decorView.systemUiVisibility = (
             View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
@@ -309,6 +317,24 @@ class MainActivity : ComponentActivity() {
             systemBarsBehavior =
                 WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
             hide(WindowInsetsCompat.Type.systemBars())
+        }
+    }
+
+    /** Handheld: visible status/navigation bars + Compose WindowInsets (no TV immersive flags). */
+    @Suppress("DEPRECATION")
+    private fun applyHandheldEdgeToEdgeSystemUi() {
+        val decorView = window.decorView
+        window.statusBarColor = android.graphics.Color.TRANSPARENT
+        window.navigationBarColor = android.graphics.Color.TRANSPARENT
+        decorView.systemUiVisibility = (
+            View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+        )
+        WindowCompat.getInsetsController(window, decorView).apply {
+            show(WindowInsetsCompat.Type.statusBars() or WindowInsetsCompat.Type.navigationBars())
+            systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_DEFAULT
+            isAppearanceLightStatusBars = false
+            isAppearanceLightNavigationBars = false
         }
     }
 
