@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -73,8 +74,9 @@ internal val MobileHandheldBottomBarReservedHeight: Dp
 
 private val HandheldNavPillBackground = Color(0xFF1E1E1E).copy(alpha = 0.94f)
 private val HandheldNavSelectedPill = Color.White.copy(alpha = 0.16f)
-/** Fade height for the floating header scrim (content scrolls underneath). */
-private val HandheldHeaderGradientHeight = 120.dp
+/** Fade height below the status bar for the floating header scrim. */
+private val HandheldHeaderGradientHeight = 96.dp
+private val HandheldFooterGradientHeight = 120.dp
 
 @Composable
 internal fun rememberHandheldChromeContentPadding(
@@ -83,14 +85,18 @@ internal fun rememberHandheldChromeContentPadding(
     val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val navigationBarBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     return remember(topBarVisible, statusBarTop, navigationBarBottom) {
-        val bottom = navigationBarBottom + MobileHandheldBottomBarReservedHeight
-        if (!topBarVisible) {
-            statusBarTop to bottom
-        } else {
-            // All handheld screens start below the floating header (never under the status bar).
-            val top = statusBarTop + MobileHandheldTopBarHeight
-            top to bottom
-        }
+        // Content scrolls under translucent header/footer chrome; never under the status bar.
+        val top = statusBarTop
+        top to navigationBarBottom
+    }
+}
+
+/** Extra scroll padding so list items can clear the floating bottom pill. */
+@Composable
+internal fun rememberHandheldBottomScrollInset(): Dp {
+    val navigationBarBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    return remember(navigationBarBottom) {
+        navigationBarBottom + MobileHandheldBottomBarReservedHeight
     }
 }
 
@@ -143,21 +149,19 @@ fun MobileHandheldTopBar(
     var accountMenuExpanded by remember { mutableStateOf(false) }
     val sounds = rememberTvInteractionSounds()
 
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .statusBarsPadding()
-    ) {
+    val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+
+    Box(modifier = modifier.fillMaxWidth()) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(HandheldHeaderGradientHeight)
+                .height(statusBarTop + HandheldHeaderGradientHeight)
                 .align(Alignment.TopCenter)
                 .background(
                     Brush.verticalGradient(
                         colorStops = arrayOf(
-                            0f to Color.Black.copy(alpha = 0.72f),
-                            0.55f to Color.Black.copy(alpha = 0.28f),
+                            0f to Color.Black.copy(alpha = 0.78f),
+                            0.35f to Color.Black.copy(alpha = 0.42f),
                             1f to Color.Transparent
                         )
                     )
@@ -166,6 +170,7 @@ fun MobileHandheldTopBar(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .statusBarsPadding()
                 .heightIn(min = MobileHandheldTopBarHeight)
                 .padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -254,16 +259,36 @@ fun MobileHandheldBottomBar(
 ) {
     val sounds = rememberTvInteractionSounds()
     val pillShape = RoundedCornerShape(32.dp)
+    val navigationBarBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    val footerScrimHeight = HandheldFooterGradientHeight + navigationBarBottom
 
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(
-                start = MobileHandheldBottomBarHorizontalMargin,
-                end = MobileHandheldBottomBarHorizontalMargin,
-                bottom = MobileHandheldBottomBarVerticalMargin
-            )
-    ) {
+    Box(modifier = modifier.fillMaxWidth()) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(footerScrimHeight)
+                .align(Alignment.BottomCenter)
+                .background(
+                    Brush.verticalGradient(
+                        colorStops = arrayOf(
+                            0f to Color.Transparent,
+                            0.45f to Color.Black.copy(alpha = 0.32f),
+                            1f to Color.Black.copy(alpha = 0.78f)
+                        )
+                    )
+                )
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter)
+                .navigationBarsPadding()
+                .padding(
+                    start = MobileHandheldBottomBarHorizontalMargin,
+                    end = MobileHandheldBottomBarHorizontalMargin,
+                    bottom = MobileHandheldBottomBarVerticalMargin
+                )
+        ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -322,6 +347,7 @@ fun MobileHandheldBottomBar(
                     }
                 }
             }
+        }
         }
     }
 }

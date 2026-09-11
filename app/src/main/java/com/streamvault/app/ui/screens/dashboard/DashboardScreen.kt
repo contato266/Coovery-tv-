@@ -63,6 +63,7 @@ import com.streamvault.app.ui.components.SeriesCard
 import com.streamvault.app.ui.components.shell.AppNavigationChrome
 import com.streamvault.app.ui.components.shell.AppHeroHeader
 import com.streamvault.app.ui.components.shell.AppScreenScaffold
+import com.streamvault.app.ui.components.shell.rememberHandheldBottomScrollInset
 import com.streamvault.app.ui.components.shell.StatusPill
 import com.streamvault.app.ui.design.AppColors
 import com.streamvault.app.ui.time.LocalAppTimeFormat
@@ -106,6 +107,7 @@ fun DashboardScreen(
     val scheduledChannelIds by viewModel.scheduledChannelIds.collectAsStateWithLifecycle()
     val provider = uiState.provider
     val isTelevisionDevice = rememberIsTelevisionDevice()
+    val handheldBottomScrollInset = rememberHandheldBottomScrollInset()
     val snackbarHostState = remember { SnackbarHostState() }
     var showHomeCustomizationDialog by remember { mutableStateOf(false) }
 
@@ -155,7 +157,9 @@ fun DashboardScreen(
 
             androidx.compose.foundation.lazy.LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(bottom = 28.dp)
+                contentPadding = PaddingValues(
+                    bottom = if (isTelevisionDevice) 28.dp else handheldBottomScrollInset + 12.dp
+                )
             ) {
                 if (uiState.isLoading && orderedSections.isEmpty()) {
                     item(key = "dashboard_loading") {
@@ -189,7 +193,7 @@ fun DashboardScreen(
                 item(key = "home_hero_carousel") {
                     HomeHeroCarousel(
                         modifier = Modifier.padding(
-                            top = if (isTelevisionDevice) 8.dp else 8.dp,
+                            top = if (isTelevisionDevice) 8.dp else 0.dp,
                             bottom = 6.dp
                         ),
                         onCardClick = { onNavigate(Routes.SERIES) }

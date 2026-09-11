@@ -2,6 +2,13 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.53]
+
+### Fixed
+
+- Handheld carousel: true infinite loop (fixed pager start index), smaller centered cards with side peek.
+- Handheld chrome: translucent header/footer scrims; content scrolls underneath up to the status bar and above the system nav area. Android TV unchanged.
+
 ## [1.0.52]
 
 ### Changed

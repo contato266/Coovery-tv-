@@ -30,6 +30,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -61,8 +63,8 @@ private const val HOME_CAROUSEL_AUTO_ADVANCE_MS = 3_000L
 private const val COOVERY_BANNER_ASPECT_RATIO = 2000f / 626f
 /** Portrait promo card (1200×1600) for handheld home carousel. */
 private const val HANDHELD_CAROUSEL_ASPECT_RATIO = 1200f / 1600f
-private const val HANDHELD_CAROUSEL_INFINITE_PAGES = 2_000
-private const val HANDHELD_CAROUSEL_CENTERED_WIDTH_FRACTION = 0.82f
+private const val HANDHELD_CAROUSEL_VIRTUAL_PAGE_COUNT = 10_000
+private const val HANDHELD_CAROUSEL_CENTERED_WIDTH_FRACTION = 0.68f
 
 @DrawableRes
 private fun homeCarouselBannerRes(index: Int): Int = when (index) {
@@ -180,12 +182,26 @@ private fun HandheldPortraitHeroCarousel(
     val cardHeight = cardWidth / HANDHELD_CAROUSEL_ASPECT_RATIO
     val cardShape = RoundedCornerShape(20.dp)
     val pageCount = HOME_CAROUSEL_CARD_COUNT
+    val virtualPageCount = HANDHELD_CAROUSEL_VIRTUAL_PAGE_COUNT
     val pagerState = rememberPagerState(
-        initialPage = pageCount * (HANDHELD_CAROUSEL_INFINITE_PAGES / 2),
-        pageCount = { HANDHELD_CAROUSEL_INFINITE_PAGES }
+        initialPage = virtualPageCount / 2,
+        pageCount = { virtualPageCount }
     )
     val activeIndex by remember {
         derivedStateOf { pagerState.currentPage % pageCount }
+    }
+
+    LaunchedEffect(pagerState, pageCount, virtualPageCount) {
+        snapshotFlow { pagerState.currentPage }
+            .distinctUntilChanged()
+            .collect { page ->
+                val buffer = pageCount * 12
+                val center = virtualPageCount / 2
+                if (page < buffer || page > virtualPageCount - buffer) {
+                    val logical = page % pageCount
+                    pagerState.scrollToPage(center + logical)
+                }
+            }
     }
 
     LaunchedEffect(pagerState) {
@@ -207,7 +223,7 @@ private fun HandheldPortraitHeroCarousel(
                 .height(cardHeight),
             contentPadding = PaddingValues(horizontal = sidePeekPadding),
             pageSpacing = 12.dp,
-            beyondViewportPageCount = 1
+            beyondViewportPageCount = 2
         ) { page ->
             val index = page % pageCount
             Image(

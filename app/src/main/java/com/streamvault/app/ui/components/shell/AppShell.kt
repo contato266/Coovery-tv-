@@ -220,16 +220,13 @@ fun AppScreenScaffold(
                 }
             }
         } else {
-            val (handheldContentTopPadding, handheldContentBottomPadding) =
+            val (handheldContentTopPadding, _) =
                 rememberHandheldChromeContentPadding(topBarVisible)
             Box(modifier = Modifier.fillMaxSize()) {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(
-                            top = handheldContentTopPadding,
-                            bottom = handheldContentBottomPadding
-                        )
+                        .padding(top = handheldContentTopPadding)
                 ) {
                     if (showScreenHeader) {
                         AppScreenHeader(
@@ -271,8 +268,6 @@ fun AppScreenScaffold(
                         onNavigate = onNavigate,
                         modifier = Modifier
                             .align(Alignment.BottomCenter)
-                            .navigationBarsPadding()
-                            .padding(bottom = 4.dp)
                             .zIndex(20f)
                     )
                 }
