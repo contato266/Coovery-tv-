@@ -2,6 +2,12 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.59]
+
+### Changed
+
+- Handheld Séries: same 136×204 poster cards and horizontal shelf browse as Filmes; category grids keep fixed poster size; tab switch returns to shelf landing. Android TV unchanged.
+
 ## [1.0.58]
 
 ### Changed

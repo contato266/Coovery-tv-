@@ -40,6 +40,11 @@ import com.streamvault.app.ui.components.SearchInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.navigation.NavBackStackEntry
+import com.streamvault.app.device.HANDHELD_SERIES_BROWSE_RESET_KEY
+import com.streamvault.app.device.HandheldVodPosterHeight
+import com.streamvault.app.device.HandheldVodPosterWidth
+import com.streamvault.app.device.rememberHandheldVodPortraitBrowse
 import com.streamvault.app.device.rememberIsTelevisionDevice
 import com.streamvault.app.navigation.Routes
 import com.streamvault.app.ui.components.CategoryRow
@@ -100,6 +105,7 @@ fun SeriesScreen(
     onNavigate: (String) -> Unit,
     currentRoute: String,
     initialCategoryId: Long? = null,
+    navBackStackEntry: NavBackStackEntry? = null,
     viewModel: SeriesViewModel = hiltViewModel()
 ) {
     remember(viewModel) {
@@ -116,6 +122,18 @@ fun SeriesScreen(
 
     LaunchedEffect(initialCategoryId) {
         viewModel.setPreferredInitialCategory(initialCategoryId)
+    }
+
+    val handheldPortraitBrowse = rememberHandheldVodPortraitBrowse()
+    if (handheldPortraitBrowse && navBackStackEntry != null) {
+        val browseResetToken by navBackStackEntry.savedStateHandle
+            .getStateFlow(HANDHELD_SERIES_BROWSE_RESET_KEY, 0L)
+            .collectAsStateWithLifecycle()
+        LaunchedEffect(browseResetToken) {
+            if (browseResetToken != 0L) {
+                viewModel.selectCategory(null)
+            }
+        }
     }
 
     HandleVodUserMessage(
@@ -358,6 +376,7 @@ private fun SeriesVodContent(
 ) {
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
     val isTelevisionDevice = rememberIsTelevisionDevice()
+    val handheldPortraitBrowse = rememberHandheldVodPortraitBrowse()
     val favoriteCardWidth = when {
         screenWidth < 700.dp -> 136.dp
         !isTelevisionDevice && screenWidth < 900.dp -> 148.dp
@@ -513,86 +532,88 @@ private fun SeriesVodContent(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(bottom = 28.dp)
         ) {
-            item(key = "hero") {
-            if (heroSeries != null) {
-                VodHeroStrip(
-                        title = heroSeries.name,
-                        subtitle = heroSeries.plot?.takeIf { it.isNotBlank() }
-                            ?: heroSeries.genre
-                            ?: stringResource(R.string.series_library_lens_subtitle),
-                        actionLabel = stringResource(R.string.player_resume).substringBefore(" "),
-                        onClick = {
-                            val isLocked = isSeriesLocked(heroSeries)
-                            if (isLocked) onProtectedSeriesClick(heroSeries) else onSeriesClick(heroSeries)
+            if (!handheldPortraitBrowse) {
+                item(key = "hero") {
+                    if (heroSeries != null) {
+                        VodHeroStrip(
+                            title = heroSeries.name,
+                            subtitle = heroSeries.plot?.takeIf { it.isNotBlank() }
+                                ?: heroSeries.genre
+                                ?: stringResource(R.string.series_library_lens_subtitle),
+                            actionLabel = stringResource(R.string.player_resume).substringBefore(" "),
+                            onClick = {
+                                val isLocked = isSeriesLocked(heroSeries)
+                                if (isLocked) onProtectedSeriesClick(heroSeries) else onSeriesClick(heroSeries)
+                            },
+                            modifier = Modifier
+                                .padding(top = 8.dp, bottom = 6.dp)
+                                .focusRequester(initialFocusRequester)
+                        )
+                    }
+                }
+                item(key = "actions") {
+                    VodActionChipRow(
+                        actions = buildList {
+                            add(
+                                VodActionChip(
+                                    key = "browse_all",
+                                    label = stringResource(R.string.library_full_browse_title_series),
+                                    detail = stringResource(R.string.library_full_browse_subtitle, uiState.libraryCount),
+                                    onClick = onSelectFullLibraryBrowse
+                                )
+                            )
+                            add(
+                                VodActionChip(
+                                    key = "categories",
+                                    label = stringResource(R.string.series_categories_title),
+                                    detail = "${visibleCategoryNames.count { name -> categoryByName[name]?.id != VodBrowseDefaults.FAVORITES_SENTINEL_ID }} groups",
+                                    onClick = { showCategoryPicker = true }
+                                )
+                            )
+                            if (favoriteSeries.isNotEmpty()) {
+                                add(
+                                    VodActionChip(
+                                        key = "favorites",
+                                        label = stringResource(R.string.favorites_title),
+                                        detail = stringResource(R.string.library_saved_items_count, favoriteSeries.size),
+                                        onClick = { onSelectCategory(uiState.favoriteCategoryName) }
+                                    )
+                                )
+                            }
+                            if (continueWatching.isNotEmpty()) {
+                                add(
+                                    VodActionChip(
+                                        key = "resume",
+                                        label = stringResource(R.string.library_lens_continue),
+                                        detail = "${continueWatching.size} items",
+                                        onClick = onOpenContinueWatching
+                                    )
+                                )
+                            }
+                            if (topRatedSeries.isNotEmpty()) {
+                                add(
+                                    VodActionChip(
+                                        key = SeriesLibraryLens.TOP_RATED.name,
+                                        label = stringResource(R.string.library_lens_top_rated),
+                                        detail = "${topRatedSeries.size} picks",
+                                        onClick = onOpenTopRated
+                                    )
+                                )
+                            }
+                            if (freshSeries.isNotEmpty()) {
+                                add(
+                                    VodActionChip(
+                                        key = SeriesLibraryLens.FRESH.name,
+                                        label = stringResource(R.string.library_lens_fresh_series),
+                                        detail = "${freshSeries.size} picks",
+                                        onClick = onOpenFresh
+                                    )
+                                )
+                            }
                         },
-                        modifier = Modifier
-                            .padding(top = 8.dp, bottom = 6.dp)
-                            .focusRequester(initialFocusRequester)
+                        modifier = Modifier.padding(top = 2.dp, bottom = 6.dp)
                     )
-            }
-            }
-            item(key = "actions") {
-            VodActionChipRow(
-                    actions = buildList {
-                        add(
-                            VodActionChip(
-                                key = "browse_all",
-                                label = stringResource(R.string.library_full_browse_title_series),
-                                detail = stringResource(R.string.library_full_browse_subtitle, uiState.libraryCount),
-                                onClick = onSelectFullLibraryBrowse
-                            )
-                        )
-                        add(
-                            VodActionChip(
-                                key = "categories",
-                                label = stringResource(R.string.series_categories_title),
-                                detail = "${visibleCategoryNames.count { name -> categoryByName[name]?.id != VodBrowseDefaults.FAVORITES_SENTINEL_ID }} groups",
-                                onClick = { showCategoryPicker = true }
-                            )
-                        )
-                        if (favoriteSeries.isNotEmpty()) {
-                            add(
-                                VodActionChip(
-                                    key = "favorites",
-                                    label = stringResource(R.string.favorites_title),
-                                    detail = stringResource(R.string.library_saved_items_count, favoriteSeries.size),
-                                    onClick = { onSelectCategory(uiState.favoriteCategoryName) }
-                                )
-                            )
-                        }
-                        if (continueWatching.isNotEmpty()) {
-                            add(
-                                VodActionChip(
-                                    key = "resume",
-                                    label = stringResource(R.string.library_lens_continue),
-                                    detail = "${continueWatching.size} items",
-                                    onClick = onOpenContinueWatching
-                                )
-                            )
-                        }
-                        if (topRatedSeries.isNotEmpty()) {
-                            add(
-                                VodActionChip(
-                                    key = SeriesLibraryLens.TOP_RATED.name,
-                                    label = stringResource(R.string.library_lens_top_rated),
-                                    detail = "${topRatedSeries.size} picks",
-                                    onClick = onOpenTopRated
-                                )
-                            )
-                        }
-                        if (freshSeries.isNotEmpty()) {
-                            add(
-                                VodActionChip(
-                                    key = SeriesLibraryLens.FRESH.name,
-                                    label = stringResource(R.string.library_lens_fresh_series),
-                                    detail = "${freshSeries.size} picks",
-                                    onClick = onOpenFresh
-                                )
-                            )
-                        }
-                    },
-                    modifier = Modifier.padding(top = 2.dp, bottom = 6.dp)
-                )
+                }
             }
             if (continueWatching.isNotEmpty()) {
             item(key = "continue_watching") {
@@ -626,7 +647,9 @@ private fun SeriesVodContent(
                             isLocked = isLocked,
                             onClick = { if (isLocked) onProtectedSeriesClick(series) else onSeriesClick(series) },
                             onLongClick = { onShowDialog(series) },
-                            modifier = Modifier.width(favoriteCardWidth)
+                            modifier = Modifier.width(favoriteCardWidth),
+                            width = HandheldVodPosterWidth,
+                            height = HandheldVodPosterHeight
                         )
                 }
             }
@@ -644,7 +667,10 @@ private fun SeriesVodContent(
                             series = series,
                             isLocked = isLocked,
                             onClick = { if (isLocked) onProtectedSeriesClick(series) else onSeriesClick(series) },
-                            onLongClick = { onShowDialog(series) }
+                            onLongClick = { onShowDialog(series) },
+                            modifier = if (handheldPortraitBrowse) Modifier.width(favoriteCardWidth) else Modifier,
+                            width = HandheldVodPosterWidth,
+                            height = HandheldVodPosterHeight
                         )
                 }
             }
@@ -662,7 +688,10 @@ private fun SeriesVodContent(
                             series = series,
                             isLocked = isLocked,
                             onClick = { if (isLocked) onProtectedSeriesClick(series) else onSeriesClick(series) },
-                            onLongClick = { onShowDialog(series) }
+                            onLongClick = { onShowDialog(series) },
+                            modifier = if (handheldPortraitBrowse) Modifier.width(favoriteCardWidth) else Modifier,
+                            width = HandheldVodPosterWidth,
+                            height = HandheldVodPosterHeight
                         )
                 }
             }
@@ -686,7 +715,15 @@ private fun SeriesVodContent(
                         isLocked = isLocked,
                         onClick = { if (isLocked) onProtectedSeriesClick(series) else onSeriesClick(series) },
                         onLongClick = { onShowDialog(series) },
-                        modifier = if (series.id == fallbackSeriesId) Modifier.focusRequester(initialFocusRequester) else Modifier
+                        modifier = when {
+                            series.id == fallbackSeriesId -> Modifier
+                                .width(favoriteCardWidth)
+                                .focusRequester(initialFocusRequester)
+                            handheldPortraitBrowse -> Modifier.width(favoriteCardWidth)
+                            else -> Modifier
+                        },
+                        width = HandheldVodPosterWidth,
+                        height = HandheldVodPosterHeight
                     )
                 }
             }
@@ -887,27 +924,61 @@ private fun SeriesVodContent(
             gridItems(filteredGridSeries, key = { it.id }) { series ->
                 val isLocked = isSeriesLocked(series)
                 val isDraggingThis = draggingSeries == series
-                SeriesCard(
-                    series = series,
-                    isLocked = isLocked,
-                    isReorderMode = uiState.isReorderMode,
-                    isDragging = isDraggingThis,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .then(if (!showSearchBar && series.id == initialGridSeriesId) Modifier.focusRequester(initialFocusRequester) else Modifier),
-                    onClick = {
-                        if (uiState.isReorderMode) {
-                            draggingSeries = if (isDraggingThis) null else series
-                        } else if (isLocked) {
-                            onProtectedSeriesClick(series)
-                        } else {
-                            onSeriesClick(series)
-                        }
-                    },
-                    onLongClick = {
-                        if (!uiState.isReorderMode) onShowDialog(series)
+                val focusModifier = if (!showSearchBar && series.id == initialGridSeriesId) {
+                    Modifier.focusRequester(initialFocusRequester)
+                } else {
+                    Modifier
+                }
+                if (handheldPortraitBrowse) {
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        SeriesCard(
+                            series = series,
+                            isLocked = isLocked,
+                            isReorderMode = uiState.isReorderMode,
+                            isDragging = isDraggingThis,
+                            modifier = focusModifier,
+                            width = HandheldVodPosterWidth,
+                            height = HandheldVodPosterHeight,
+                            onClick = {
+                                if (uiState.isReorderMode) {
+                                    draggingSeries = if (isDraggingThis) null else series
+                                } else if (isLocked) {
+                                    onProtectedSeriesClick(series)
+                                } else {
+                                    onSeriesClick(series)
+                                }
+                            },
+                            onLongClick = {
+                                if (!uiState.isReorderMode) onShowDialog(series)
+                            }
+                        )
                     }
-                )
+                } else {
+                    SeriesCard(
+                        series = series,
+                        isLocked = isLocked,
+                        isReorderMode = uiState.isReorderMode,
+                        isDragging = isDraggingThis,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .then(focusModifier),
+                        onClick = {
+                            if (uiState.isReorderMode) {
+                                draggingSeries = if (isDraggingThis) null else series
+                            } else if (isLocked) {
+                                onProtectedSeriesClick(series)
+                            } else {
+                                onSeriesClick(series)
+                            }
+                        },
+                        onLongClick = {
+                            if (!uiState.isReorderMode) onShowDialog(series)
+                        }
+                    )
+                }
             }
         }
         if (uiState.canLoadMoreSelectedCategory && !uiState.isLoadingSelectedCategory && !uiState.isLoadingMoreSelectedCategory &&

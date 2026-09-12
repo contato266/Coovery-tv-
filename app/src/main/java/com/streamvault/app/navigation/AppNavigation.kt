@@ -42,6 +42,7 @@ import com.streamvault.app.ui.screens.downloads.DownloadsScreen
 import com.streamvault.app.MainActivity
 import com.streamvault.app.device.applyHandheldBrowseOrientation
 import com.streamvault.app.device.applyHandheldPlayerOrientation
+import com.streamvault.app.device.HANDHELD_SERIES_BROWSE_RESET_KEY
 import com.streamvault.app.device.isTelevisionDevice
 import com.streamvault.domain.model.AppLandingDestination
 import com.streamvault.domain.model.AppTopLevelDestination
@@ -529,6 +530,11 @@ fun AppNavigation(mainActivity: MainActivity) {
             launchSingleTop = true
             restoreState = true
         }
+        if (!mainActivity.isTelevisionDevice() && resolvedRoute == Routes.SERIES) {
+            navController.currentBackStackEntry
+                ?.savedStateHandle
+                ?.set(HANDHELD_SERIES_BROWSE_RESET_KEY, System.nanoTime())
+        }
     }
 
     LaunchedEffect(activeProvider?.id, activeProvider?.catalogLayout, currentBackStackEntry?.destination?.route) {
@@ -729,7 +735,8 @@ fun AppNavigation(mainActivity: MainActivity) {
                 },
                 onNavigate = { route -> tabNavigate(route) },
                 currentRoute = Routes.SERIES,
-                initialCategoryId = initialCategoryId
+                initialCategoryId = initialCategoryId,
+                navBackStackEntry = backStackEntry
             )
         }
 
