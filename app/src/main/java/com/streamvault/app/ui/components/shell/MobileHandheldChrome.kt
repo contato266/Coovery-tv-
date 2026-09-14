@@ -25,9 +25,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Text
@@ -120,8 +120,8 @@ private data class HandheldBottomNavItem(
 private val handheldBottomNavItems = listOf(
     HandheldBottomNavItem(Routes.HOME, R.string.nav_handheld_home, Icons.Default.Home),
     HandheldBottomNavItem(Routes.LIVE_TV, R.string.nav_handheld_live_tv, Icons.Default.PlayArrow),
-    HandheldBottomNavItem(Routes.MOVIES, R.string.nav_handheld_movies, Icons.Default.Star),
-    HandheldBottomNavItem(Routes.SERIES, R.string.nav_handheld_series, Icons.Default.Menu)
+    HandheldBottomNavItem(Routes.DOWNLOADS, R.string.nav_downloads, Icons.Default.Download),
+    HandheldBottomNavItem(Routes.SEARCH, R.string.search_title, Icons.Default.Search)
 )
 
 internal fun isHandheldBottomTabSelected(tabRoute: String, currentRoute: String): Boolean {
@@ -130,14 +130,10 @@ internal fun isHandheldBottomTabSelected(tabRoute: String, currentRoute: String)
             currentRoute == Routes.HOME || currentRoute.startsWith("${Routes.HOME}?")
         Routes.LIVE_TV ->
             currentRoute.startsWith(Routes.LIVE_TV)
-        Routes.MOVIES ->
-            currentRoute.startsWith(Routes.MOVIES) ||
-                currentRoute.startsWith("movie_detail") ||
-                currentRoute == Routes.VOD ||
-                currentRoute.startsWith("${Routes.VOD}?")
-        Routes.SERIES ->
-            currentRoute.startsWith(Routes.SERIES) ||
-                currentRoute.startsWith("series_detail")
+        Routes.DOWNLOADS ->
+            currentRoute.startsWith(Routes.DOWNLOADS)
+        Routes.SEARCH ->
+            currentRoute == Routes.SEARCH || currentRoute.startsWith("${Routes.SEARCH}?")
         else -> currentRoute.startsWith(tabRoute)
     }
 }
@@ -247,27 +243,16 @@ fun MobileHandheldBottomBar(
 ) {
     val sounds = rememberTvInteractionSounds()
     val pillShape = RoundedCornerShape(32.dp)
-    val navigationBarBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-    val footerBlackHeight = MobileHandheldBottomBarReservedHeight + navigationBarBottom
-    Box(modifier = modifier.fillMaxWidth()) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(footerBlackHeight)
-                .align(Alignment.BottomCenter)
-                .background(Color.Black)
-        )
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .align(Alignment.BottomCenter)
-                .navigationBarsPadding()
-                .padding(
-                    start = MobileHandheldBottomBarHorizontalMargin,
-                    end = MobileHandheldBottomBarHorizontalMargin,
-                    bottom = MobileHandheldBottomBarVerticalMargin
-                )
-        ) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .navigationBarsPadding()
+            .padding(
+                start = MobileHandheldBottomBarHorizontalMargin,
+                end = MobileHandheldBottomBarHorizontalMargin,
+                bottom = MobileHandheldBottomBarVerticalMargin
+            )
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -326,7 +311,6 @@ fun MobileHandheldBottomBar(
                     }
                 }
             }
-        }
         }
     }
 }

@@ -2,6 +2,12 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.61]
+
+### Changed
+
+- Handheld bottom bar: remove solid black band behind the floating pill; tabs are Downloads and Search instead of Movies and Series. Android TV unchanged.
+
 ## [1.0.60]
 
 ### Changed
