@@ -2,6 +2,13 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.60]
+
+### Changed
+
+- Handheld movie/series synopsis screens use immersive fullscreen (hidden status and navigation bars), same as the player; all other screens keep edge-to-edge with visible system bars. Android TV unchanged.
+- Handheld header profile button uses the Coovery avatar artwork instead of the blue account icon. Android TV unchanged.
+
 ## [1.0.59]
 
 ### Changed

@@ -380,12 +380,16 @@ fun AppNavigation(mainActivity: MainActivity) {
         val route = currentBackStackEntry?.destination?.route
         val onPlayerRoute = route != null &&
             (route == Routes.PLAYER || route.startsWith("${Routes.PLAYER}?"))
+        val onHandheldImmersiveVodDetailRoute = route != null &&
+            (route.startsWith("movie_detail") || route.startsWith("series_detail"))
         if (onPlayerRoute) {
             mainActivity.applyHandheldPlayerOrientation()
             mainActivity.setHandheldPlayerImmersiveActive(!mainActivity.isTelevisionDevice())
         } else {
             mainActivity.applyHandheldBrowseOrientation()
-            mainActivity.setHandheldPlayerImmersiveActive(false)
+            val handheldImmersive = !mainActivity.isTelevisionDevice() &&
+                (onHandheldImmersiveVodDetailRoute)
+            mainActivity.setHandheldPlayerImmersiveActive(handheldImmersive)
         }
     }
     val activeProvider = mainActivity.providerRepository.getActiveProvider()

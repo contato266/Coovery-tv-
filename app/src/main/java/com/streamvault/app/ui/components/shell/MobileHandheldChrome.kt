@@ -2,6 +2,7 @@ package com.streamvault.app.ui.components.shell
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,7 +26,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.DropdownMenu
@@ -198,29 +198,15 @@ fun MobileHandheldTopBar(
                         accountMenuExpanded = true
                     }
                     val accountContentDescription = stringResource(R.string.nav_handheld_account)
-                    Surface(
-                        onClick = openAccountMenu,
-                        shape = ClickableSurfaceDefaults.shape(CircleShape),
-                        colors = ClickableSurfaceDefaults.colors(
-                            containerColor = AppColors.Brand,
-                            focusedContainerColor = AppColors.Brand.copy(alpha = 0.88f)
-                        ),
+                    Image(
+                        painter = painterResource(R.drawable.coovery_handheld_profile_avatar),
+                        contentDescription = accountContentDescription,
                         modifier = Modifier
                             .size(40.dp)
-                            .mouseClickable(onClick = openAccountMenu)
-                    ) {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Person,
-                                contentDescription = accountContentDescription,
-                                tint = Color.White,
-                                modifier = Modifier.size(22.dp)
-                            )
-                        }
-                    }
+                            .clip(CircleShape)
+                            .mouseClickable(onClick = openAccountMenu),
+                        contentScale = ContentScale.Crop
+                    )
                     DropdownMenu(
                         expanded = accountMenuExpanded,
                         onDismissRequest = { accountMenuExpanded = false }
