@@ -536,7 +536,94 @@ fun ProviderSetupScreen(
                 .fillMaxSize()
                 .padding(horizontal = hPad, vertical = if (handheldLayout) 12.dp else 16.dp)
         ) {
-            if (isWide) {
+            val setupTitle = if (uiState.isEditing) {
+                androidx.compose.ui.res.stringResource(R.string.setup_edit_provider)
+            } else {
+                androidx.compose.ui.res.stringResource(R.string.setup_provider_title)
+            }
+            val providerFormContent: @Composable (Modifier) -> Unit = { formModifier ->
+                ProviderFormContent(
+                    sourceType = sourceType,
+                    uiState = uiState,
+                    pairingState = pairingState,
+                    name = name, onNameChange = { name = ProviderInputSanitizer.sanitizeProviderNameForEditing(it) },
+                    serverUrl = serverUrl, onServerUrlChange = { serverUrl = ProviderInputSanitizer.sanitizeUrlForEditing(it) },
+                    username = username, onUsernameChange = { username = ProviderInputSanitizer.sanitizeUsernameForEditing(it) },
+                    password = password, onPasswordChange = { password = ProviderInputSanitizer.sanitizePasswordForEditing(it) },
+                    m3uUrl = m3uUrl, onM3uUrlChange = { m3uUrl = ProviderInputSanitizer.sanitizeUrlForEditing(it) },
+                    httpUserAgent = httpUserAgent, onHttpUserAgentChange = { httpUserAgent = ProviderInputSanitizer.sanitizeHttpUserAgentForEditing(it) },
+                    httpHeaders = httpHeaders, onHttpHeadersChange = { httpHeaders = ProviderInputSanitizer.sanitizeHttpHeadersForEditing(it) },
+                    stalkerMacAddress = stalkerMacAddress, onStalkerMacAddressChange = { stalkerMacAddress = ProviderInputSanitizer.sanitizeMacAddressForEditing(it) },
+                    stalkerAuthMode = stalkerAuthMode, onStalkerAuthModeChange = { stalkerAuthMode = it },
+                    stalkerDeviceProfile = stalkerDeviceProfile, onStalkerDeviceProfileChange = { stalkerDeviceProfile = ProviderInputSanitizer.sanitizeDeviceProfileForEditing(it) },
+                    stalkerDeviceTimezone = stalkerDeviceTimezone, onStalkerDeviceTimezoneChange = { stalkerDeviceTimezone = ProviderInputSanitizer.sanitizeTimezoneForEditing(it) },
+                    stalkerDeviceLocale = stalkerDeviceLocale, onStalkerDeviceLocaleChange = { stalkerDeviceLocale = ProviderInputSanitizer.sanitizeLocaleForEditing(it) },
+                    stalkerSerialNumber = stalkerSerialNumber, onStalkerSerialNumberChange = { stalkerSerialNumber = ProviderInputSanitizer.sanitizeStalkerSerialForEditing(it) },
+                    stalkerDeviceId = stalkerDeviceId, onStalkerDeviceIdChange = { stalkerDeviceId = ProviderInputSanitizer.sanitizeStalkerDeviceIdForEditing(it) },
+                    stalkerDeviceId2 = stalkerDeviceId2, onStalkerDeviceId2Change = { stalkerDeviceId2 = ProviderInputSanitizer.sanitizeStalkerDeviceIdForEditing(it) },
+                    stalkerSignature = stalkerSignature, onStalkerSignatureChange = { stalkerSignature = ProviderInputSanitizer.sanitizeStalkerSignatureForEditing(it) },
+                    stalkerHwVersion = stalkerHwVersion, onStalkerHwVersionChange = { stalkerHwVersion = it },
+                    stalkerApiUserAgent = stalkerApiUserAgent, onStalkerApiUserAgentChange = { stalkerApiUserAgent = ProviderInputSanitizer.sanitizeHttpUserAgentForEditing(it) },
+                    stalkerPlayerUserAgent = stalkerPlayerUserAgent, onStalkerPlayerUserAgentChange = { stalkerPlayerUserAgent = ProviderInputSanitizer.sanitizeHttpUserAgentForEditing(it) },
+                    stalkerPlayerHeaders = stalkerPlayerHeaders, onStalkerPlayerHeadersChange = { stalkerPlayerHeaders = ProviderInputSanitizer.sanitizeHttpHeadersForEditing(it) },
+                    stalkerXUserAgentLink = stalkerXUserAgentLink, onStalkerXUserAgentLinkChange = { stalkerXUserAgentLink = it },
+                    stalkerProxyEnabled = stalkerProxyEnabled, onStalkerProxyEnabledChange = { stalkerProxyEnabled = it },
+                    stalkerProxyHost = stalkerProxyHost, onStalkerProxyHostChange = { stalkerProxyHost = it.trim() },
+                    stalkerProxyPort = stalkerProxyPort, onStalkerProxyPortChange = { stalkerProxyPort = it.filter(Char::isDigit).take(5) },
+                    stalkerRequestRules = stalkerRequestRules,
+                    onAddStalkerRequestRule = { stalkerRequestRules.add(StalkerRequestRuleUiState()) },
+                    onUpdateStalkerRequestRule = { index, rule -> if (index in stalkerRequestRules.indices) stalkerRequestRules[index] = rule },
+                    onRemoveStalkerRequestRule = { index -> if (index in stalkerRequestRules.indices) stalkerRequestRules.removeAt(index) },
+                    fileImportError = fileImportError,
+                    onFilePick = { filePickerLauncher.launch(arrayOf("*/*")) },
+                    onLoginXtream = { viewModel.loginXtream(serverUrl, username, password, name, httpUserAgent, httpHeaders) },
+                    onLoginStalker = { viewModel.loginStalker(serverUrl, stalkerMacAddress, stalkerAuthMode, username, password, name, "", httpHeaders, stalkerDeviceProfile, stalkerDeviceTimezone, stalkerDeviceLocale, stalkerSerialNumber, stalkerDeviceId, stalkerDeviceId2, stalkerSignature, buildStalkerAdvancedOptionsJson(), uiState.stalkerProtocolPreference, uiState.stalkerRequestedProfileId) },
+                    onRepairStalker = { viewModel.loginStalker(serverUrl, stalkerMacAddress, stalkerAuthMode, username, password, name, "", httpHeaders, stalkerDeviceProfile, stalkerDeviceTimezone, stalkerDeviceLocale, stalkerSerialNumber, stalkerDeviceId, stalkerDeviceId2, stalkerSignature, buildStalkerAdvancedOptionsJson(), uiState.stalkerProtocolPreference, uiState.stalkerRequestedProfileId, repairConnection = true) },
+                    onAddM3u = { viewModel.addM3u(m3uUrl, name, httpUserAgent, httpHeaders) },
+                    onLoginJellyfin = { viewModel.loginJellyfin(serverUrl, username, password, name) },
+                    quickConnectCode = uiState.jellyfinQuickConnectCode,
+                    onQuickConnectRequest = { viewModel.loginJellyfinQuickConnect(serverUrl.trim(), name.trim()) },
+                    onStartPhonePairing = viewModel::startPhonePairing,
+                    onStopPhonePairing = viewModel::stopPhonePairing,
+                    onToggleM3uVodClassification = { viewModel.updateM3uVodClassificationEnabled(!uiState.m3uVodClassificationEnabled) },
+                    onSelectEpgSyncMode = viewModel::updateEpgSyncMode,
+                    onSelectStalkerCatalogMode = viewModel::updateStalkerCatalogMode,
+                    onSelectStalkerProtocolPreference = viewModel::updateStalkerProtocolPreference,
+                    onSelectStalkerProfile = viewModel::updateStalkerRequestedProfile,
+                    onSelectXtreamLiveSyncMode = viewModel::updateXtreamLiveSyncMode,
+                    onSelectGuideSourcePolicy = viewModel::updateGuideSourcePolicy,
+                    onSelectChannelLogoSourcePolicy = viewModel::updateChannelLogoSourcePolicy,
+                    handheldLayout = false,
+                    modifier = formModifier
+                )
+            }
+
+            if (isWide && isTelevisionDevice) {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    TelevisionProviderSetupHeader(
+                        title = setupTitle,
+                        isEditing = uiState.isEditing,
+                        onImportClick = { showImportOptionsDialog = true },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    TelevisionSourceTypeSelector(
+                        sourceType = sourceType,
+                        isEditing = uiState.isEditing,
+                        onSelect = ::onSourceTypeSelected,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    providerFormContent(
+                        Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                            .widthIn(max = 920.dp)
+                    )
+                }
+            } else if (isWide) {
                 Row(
                     modifier = Modifier.fillMaxSize(),
                     horizontalArrangement = Arrangement.spacedBy(14.dp),
@@ -551,60 +638,7 @@ fun ProviderSetupScreen(
                         onImportClick = { showImportOptionsDialog = true },
                         modifier = Modifier.width(200.dp).fillMaxHeight()
                     )
-                    ProviderFormContent(
-                        sourceType = sourceType,
-                        uiState = uiState,
-                        pairingState = pairingState,
-                        name = name, onNameChange = { name = ProviderInputSanitizer.sanitizeProviderNameForEditing(it) },
-                        serverUrl = serverUrl, onServerUrlChange = { serverUrl = ProviderInputSanitizer.sanitizeUrlForEditing(it) },
-                        username = username, onUsernameChange = { username = ProviderInputSanitizer.sanitizeUsernameForEditing(it) },
-                        password = password, onPasswordChange = { password = ProviderInputSanitizer.sanitizePasswordForEditing(it) },
-                        m3uUrl = m3uUrl, onM3uUrlChange = { m3uUrl = ProviderInputSanitizer.sanitizeUrlForEditing(it) },
-                        httpUserAgent = httpUserAgent, onHttpUserAgentChange = { httpUserAgent = ProviderInputSanitizer.sanitizeHttpUserAgentForEditing(it) },
-                        httpHeaders = httpHeaders, onHttpHeadersChange = { httpHeaders = ProviderInputSanitizer.sanitizeHttpHeadersForEditing(it) },
-                        stalkerMacAddress = stalkerMacAddress, onStalkerMacAddressChange = { stalkerMacAddress = ProviderInputSanitizer.sanitizeMacAddressForEditing(it) },
-                        stalkerAuthMode = stalkerAuthMode, onStalkerAuthModeChange = { stalkerAuthMode = it },
-                        stalkerDeviceProfile = stalkerDeviceProfile, onStalkerDeviceProfileChange = { stalkerDeviceProfile = ProviderInputSanitizer.sanitizeDeviceProfileForEditing(it) },
-                        stalkerDeviceTimezone = stalkerDeviceTimezone, onStalkerDeviceTimezoneChange = { stalkerDeviceTimezone = ProviderInputSanitizer.sanitizeTimezoneForEditing(it) },
-                        stalkerDeviceLocale = stalkerDeviceLocale, onStalkerDeviceLocaleChange = { stalkerDeviceLocale = ProviderInputSanitizer.sanitizeLocaleForEditing(it) },
-                        stalkerSerialNumber = stalkerSerialNumber, onStalkerSerialNumberChange = { stalkerSerialNumber = ProviderInputSanitizer.sanitizeStalkerSerialForEditing(it) },
-                        stalkerDeviceId = stalkerDeviceId, onStalkerDeviceIdChange = { stalkerDeviceId = ProviderInputSanitizer.sanitizeStalkerDeviceIdForEditing(it) },
-                        stalkerDeviceId2 = stalkerDeviceId2, onStalkerDeviceId2Change = { stalkerDeviceId2 = ProviderInputSanitizer.sanitizeStalkerDeviceIdForEditing(it) },
-                        stalkerSignature = stalkerSignature, onStalkerSignatureChange = { stalkerSignature = ProviderInputSanitizer.sanitizeStalkerSignatureForEditing(it) },
-                        stalkerHwVersion = stalkerHwVersion, onStalkerHwVersionChange = { stalkerHwVersion = it },
-                        stalkerApiUserAgent = stalkerApiUserAgent, onStalkerApiUserAgentChange = { stalkerApiUserAgent = ProviderInputSanitizer.sanitizeHttpUserAgentForEditing(it) },
-                        stalkerPlayerUserAgent = stalkerPlayerUserAgent, onStalkerPlayerUserAgentChange = { stalkerPlayerUserAgent = ProviderInputSanitizer.sanitizeHttpUserAgentForEditing(it) },
-                        stalkerPlayerHeaders = stalkerPlayerHeaders, onStalkerPlayerHeadersChange = { stalkerPlayerHeaders = ProviderInputSanitizer.sanitizeHttpHeadersForEditing(it) },
-                        stalkerXUserAgentLink = stalkerXUserAgentLink, onStalkerXUserAgentLinkChange = { stalkerXUserAgentLink = it },
-                        stalkerProxyEnabled = stalkerProxyEnabled, onStalkerProxyEnabledChange = { stalkerProxyEnabled = it },
-                        stalkerProxyHost = stalkerProxyHost, onStalkerProxyHostChange = { stalkerProxyHost = it.trim() },
-                        stalkerProxyPort = stalkerProxyPort, onStalkerProxyPortChange = { stalkerProxyPort = it.filter(Char::isDigit).take(5) },
-                        stalkerRequestRules = stalkerRequestRules,
-                        onAddStalkerRequestRule = { stalkerRequestRules.add(StalkerRequestRuleUiState()) },
-                        onUpdateStalkerRequestRule = { index, rule -> if (index in stalkerRequestRules.indices) stalkerRequestRules[index] = rule },
-                        onRemoveStalkerRequestRule = { index -> if (index in stalkerRequestRules.indices) stalkerRequestRules.removeAt(index) },
-                        fileImportError = fileImportError,
-                        onFilePick = { filePickerLauncher.launch(arrayOf("*/*")) },
-                        onLoginXtream = { viewModel.loginXtream(serverUrl, username, password, name, httpUserAgent, httpHeaders) },
-                        onLoginStalker = { viewModel.loginStalker(serverUrl, stalkerMacAddress, stalkerAuthMode, username, password, name, "", httpHeaders, stalkerDeviceProfile, stalkerDeviceTimezone, stalkerDeviceLocale, stalkerSerialNumber, stalkerDeviceId, stalkerDeviceId2, stalkerSignature, buildStalkerAdvancedOptionsJson(), uiState.stalkerProtocolPreference, uiState.stalkerRequestedProfileId) },
-                        onRepairStalker = { viewModel.loginStalker(serverUrl, stalkerMacAddress, stalkerAuthMode, username, password, name, "", httpHeaders, stalkerDeviceProfile, stalkerDeviceTimezone, stalkerDeviceLocale, stalkerSerialNumber, stalkerDeviceId, stalkerDeviceId2, stalkerSignature, buildStalkerAdvancedOptionsJson(), uiState.stalkerProtocolPreference, uiState.stalkerRequestedProfileId, repairConnection = true) },
-                        onAddM3u = { viewModel.addM3u(m3uUrl, name, httpUserAgent, httpHeaders) },
-                        onLoginJellyfin = { viewModel.loginJellyfin(serverUrl, username, password, name) },
-                        quickConnectCode = uiState.jellyfinQuickConnectCode,
-                        onQuickConnectRequest = { viewModel.loginJellyfinQuickConnect(serverUrl.trim(), name.trim()) },
-                        onStartPhonePairing = viewModel::startPhonePairing,
-                        onStopPhonePairing = viewModel::stopPhonePairing,
-                        onToggleM3uVodClassification = { viewModel.updateM3uVodClassificationEnabled(!uiState.m3uVodClassificationEnabled) },
-                        onSelectEpgSyncMode = viewModel::updateEpgSyncMode,
-                        onSelectStalkerCatalogMode = viewModel::updateStalkerCatalogMode,
-                        onSelectStalkerProtocolPreference = viewModel::updateStalkerProtocolPreference,
-                        onSelectStalkerProfile = viewModel::updateStalkerRequestedProfile,
-                        onSelectXtreamLiveSyncMode = viewModel::updateXtreamLiveSyncMode,
-                        onSelectGuideSourcePolicy = viewModel::updateGuideSourcePolicy,
-                        onSelectChannelLogoSourcePolicy = viewModel::updateChannelLogoSourcePolicy,
-                        handheldLayout = false,
-                        modifier = Modifier.weight(1f).fillMaxHeight()
-                    )
+                    providerFormContent(Modifier.weight(1f).fillMaxHeight())
                 }
             } else {
                 Column(
@@ -2670,6 +2704,138 @@ private fun FormErrors(validationError: String?, error: String?) {
 // ??? Source type selector ן¿½ wide layout (left sidebar) ????????????????????????
 
 @Composable
+private fun SourceTypeOptionCards(
+    sourceType: SourceType,
+    isEditing: Boolean,
+    onSelect: (SourceType) -> Unit,
+    cardModifier: Modifier = Modifier.fillMaxWidth()
+) {
+    if (!isEditing || sourceType == SourceType.XTREAM) {
+        SourceTypeCard(
+            title = androidx.compose.ui.res.stringResource(R.string.setup_xtream),
+            subtitle = androidx.compose.ui.res.stringResource(R.string.setup_info_xtream_body),
+            selected = sourceType == SourceType.XTREAM,
+            enabled = !isEditing,
+            onClick = { onSelect(SourceType.XTREAM) },
+            modifier = cardModifier
+        )
+    }
+    if (!isEditing || sourceType == SourceType.STALKER) {
+        SourceTypeCard(
+            title = androidx.compose.ui.res.stringResource(R.string.setup_stalker),
+            badge = androidx.compose.ui.res.stringResource(R.string.badge_beta),
+            subtitle = androidx.compose.ui.res.stringResource(R.string.setup_info_stalker_body),
+            selected = sourceType == SourceType.STALKER,
+            enabled = !isEditing,
+            onClick = { onSelect(SourceType.STALKER) },
+            modifier = cardModifier
+        )
+    }
+    if (!isEditing || sourceType == SourceType.M3U_URL) {
+        SourceTypeCard(
+            title = androidx.compose.ui.res.stringResource(R.string.setup_tab_url),
+            subtitle = androidx.compose.ui.res.stringResource(R.string.setup_info_m3u_body),
+            selected = sourceType == SourceType.M3U_URL,
+            enabled = !isEditing,
+            onClick = { onSelect(SourceType.M3U_URL) },
+            modifier = cardModifier
+        )
+    }
+    if (!isEditing || sourceType == SourceType.M3U_FILE) {
+        SourceTypeCard(
+            title = androidx.compose.ui.res.stringResource(R.string.setup_tab_file),
+            subtitle = androidx.compose.ui.res.stringResource(R.string.setup_file_browse_hint),
+            selected = sourceType == SourceType.M3U_FILE,
+            enabled = !isEditing,
+            onClick = { onSelect(SourceType.M3U_FILE) },
+            modifier = cardModifier
+        )
+    }
+    if (!isEditing || sourceType == SourceType.JELLYFIN) {
+        SourceTypeCard(
+            title = androidx.compose.ui.res.stringResource(R.string.setup_tab_jellyfin),
+            subtitle = "Jellyfin media server",
+            selected = sourceType == SourceType.JELLYFIN,
+            enabled = !isEditing,
+            onClick = { onSelect(SourceType.JELLYFIN) },
+            modifier = cardModifier
+        )
+    }
+}
+
+@Composable
+private fun TelevisionProviderSetupHeader(
+    title: String,
+    isEditing: Boolean,
+    onImportClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.headlineSmall,
+                color = TextPrimary
+            )
+            Text(
+                text = androidx.compose.ui.res.stringResource(R.string.setup_shell_subtitle),
+                style = MaterialTheme.typography.bodyMedium,
+                color = OnSurfaceDim
+            )
+        }
+        if (!isEditing) {
+            ImportOptionsButton(
+                text = stringResource(R.string.settings_restore_data),
+                onClick = onImportClick,
+                compact = true
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun TelevisionSourceTypeSelector(
+    sourceType: SourceType,
+    isEditing: Boolean,
+    onSelect: (SourceType) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Text(
+            text = androidx.compose.ui.res.stringResource(R.string.setup_source_type_label),
+            style = MaterialTheme.typography.titleSmall,
+            color = TextPrimary,
+            textAlign = TextAlign.Center
+        )
+        FlowRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            maxItemsInEachRow = 3
+        ) {
+            SourceTypeOptionCards(
+                sourceType = sourceType,
+                isEditing = isEditing,
+                onSelect = onSelect,
+                cardModifier = Modifier.widthIn(min = 188.dp, max = 228.dp)
+            )
+        }
+    }
+}
+
+@Composable
 private fun SourceTypeSelectorPanel(
     sourceType: SourceType,
     isEditing: Boolean,
@@ -2702,52 +2868,11 @@ private fun SourceTypeSelectorPanel(
                 style = MaterialTheme.typography.labelSmall,
                 color = TextTertiary
             )
-            if (!isEditing || sourceType == SourceType.XTREAM) {
-                SourceTypeCard(
-                    title = androidx.compose.ui.res.stringResource(R.string.setup_xtream),
-                    subtitle = androidx.compose.ui.res.stringResource(R.string.setup_info_xtream_body),
-                    selected = sourceType == SourceType.XTREAM,
-                    enabled = !isEditing,
-                    onClick = { onSelect(SourceType.XTREAM) }
-                )
-            }
-            if (!isEditing || sourceType == SourceType.STALKER) {
-                SourceTypeCard(
-                    title = androidx.compose.ui.res.stringResource(R.string.setup_stalker),
-                    badge = androidx.compose.ui.res.stringResource(R.string.badge_beta),
-                    subtitle = androidx.compose.ui.res.stringResource(R.string.setup_info_stalker_body),
-                    selected = sourceType == SourceType.STALKER,
-                    enabled = !isEditing,
-                    onClick = { onSelect(SourceType.STALKER) }
-                )
-            }
-            if (!isEditing || sourceType == SourceType.M3U_URL) {
-                SourceTypeCard(
-                    title = androidx.compose.ui.res.stringResource(R.string.setup_tab_url),
-                    subtitle = androidx.compose.ui.res.stringResource(R.string.setup_info_m3u_body),
-                    selected = sourceType == SourceType.M3U_URL,
-                    enabled = !isEditing,
-                    onClick = { onSelect(SourceType.M3U_URL) }
-                )
-            }
-            if (!isEditing || sourceType == SourceType.M3U_FILE) {
-                SourceTypeCard(
-                    title = androidx.compose.ui.res.stringResource(R.string.setup_tab_file),
-                    subtitle = androidx.compose.ui.res.stringResource(R.string.setup_file_browse_hint),
-                    selected = sourceType == SourceType.M3U_FILE,
-                    enabled = !isEditing,
-                    onClick = { onSelect(SourceType.M3U_FILE) }
-                )
-            }
-            if (!isEditing || sourceType == SourceType.JELLYFIN) {
-                SourceTypeCard(
-                    title = androidx.compose.ui.res.stringResource(R.string.setup_tab_jellyfin),
-                    subtitle = "Jellyfin media server",
-                    selected = sourceType == SourceType.JELLYFIN,
-                    enabled = !isEditing,
-                    onClick = { onSelect(SourceType.JELLYFIN) }
-                )
-            }
+            SourceTypeOptionCards(
+                sourceType = sourceType,
+                isEditing = isEditing,
+                onSelect = onSelect
+            )
             if (!isEditing) {
                 ImportOptionsButton(
                     text = stringResource(R.string.settings_restore_data),
@@ -2778,11 +2903,12 @@ private fun SourceTypeCard(
     subtitle: String,
     selected: Boolean,
     enabled: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Surface(
         onClick = { if (enabled) onClick() },
-        modifier = Modifier.fillMaxWidth().mouseClickable(enabled = enabled, onClick = onClick),
+        modifier = modifier.fillMaxWidth().mouseClickable(enabled = enabled, onClick = onClick),
         shape = ClickableSurfaceDefaults.shape(RoundedCornerShape(12.dp)),
         colors = ClickableSurfaceDefaults.colors(
             containerColor  = if (selected) Primary.copy(alpha = 0.18f) else SurfaceElevated,

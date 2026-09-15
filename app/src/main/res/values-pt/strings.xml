@@ -25,8 +25,8 @@
     <string name="sync_section_vod">VOD</string>
     <string name="sync_section_series">Series</string>
     <string name="sync_items_indexed_format">%1$d items indexed</string>
-    <string name="welcome_tagline">IPTV premium para a sala</string>
-    <string name="welcome_subtitle">Aproveite os canais ao vivo, assista a filmes e séries com uma experiência Android TV original.</string>
+    <string name="welcome_tagline">Coovery tv+ tá na minha casa</string>
+    <string name="welcome_subtitle">Coovery é tv e streaming para toda a família com o melhor do streaming hdtv hdr original</string>
     <string name="welcome_feature_live">Navegação rápida ao vivo com foco remoto</string>
     <string name="welcome_feature_library">Filmes e séries de grande biblioteca sem confusão</string>
     <string name="welcome_feature_player">Sobreposições de player unificadas, acesso de guia e conteúdo salvo</string>
