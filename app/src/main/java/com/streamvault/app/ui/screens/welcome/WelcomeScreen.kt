@@ -161,7 +161,8 @@ fun WelcomeScreen(
                 painter = painterResource(R.drawable.coovery_handheld_welcome_background),
                 contentDescription = null,
                 modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop
+                contentScale = ContentScale.Crop,
+                alignment = Alignment.TopCenter
             )
             Box(
                 modifier = Modifier
