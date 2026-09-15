@@ -30,6 +30,7 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -43,6 +44,7 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Star
 import androidx.tv.material3.*
 import com.streamvault.app.R
+import com.streamvault.app.device.rememberIsTelevisionDevice
 import com.streamvault.app.ui.components.CategoryRow
 import com.streamvault.app.ui.components.SearchInput
 import com.streamvault.app.ui.components.ChannelCard
@@ -51,6 +53,7 @@ import com.streamvault.app.ui.components.SeriesCard
 import com.streamvault.app.ui.components.TvEmptyState
 import com.streamvault.app.ui.components.shell.AppNavigationChrome
 import com.streamvault.app.ui.components.shell.AppScreenScaffold
+import com.streamvault.app.ui.components.shell.rememberHandheldBottomScrollInset
 import com.streamvault.app.ui.design.AppColors
 import com.streamvault.app.ui.design.requestFocusSafely
 import com.streamvault.app.ui.interaction.mouseClickable
@@ -387,6 +390,12 @@ fun SearchScreen(
     var pendingSeries by remember { mutableStateOf<Series?>(null) }
     val scope = rememberCoroutineScope()
     val selectedStateLabel = stringResource(R.string.a11y_selected)
+    val isHandheldSearchLayout = !rememberIsTelevisionDevice()
+    val handheldBottomScrollInset = if (isHandheldSearchLayout) {
+        rememberHandheldBottomScrollInset()
+    } else {
+        32.dp
+    }
 
     // ── Long-press actions dialog state ───────────────────────────────
     var showActionsDialog by remember { mutableStateOf(false) }
@@ -548,26 +557,35 @@ fun SearchScreen(
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(18.dp),
-            contentPadding = PaddingValues(bottom = 32.dp)
+            contentPadding = PaddingValues(bottom = handheldBottomScrollInset)
         ) {
             item {
-                SearchHeroPanel(
-                    query = query,
-                    selectedTab = selectedTab,
-                    recentQueries = recentQueries,
-                    totalResults = uiState.totalResults,
-                    onQueryChange = viewModel::onQueryChange,
-                    onSearch = {
-                        viewModel.onSearchSubmitted()
-                    },
-                    onTabSelected = viewModel::onTabSelected,
-                    onRecentQuerySelected = {
-                        viewModel.onRecentQuerySelected(it)
-                    },
-                    onClearRecentQueries = viewModel::clearRecentQueries,
-                    focusRequester = searchFocusRequester,
-                    selectedStateLabel = selectedTabDescription
-                )
+                if (isHandheldSearchLayout) {
+                    HandheldNetflixSearchHeader(
+                        query = query,
+                        onQueryChange = viewModel::onQueryChange,
+                        onSearch = { viewModel.onSearchSubmitted() },
+                        focusRequester = searchFocusRequester
+                    )
+                } else {
+                    SearchHeroPanel(
+                        query = query,
+                        selectedTab = selectedTab,
+                        recentQueries = recentQueries,
+                        totalResults = uiState.totalResults,
+                        onQueryChange = viewModel::onQueryChange,
+                        onSearch = {
+                            viewModel.onSearchSubmitted()
+                        },
+                        onTabSelected = viewModel::onTabSelected,
+                        onRecentQuerySelected = {
+                            viewModel.onRecentQuerySelected(it)
+                        },
+                        onClearRecentQueries = viewModel::clearRecentQueries,
+                        focusRequester = searchFocusRequester,
+                        selectedStateLabel = selectedTabDescription
+                    )
+                }
             }
 
             when {
@@ -581,11 +599,13 @@ fun SearchScreen(
                 }
 
                 uiState.queryLength < 2 -> {
-                    item {
-                        SearchMessageState(
-                            title = stringResource(R.string.search_ready_title),
-                            subtitle = stringResource(R.string.search_type_to_search)
-                        )
+                    if (!isHandheldSearchLayout) {
+                        item {
+                            SearchMessageState(
+                                title = stringResource(R.string.search_ready_title),
+                                subtitle = stringResource(R.string.search_type_to_search)
+                            )
+                        }
                     }
                 }
 
@@ -617,14 +637,16 @@ fun SearchScreen(
                 }
 
                 else -> {
-                    item {
-                        SearchResultsSummaryRow(
-                            uiState = uiState,
-                            onBuildCompleteIndex = viewModel::buildCompleteStalkerSearchIndex
-                        )
+                    if (!isHandheldSearchLayout) {
+                        item {
+                            SearchResultsSummaryRow(
+                                uiState = uiState,
+                                onBuildCompleteIndex = viewModel::buildCompleteStalkerSearchIndex
+                            )
+                        }
                     }
 
-                    if (selectedTab == SearchTab.ALL) {
+                    if (selectedTab == SearchTab.ALL || isHandheldSearchLayout) {
                         if (uiState.channels.isNotEmpty()) {
                             item {
                                 SearchResultRail(
@@ -805,6 +827,39 @@ fun SearchScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun HandheldNetflixSearchHeader(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    onSearch: () -> Unit,
+    focusRequester: FocusRequester
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 6.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp)
+    ) {
+        Text(
+            text = stringResource(R.string.search_title),
+            style = MaterialTheme.typography.headlineLarge,
+            fontWeight = FontWeight.Bold,
+            color = TextPrimary,
+            modifier = Modifier.semantics { heading() }
+        )
+        SearchInput(
+            value = query,
+            onValueChange = onQueryChange,
+            placeholder = stringResource(R.string.search_hint),
+            focusRequester = focusRequester,
+            onSearch = onSearch,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp)
+        )
     }
 }
 

@@ -2,6 +2,12 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.62]
+
+### Changed
+
+- Handheld search: Netflix-style header with title and search field only (no tabs, recent queries, or recommendation panels). Android TV search unchanged.
+
 ## [1.0.61]
 
 ### Changed
