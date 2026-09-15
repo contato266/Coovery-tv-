@@ -2,6 +2,12 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.66]
+
+### Changed
+
+- Handheld provider setup: header row with import action, horizontally scrollable source tabs, credentials and sign-in before the optional phone QR pairing block. Android TV provider setup unchanged.
+
 ## [1.0.65]
 
 ### Changed

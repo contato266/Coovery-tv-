@@ -22,6 +22,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
@@ -61,6 +62,7 @@ import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -525,6 +527,8 @@ fun ProviderSetupScreen(
             .background(Brush.verticalGradient(colors = listOf(BackgroundDeep, Background, Background)))
     ) {
         val isWide = maxWidth >= 700.dp
+        val isTelevisionDevice = rememberIsTelevisionDevice()
+        val handheldLayout = !isWide && !isTelevisionDevice
         val hPad = if (isWide) 24.dp else 16.dp
 
         Box(
@@ -598,18 +602,30 @@ fun ProviderSetupScreen(
                         onSelectXtreamLiveSyncMode = viewModel::updateXtreamLiveSyncMode,
                         onSelectGuideSourcePolicy = viewModel::updateGuideSourcePolicy,
                         onSelectChannelLogoSourcePolicy = viewModel::updateChannelLogoSourcePolicy,
+                        handheldLayout = false,
                         modifier = Modifier.weight(1f).fillMaxHeight()
                     )
                 }
             } else {
                 Column(
                     modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                    verticalArrangement = Arrangement.spacedBy(if (handheldLayout) 12.dp else 10.dp)
                 ) {
+                    if (handheldLayout) {
+                        HandheldProviderSetupHeader(
+                            title = stringResource(
+                                if (uiState.isEditing) R.string.setup_edit_provider else R.string.setup_provider_title
+                            ),
+                            importLabel = stringResource(R.string.settings_restore_data),
+                            onImportClick = { showImportOptionsDialog = true },
+                            showImport = !uiState.isEditing
+                        )
+                    }
                     SourceTypeTabRow(
                         sourceType = sourceType,
                         isEditing = uiState.isEditing,
                         onSelect = ::onSourceTypeSelected,
+                        scrollable = handheldLayout,
                         modifier = Modifier.fillMaxWidth()
                     )
                     ProviderFormContent(
@@ -663,12 +679,13 @@ fun ProviderSetupScreen(
                         onSelectXtreamLiveSyncMode = viewModel::updateXtreamLiveSyncMode,
                         onSelectGuideSourcePolicy = viewModel::updateGuideSourcePolicy,
                         onSelectChannelLogoSourcePolicy = viewModel::updateChannelLogoSourcePolicy,
+                        handheldLayout = handheldLayout,
                         modifier = Modifier.weight(1f).fillMaxWidth()
                     )
                 }
             }
 
-            if (!uiState.isEditing && !isWide) {
+            if (!uiState.isEditing && !isWide && !handheldLayout) {
                 ImportOptionsButton(
                     text = stringResource(R.string.settings_restore_data),
                     onClick = { showImportOptionsDialog = true },
@@ -908,116 +925,213 @@ private suspend fun Lifecycle.awaitResumed() {
 }
 
 @Composable
+private fun HandheldProviderSetupHeader(
+    title: String,
+    importLabel: String,
+    onImportClick: () -> Unit,
+    showImport: Boolean,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = title,
+            modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.titleMedium,
+            color = OnBackground,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+        if (showImport) {
+            ImportOptionsButton(
+                text = importLabel,
+                onClick = onImportClick,
+                compact = true
+            )
+        }
+    }
+}
+
+@Composable
 private fun PhonePairingCard(
     pairingState: ProviderQrPairingState,
     onStart: () -> Unit,
-    onStop: () -> Unit
+    onStop: () -> Unit,
+    compactHandheld: Boolean = false
 ) {
     val isActive = pairingState.status == ProviderQrPairingStatus.READY ||
         pairingState.status == ProviderQrPairingStatus.RECEIVING
     val message = pairingState.message ?: stringResource(R.string.setup_phone_pairing_body)
+    val statusLabel = when (pairingState.status) {
+        ProviderQrPairingStatus.IDLE -> stringResource(R.string.setup_phone_pairing_idle)
+        ProviderQrPairingStatus.READY -> stringResource(R.string.setup_phone_pairing_ready)
+        ProviderQrPairingStatus.RECEIVING -> stringResource(R.string.setup_phone_pairing_receiving)
+        ProviderQrPairingStatus.COMPLETE -> stringResource(R.string.setup_phone_pairing_complete)
+        ProviderQrPairingStatus.ERROR -> stringResource(R.string.setup_phone_pairing_error)
+    }
+    val statusColor = if (pairingState.status == ProviderQrPairingStatus.ERROR) {
+        ErrorColor.copy(alpha = 0.35f)
+    } else {
+        PrimaryGlow
+    }
 
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(if (compactHandheld) 14.dp else 16.dp),
         colors = SurfaceDefaults.colors(containerColor = Surface.copy(alpha = 0.72f)),
         border = Border(
             border = BorderStroke(
                 1.dp,
                 if (isActive) Primary.copy(alpha = 0.55f) else SurfaceHighlight
             ),
-            shape = RoundedCornerShape(16.dp)
+            shape = RoundedCornerShape(if (compactHandheld) 14.dp else 16.dp)
         )
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            modifier = Modifier.padding(if (compactHandheld) 14.dp else 16.dp),
+            verticalArrangement = Arrangement.spacedBy(if (compactHandheld) 10.dp else 12.dp)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(
-                        text = stringResource(R.string.setup_phone_pairing_title),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = OnBackground
-                    )
-                    Text(
-                        text = message,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = OnSurfaceDim
-                    )
-                }
-                StatusPill(
-                    label = when (pairingState.status) {
-                        ProviderQrPairingStatus.IDLE -> stringResource(R.string.setup_phone_pairing_idle)
-                        ProviderQrPairingStatus.READY -> stringResource(R.string.setup_phone_pairing_ready)
-                        ProviderQrPairingStatus.RECEIVING -> stringResource(R.string.setup_phone_pairing_receiving)
-                        ProviderQrPairingStatus.COMPLETE -> stringResource(R.string.setup_phone_pairing_complete)
-                        ProviderQrPairingStatus.ERROR -> stringResource(R.string.setup_phone_pairing_error)
-                    },
-                    containerColor = if (pairingState.status == ProviderQrPairingStatus.ERROR) {
-                        ErrorColor.copy(alpha = 0.35f)
-                    } else {
-                        PrimaryGlow
-                    }
+            if (compactHandheld) {
+                Text(
+                    text = stringResource(R.string.setup_phone_pairing_title),
+                    style = MaterialTheme.typography.titleSmall,
+                    color = OnBackground
                 )
+                Text(
+                    text = message,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = OnSurfaceDim
+                )
+                StatusPill(
+                    label = statusLabel,
+                    containerColor = statusColor
+                )
+            } else {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(
+                            text = stringResource(R.string.setup_phone_pairing_title),
+                            style = MaterialTheme.typography.titleMedium,
+                            color = OnBackground
+                        )
+                        Text(
+                            text = message,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = OnSurfaceDim
+                        )
+                    }
+                    StatusPill(label = statusLabel, containerColor = statusColor)
+                }
             }
 
             pairingState.qrBitmap?.let { bitmap ->
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Image(
-                        bitmap = bitmap.asImageBitmap(),
-                        contentDescription = stringResource(R.string.setup_phone_pairing_qr_description),
-                        modifier = Modifier
-                            .size(156.dp)
-                            .background(Color.White, RoundedCornerShape(12.dp))
-                            .padding(8.dp)
-                    )
+                if (compactHandheld) {
                     Column(
-                        modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
+                        Image(
+                            bitmap = bitmap.asImageBitmap(),
+                            contentDescription = stringResource(R.string.setup_phone_pairing_qr_description),
+                            modifier = Modifier
+                                .size(168.dp)
+                                .background(Color.White, RoundedCornerShape(12.dp))
+                                .padding(8.dp)
+                        )
                         Text(
                             text = stringResource(R.string.setup_phone_pairing_same_wifi),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = OnBackground
+                            style = MaterialTheme.typography.bodySmall,
+                            color = OnBackground,
+                            textAlign = TextAlign.Center
                         )
                         pairingState.url?.let { url ->
                             Text(
                                 text = url,
                                 style = MaterialTheme.typography.bodySmall,
                                 color = Primary,
-                                maxLines = 3
+                                maxLines = 3,
+                                textAlign = TextAlign.Center
                             )
+                        }
+                    }
+                } else {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Image(
+                            bitmap = bitmap.asImageBitmap(),
+                            contentDescription = stringResource(R.string.setup_phone_pairing_qr_description),
+                            modifier = Modifier
+                                .size(156.dp)
+                                .background(Color.White, RoundedCornerShape(12.dp))
+                                .padding(8.dp)
+                        )
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = stringResource(R.string.setup_phone_pairing_same_wifi),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = OnBackground
+                            )
+                            pairingState.url?.let { url ->
+                                Text(
+                                    text = url,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Primary,
+                                    maxLines = 3
+                                )
+                            }
                         }
                     }
                 }
             }
 
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                Box(modifier = Modifier.weight(1f)) {
+            if (compactHandheld) {
+                SmallActionButton(
+                    text = if (isActive) {
+                        stringResource(R.string.setup_phone_pairing_restart)
+                    } else {
+                        stringResource(R.string.setup_phone_pairing_start)
+                    },
+                    onClick = onStart
+                )
+                if (isActive) {
                     SmallActionButton(
-                        text = if (isActive) {
-                            stringResource(R.string.setup_phone_pairing_restart)
-                        } else {
-                            stringResource(R.string.setup_phone_pairing_start)
-                        },
-                        onClick = onStart
+                        text = stringResource(R.string.setup_phone_pairing_stop),
+                        onClick = onStop
                     )
                 }
-                if (isActive) {
+            } else {
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     Box(modifier = Modifier.weight(1f)) {
                         SmallActionButton(
-                            text = stringResource(R.string.setup_phone_pairing_stop),
-                            onClick = onStop
+                            text = if (isActive) {
+                                stringResource(R.string.setup_phone_pairing_restart)
+                            } else {
+                                stringResource(R.string.setup_phone_pairing_start)
+                            },
+                            onClick = onStart
                         )
+                    }
+                    if (isActive) {
+                        Box(modifier = Modifier.weight(1f)) {
+                            SmallActionButton(
+                                text = stringResource(R.string.setup_phone_pairing_stop),
+                                onClick = onStop
+                            )
+                        }
                     }
                 }
             }
@@ -1078,15 +1192,20 @@ private fun ProviderFormContent(
     onSelectXtreamLiveSyncMode: (ProviderXtreamLiveSyncMode) -> Unit,
     onSelectGuideSourcePolicy: (GuideSourcePolicy) -> Unit,
     onSelectChannelLogoSourcePolicy: (ChannelLogoSourcePolicy) -> Unit,
+    handheldLayout: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val scrollState = rememberScrollState()
     val isTelevisionDevice = rememberIsTelevisionDevice()
+    val formPadding = if (handheldLayout) 16.dp else 20.dp
+    val sectionSpacing = if (handheldLayout) 14.dp else 12.dp
+    val showPhonePairingTop = !uiState.isEditing && !handheldLayout
+    val showPhonePairingBottom = !uiState.isEditing && handheldLayout
 
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(20.dp),
-        border = Border(border = BorderStroke(1.dp, SurfaceHighlight), shape = RoundedCornerShape(20.dp)),
+        shape = RoundedCornerShape(if (handheldLayout) 16.dp else 20.dp),
+        border = Border(border = BorderStroke(1.dp, SurfaceHighlight), shape = RoundedCornerShape(if (handheldLayout) 16.dp else 20.dp)),
         colors = SurfaceDefaults.colors(containerColor = SurfaceElevated.copy(alpha = 0.95f))
     ) {
         Column(
@@ -1094,25 +1213,23 @@ private fun ProviderFormContent(
                 .fillMaxSize()
                 .verticalScroll(scrollState)
                 .imePadding()
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .padding(formPadding),
+            verticalArrangement = Arrangement.spacedBy(sectionSpacing)
         ) {
-            // Playlist name ן¿½ always shown
             ProviderTextField(
                 value = name,
                 onValueChange = onNameChange,
                 placeholder = androidx.compose.ui.res.stringResource(R.string.setup_name_hint)
             )
 
-            if (!uiState.isEditing) {
+            if (showPhonePairingTop) {
                 PhonePairingCard(
                     pairingState = pairingState,
                     onStart = onStartPhonePairing,
                     onStop = onStopPhonePairing
                 )
+                HorizontalDivider(color = SurfaceHighlight.copy(alpha = 0.6f))
             }
-
-            HorizontalDivider(color = SurfaceHighlight.copy(alpha = 0.6f))
 
             when (sourceType) {
                 SourceType.XTREAM -> {
@@ -1455,6 +1572,16 @@ private fun ProviderFormContent(
                         onClick = onLoginJellyfin
                     )
                 }
+            }
+
+            if (showPhonePairingBottom) {
+                HorizontalDivider(color = SurfaceHighlight.copy(alpha = 0.6f))
+                PhonePairingCard(
+                    pairingState = pairingState,
+                    onStart = onStartPhonePairing,
+                    onStop = onStopPhonePairing,
+                    compactHandheld = true
+                )
             }
         }
     }
@@ -2702,9 +2829,16 @@ private fun SourceTypeTabRow(
     sourceType: SourceType,
     isEditing: Boolean,
     onSelect: (SourceType) -> Unit,
+    scrollable: Boolean = false,
     modifier: Modifier = Modifier
 ) {
-    Row(modifier = modifier, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    val tabScrollState = rememberScrollState()
+    Row(
+        modifier = modifier.then(
+            if (scrollable) Modifier.horizontalScroll(tabScrollState) else Modifier
+        ),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
         if (!isEditing || sourceType == SourceType.XTREAM) {
             TabButton(
                 text = androidx.compose.ui.res.stringResource(R.string.setup_xtream),
