@@ -46,6 +46,8 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.key.onPreviewKeyEvent
+import android.content.res.Configuration
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
@@ -528,7 +530,10 @@ fun ProviderSetupScreen(
     ) {
         val isWide = maxWidth >= 700.dp
         val isTelevisionDevice = rememberIsTelevisionDevice()
-        val handheldLayout = !isWide && !isTelevisionDevice
+        val isTvUiMode = (LocalConfiguration.current.uiMode and Configuration.UI_MODE_TYPE_MASK) ==
+            Configuration.UI_MODE_TYPE_TELEVISION
+        val televisionProviderSetup = isTelevisionDevice || isTvUiMode
+        val handheldLayout = !isWide && !televisionProviderSetup
         val hPad = if (isWide) 24.dp else 16.dp
 
         Box(
@@ -598,37 +603,42 @@ fun ProviderSetupScreen(
                 )
             }
 
-            if (isTelevisionDevice) {
+            if (televisionProviderSetup) {
                 Column(
                     modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     TelevisionProviderSetupHeader(
                         title = setupTitle,
-                        isEditing = uiState.isEditing,
-                        onImportClick = { showImportOptionsDialog = true },
                         modifier = Modifier.fillMaxWidth()
                     )
-                    Row(
+                    Box(
                         modifier = Modifier
                             .weight(1f)
-                            .fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
-                        verticalAlignment = Alignment.Top
+                            .fillMaxWidth()
                     ) {
-                        TelevisionSourceTypePanel(
-                            sourceType = sourceType,
-                            isEditing = uiState.isEditing,
-                            onSelect = ::onSourceTypeSelected,
-                            modifier = Modifier
-                                .width(280.dp)
-                                .fillMaxHeight()
-                        )
-                        providerFormContent(
-                            Modifier
-                                .weight(1f)
-                                .fillMaxHeight()
-                        )
+                        Row(
+                            modifier = Modifier.fillMaxSize(),
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                            verticalAlignment = Alignment.Top
+                        ) {
+                            SourceTypeSelectorPanel(
+                                sourceType = sourceType,
+                                isEditing = uiState.isEditing,
+                                isEditLabel = setupTitle,
+                                onSelect = ::onSourceTypeSelected,
+                                onImportClick = { showImportOptionsDialog = true },
+                                showShellHeader = false,
+                                modifier = Modifier
+                                    .width(300.dp)
+                                    .fillMaxHeight()
+                            )
+                            providerFormContent(
+                                Modifier
+                                    .weight(1f)
+                                    .fillMaxHeight()
+                            )
+                        }
                     }
                 }
             } else if (isWide) {
@@ -727,7 +737,7 @@ fun ProviderSetupScreen(
                 }
             }
 
-            if (!uiState.isEditing && !isWide && !handheldLayout && !isTelevisionDevice) {
+            if (!uiState.isEditing && !isWide && !handheldLayout && !televisionProviderSetup) {
                 ImportOptionsButton(
                     text = stringResource(R.string.settings_restore_data),
                     onClick = { showImportOptionsDialog = true },
@@ -2774,74 +2784,22 @@ private fun SourceTypeOptionCards(
 @Composable
 private fun TelevisionProviderSetupHeader(
     title: String,
-    isEditing: Boolean,
-    onImportClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Row(
+    Column(
         modifier = modifier,
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.headlineSmall,
-                color = TextPrimary
-            )
-            Text(
-                text = androidx.compose.ui.res.stringResource(R.string.setup_shell_subtitle),
-                style = MaterialTheme.typography.bodyMedium,
-                color = OnSurfaceDim
-            )
-        }
-        if (!isEditing) {
-            ImportOptionsButton(
-                text = stringResource(R.string.settings_restore_data),
-                onClick = onImportClick,
-                compact = true
-            )
-        }
-    }
-}
-
-@Composable
-private fun TelevisionSourceTypePanel(
-    sourceType: SourceType,
-    isEditing: Boolean,
-    onSelect: (SourceType) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Surface(
-        modifier = modifier,
-        shape = RoundedCornerShape(20.dp),
-        colors = SurfaceDefaults.colors(containerColor = Surface.copy(alpha = 0.92f)),
-        border = Border(
-            border = BorderStroke(1.dp, SurfaceHighlight),
-            shape = RoundedCornerShape(20.dp)
+        Text(
+            text = title,
+            style = MaterialTheme.typography.headlineSmall,
+            color = TextPrimary
         )
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            Text(
-                text = androidx.compose.ui.res.stringResource(R.string.setup_source_type_label),
-                style = MaterialTheme.typography.titleSmall,
-                color = TextPrimary
-            )
-            SourceTypeOptionCards(
-                sourceType = sourceType,
-                isEditing = isEditing,
-                onSelect = onSelect
-            )
-        }
+        Text(
+            text = androidx.compose.ui.res.stringResource(R.string.setup_shell_subtitle),
+            style = MaterialTheme.typography.bodyMedium,
+            color = OnSurfaceDim
+        )
     }
 }
 
@@ -2852,6 +2810,7 @@ private fun SourceTypeSelectorPanel(
     isEditLabel: String,
     onSelect: (SourceType) -> Unit,
     onImportClick: () -> Unit,
+    showShellHeader: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     Surface(
@@ -2863,16 +2822,18 @@ private fun SourceTypeSelectorPanel(
             modifier = Modifier.fillMaxSize().padding(14.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text(
-                text = isEditLabel,
-                style = MaterialTheme.typography.titleMedium,
-                color = TextPrimary
-            )
-            Text(
-                text = androidx.compose.ui.res.stringResource(R.string.setup_shell_subtitle),
-                style = MaterialTheme.typography.bodySmall,
-                color = OnSurfaceDim
-            )
+            if (showShellHeader) {
+                Text(
+                    text = isEditLabel,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = TextPrimary
+                )
+                Text(
+                    text = androidx.compose.ui.res.stringResource(R.string.setup_shell_subtitle),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = OnSurfaceDim
+                )
+            }
             Text(
                 text = androidx.compose.ui.res.stringResource(R.string.setup_source_type_label),
                 style = MaterialTheme.typography.labelSmall,
