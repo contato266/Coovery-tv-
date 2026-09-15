@@ -534,7 +534,7 @@ fun ProviderSetupScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = hPad, vertical = 16.dp)
+                .padding(horizontal = hPad, vertical = if (handheldLayout) 12.dp else 16.dp)
         ) {
             if (isWide) {
                 Row(

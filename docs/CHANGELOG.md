@@ -2,6 +2,13 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.67]
+
+### Changed
+
+- Handheld welcome: updated full-screen splash background artwork.
+- Handheld provider setup: immersive full-screen layout (hidden status and navigation bars) for more usable form space. Android TV unchanged.
+
 ## [1.0.66]
 
 ### Changed

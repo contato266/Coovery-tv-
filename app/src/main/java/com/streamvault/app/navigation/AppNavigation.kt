@@ -383,13 +383,16 @@ fun AppNavigation(mainActivity: MainActivity) {
         val onHandheldImmersiveVodDetailRoute = route != null &&
             (route.startsWith("movie_detail") || route.startsWith("series_detail"))
         val isHandheld = !mainActivity.isTelevisionDevice()
+        val onHandheldProviderSetupRoute = route != null && route.startsWith("provider_setup")
         if (onPlayerRoute) {
             mainActivity.applyHandheldPlayerOrientation()
             mainActivity.setHandheldPlayerImmersiveActive(isHandheld)
             mainActivity.setHandheldWelcomeEdgeToEdgeActive(false)
         } else {
             mainActivity.applyHandheldBrowseOrientation()
-            val handheldImmersive = isHandheld && onHandheldImmersiveVodDetailRoute
+            val handheldImmersive = isHandheld && (
+                onHandheldImmersiveVodDetailRoute || onHandheldProviderSetupRoute
+            )
             mainActivity.setHandheldPlayerImmersiveActive(handheldImmersive)
             mainActivity.setHandheldWelcomeEdgeToEdgeActive(
                 isHandheld && route == Routes.WELCOME
