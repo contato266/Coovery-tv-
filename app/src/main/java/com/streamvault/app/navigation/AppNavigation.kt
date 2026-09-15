@@ -390,13 +390,14 @@ fun AppNavigation(mainActivity: MainActivity) {
             mainActivity.setHandheldWelcomeEdgeToEdgeActive(false)
         } else {
             mainActivity.applyHandheldBrowseOrientation()
+            val onHandheldWelcomeRoute = route == Routes.WELCOME
             val handheldImmersive = isHandheld && (
-                onHandheldImmersiveVodDetailRoute || onHandheldProviderSetupRoute
+                onHandheldWelcomeRoute ||
+                onHandheldImmersiveVodDetailRoute ||
+                onHandheldProviderSetupRoute
             )
             mainActivity.setHandheldPlayerImmersiveActive(handheldImmersive)
-            mainActivity.setHandheldWelcomeEdgeToEdgeActive(
-                isHandheld && route == Routes.WELCOME
-            )
+            mainActivity.setHandheldWelcomeEdgeToEdgeActive(false)
         }
     }
     val activeProvider = mainActivity.providerRepository.getActiveProvider()
