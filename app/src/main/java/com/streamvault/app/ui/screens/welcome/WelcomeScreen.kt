@@ -3,6 +3,7 @@ package com.streamvault.app.ui.screens.welcome
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -14,8 +15,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -27,12 +33,15 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.tv.material3.ButtonDefaults
+import androidx.tv.material3.ClickableSurfaceDefaults
+import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Surface
 import androidx.tv.material3.SurfaceDefaults
@@ -43,6 +52,7 @@ import com.streamvault.app.device.rememberIsTelevisionDevice
 import com.streamvault.app.ui.components.shell.StatusPill
 import com.streamvault.app.ui.design.AppColors
 import com.streamvault.app.ui.interaction.TvButton
+import com.streamvault.app.ui.interaction.TvClickableSurface
 import com.streamvault.data.sync.SyncProgressBus
 import com.streamvault.data.sync.SyncProgressAggregate
 import com.streamvault.domain.repository.ProviderRepository
@@ -153,6 +163,11 @@ fun WelcomeScreen(
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop
             )
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.38f))
+            )
         } else {
             Box(
                 modifier = Modifier
@@ -184,7 +199,7 @@ fun WelcomeScreen(
                     onNavigateToSetup = onNavigateToSetup,
                     modifier = Modifier
                         .align(Alignment.Center)
-                        .padding(horizontal = 28.dp)
+                        .padding(horizontal = 32.dp)
                         .fillMaxWidth()
                 )
             }
@@ -199,38 +214,78 @@ fun WelcomeScreen(
     }
 }
 
+private val HandheldWelcomeActionPillColor = Color(0xFF1B2A45).copy(alpha = 0.88f)
+
 @Composable
 private fun HandheldWelcomeStartActions(
     onNavigateToHome: () -> Unit,
     onNavigateToSetup: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Row(
-        modifier = modifier.widthIn(max = 520.dp),
-        horizontalArrangement = Arrangement.spacedBy(14.dp),
-        verticalAlignment = Alignment.CenterVertically
+    Column(
+        modifier = modifier.widthIn(max = 420.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        TvButton(
-            onClick = onNavigateToSetup,
-            modifier = Modifier.weight(1f)
+        HandheldWelcomeActionPill(
+            text = stringResource(R.string.welcome_setup_provider),
+            leadingIcon = Icons.Default.Settings,
+            onClick = onNavigateToSetup
+        )
+        HandheldWelcomeActionPill(
+            text = stringResource(R.string.welcome_setup_later),
+            leadingIcon = Icons.Default.Schedule,
+            onClick = onNavigateToHome
+        )
+    }
+}
+
+@Composable
+private fun HandheldWelcomeActionPill(
+    text: String,
+    leadingIcon: ImageVector,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val pillShape = RoundedCornerShape(28.dp)
+    TvClickableSurface(
+        onClick = onClick,
+        modifier = modifier
+            .fillMaxWidth()
+            .height(56.dp),
+        shape = ClickableSurfaceDefaults.shape(pillShape),
+        colors = ClickableSurfaceDefaults.colors(
+            containerColor = HandheldWelcomeActionPillColor,
+            focusedContainerColor = HandheldWelcomeActionPillColor.copy(alpha = 0.96f),
+            contentColor = Color.White
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 22.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            Text(
-                text = stringResource(R.string.welcome_setup_provider),
-                textAlign = TextAlign.Center
+            Icon(
+                imageVector = leadingIcon,
+                contentDescription = null,
+                tint = Color.White,
+                modifier = Modifier.size(24.dp)
             )
-        }
-        TvButton(
-            onClick = onNavigateToHome,
-            modifier = Modifier.weight(1f),
-            colors = ButtonDefaults.colors(
-                containerColor = AppColors.SurfaceElevated.copy(alpha = 0.92f),
-                focusedContainerColor = Color.White,
-                contentColor = AppColors.TextPrimary
-            )
-        ) {
             Text(
-                text = stringResource(R.string.welcome_setup_later),
-                textAlign = TextAlign.Center
+                text = text,
+                style = MaterialTheme.typography.titleMedium,
+                color = Color.White,
+                modifier = Modifier.weight(1f),
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = null,
+                tint = Color.White.copy(alpha = 0.72f),
+                modifier = Modifier.size(28.dp)
             )
         }
     }

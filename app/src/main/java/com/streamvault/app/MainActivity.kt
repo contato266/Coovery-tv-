@@ -135,6 +135,7 @@ class MainActivity : ComponentActivity() {
 
     private var playerPictureInPictureState = PlayerPictureInPictureState()
     private var handheldPlayerImmersiveActive = false
+    private var handheldWelcomeEdgeToEdgeActive = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         if (BuildConfig.DEBUG) {
@@ -301,11 +302,19 @@ class MainActivity : ComponentActivity() {
         applyPlatformSystemUi()
     }
 
+    fun setHandheldWelcomeEdgeToEdgeActive(active: Boolean) {
+        if (handheldWelcomeEdgeToEdgeActive == active) return
+        handheldWelcomeEdgeToEdgeActive = active
+        applyPlatformSystemUi()
+    }
+
     private fun applyPlatformSystemUi() {
         if (isTelevisionDevice()) {
             applyTelevisionImmersiveSystemUi()
         } else if (handheldPlayerImmersiveActive) {
             applyHandheldPlayerImmersiveSystemUi()
+        } else if (handheldWelcomeEdgeToEdgeActive) {
+            applyHandheldWelcomeEdgeToEdgeSystemUi()
         } else {
             applyHandheldEdgeToEdgeSystemUi()
         }
@@ -347,6 +356,25 @@ class MainActivity : ComponentActivity() {
             systemBarsBehavior =
                 WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
             hide(WindowInsetsCompat.Type.systemBars())
+        }
+    }
+
+    /** Handheld welcome: draw behind status + navigation bars; system bars stay visible. */
+    @Suppress("DEPRECATION")
+    private fun applyHandheldWelcomeEdgeToEdgeSystemUi() {
+        val decorView = window.decorView
+        window.statusBarColor = android.graphics.Color.TRANSPARENT
+        window.navigationBarColor = android.graphics.Color.TRANSPARENT
+        decorView.systemUiVisibility = (
+            View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+            )
+        WindowCompat.getInsetsController(window, decorView).apply {
+            show(WindowInsetsCompat.Type.statusBars() or WindowInsetsCompat.Type.navigationBars())
+            systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_DEFAULT
+            isAppearanceLightStatusBars = false
+            isAppearanceLightNavigationBars = false
         }
     }
 

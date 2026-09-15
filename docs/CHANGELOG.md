@@ -2,6 +2,12 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.64]
+
+### Changed
+
+- Handheld welcome: stacked action pills (settings / clock icons, chevrons) over poster background; edge-to-edge behind visible status and navigation bars. Android TV welcome unchanged.
+
 ## [1.0.63]
 
 ### Changed
