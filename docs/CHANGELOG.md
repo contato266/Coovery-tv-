@@ -2,6 +2,12 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.68]
+
+### Changed
+
+- Handheld welcome: immersive full-screen (hidden status and navigation bars; system bars appear transiently on swipe). Android TV welcome unchanged.
+
 ## [1.0.67]
 
 ### Changed
