@@ -2,6 +2,12 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.70]
+
+### Fixed
+
+- Android TV provider setup: restore visible source-type cards and login form (title row on top, option panel + form side by side). Fixes broken layout that could show only Import on some TV sizes. Handheld unchanged.
+
 ## [1.0.69]
 
 ### Changed

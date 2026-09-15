@@ -598,11 +598,10 @@ fun ProviderSetupScreen(
                 )
             }
 
-            if (isWide && isTelevisionDevice) {
+            if (isTelevisionDevice) {
                 Column(
                     modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
                     TelevisionProviderSetupHeader(
                         title = setupTitle,
@@ -610,18 +609,27 @@ fun ProviderSetupScreen(
                         onImportClick = { showImportOptionsDialog = true },
                         modifier = Modifier.fillMaxWidth()
                     )
-                    TelevisionSourceTypeSelector(
-                        sourceType = sourceType,
-                        isEditing = uiState.isEditing,
-                        onSelect = ::onSourceTypeSelected,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    providerFormContent(
-                        Modifier
+                    Row(
+                        modifier = Modifier
                             .weight(1f)
-                            .fillMaxWidth()
-                            .widthIn(max = 920.dp)
-                    )
+                            .fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalAlignment = Alignment.Top
+                    ) {
+                        TelevisionSourceTypePanel(
+                            sourceType = sourceType,
+                            isEditing = uiState.isEditing,
+                            onSelect = ::onSourceTypeSelected,
+                            modifier = Modifier
+                                .width(280.dp)
+                                .fillMaxHeight()
+                        )
+                        providerFormContent(
+                            Modifier
+                                .weight(1f)
+                                .fillMaxHeight()
+                        )
+                    }
                 }
             } else if (isWide) {
                 Row(
@@ -719,7 +727,7 @@ fun ProviderSetupScreen(
                 }
             }
 
-            if (!uiState.isEditing && !isWide && !handheldLayout) {
+            if (!uiState.isEditing && !isWide && !handheldLayout && !isTelevisionDevice) {
                 ImportOptionsButton(
                     text = stringResource(R.string.settings_restore_data),
                     onClick = { showImportOptionsDialog = true },
@@ -2800,36 +2808,38 @@ private fun TelevisionProviderSetupHeader(
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun TelevisionSourceTypeSelector(
+private fun TelevisionSourceTypePanel(
     sourceType: SourceType,
     isEditing: Boolean,
     onSelect: (SourceType) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(
+    Surface(
         modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Text(
-            text = androidx.compose.ui.res.stringResource(R.string.setup_source_type_label),
-            style = MaterialTheme.typography.titleSmall,
-            color = TextPrimary,
-            textAlign = TextAlign.Center
+        shape = RoundedCornerShape(20.dp),
+        colors = SurfaceDefaults.colors(containerColor = Surface.copy(alpha = 0.92f)),
+        border = Border(
+            border = BorderStroke(1.dp, SurfaceHighlight),
+            shape = RoundedCornerShape(20.dp)
         )
-        FlowRow(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            maxItemsInEachRow = 3
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
+            Text(
+                text = androidx.compose.ui.res.stringResource(R.string.setup_source_type_label),
+                style = MaterialTheme.typography.titleSmall,
+                color = TextPrimary
+            )
             SourceTypeOptionCards(
                 sourceType = sourceType,
                 isEditing = isEditing,
-                onSelect = onSelect,
-                cardModifier = Modifier.widthIn(min = 188.dp, max = 228.dp)
+                onSelect = onSelect
             )
         }
     }
