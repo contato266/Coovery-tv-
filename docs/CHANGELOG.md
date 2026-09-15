@@ -2,6 +2,12 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.65]
+
+### Changed
+
+- Handheld welcome: Eu tv e streaming promotional artwork as the full-screen background. Android TV welcome unchanged.
+
 ## [1.0.64]
 
 ### Changed
