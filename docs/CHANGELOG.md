@@ -2,6 +2,13 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.69]
+
+### Changed
+
+- Android TV welcome: updated headline and subtitle copy (Coovery tv+ / family streaming messaging). Handheld welcome unchanged.
+- Android TV provider setup: title and import at the top, source-type options centered in a grid, form below. Handheld provider setup unchanged.
+
 ## [1.0.68]
 
 ### Changed

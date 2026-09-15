@@ -31,8 +31,8 @@
     <string name="sync_section_vod">VOD</string>
     <string name="sync_section_series">Series</string>
     <string name="sync_items_indexed_format">%1$d items indexed</string>
-    <string name="welcome_tagline">Premium IPTV for the living room</string>
-    <string name="welcome_subtitle">Lean back into live channels, catch-up viewing, movies, and series with a first-party Android TV experience.</string>
+    <string name="welcome_tagline">Coovery tv+ is in my home</string>
+    <string name="welcome_subtitle">Coovery is TV and streaming for the whole family with the best original HDTV HDR streaming.</string>
     <string name="welcome_feature_live">Fast live browsing with remote-first focus</string>
     <string name="welcome_feature_library">Large-library movies and series without the clutter</string>
     <string name="welcome_feature_player">Unified player overlays, guide access, and saved content</string>
