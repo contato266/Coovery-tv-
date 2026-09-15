@@ -2,6 +2,12 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.71]
+
+### Fixed
+
+- Android TV provider setup: use the full source-type selector panel (Xtream, Stalker, URL, File, Jellyfin) plus login form again; detect TV UI mode; fix column layout sizing. Handheld unchanged.
+
 ## [1.0.70]
 
 ### Fixed
