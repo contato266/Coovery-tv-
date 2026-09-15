@@ -1,5 +1,6 @@
 package com.streamvault.app.ui.screens.welcome
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,6 +23,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -36,6 +39,7 @@ import androidx.tv.material3.SurfaceDefaults
 import androidx.tv.material3.Text
 import com.streamvault.app.BuildConfig
 import com.streamvault.app.R
+import com.streamvault.app.device.rememberIsTelevisionDevice
 import com.streamvault.app.ui.components.shell.StatusPill
 import com.streamvault.app.ui.design.AppColors
 import com.streamvault.app.ui.interaction.TvButton
@@ -131,6 +135,7 @@ fun WelcomeScreen(
 ) {
     val hasProviders by viewModel.hasProviders.collectAsStateWithLifecycle()
     val syncProgress by viewModel.syncProgress.collectAsStateWithLifecycle()
+    val isTelevisionDevice = rememberIsTelevisionDevice()
 
     LaunchedEffect(hasProviders, startupReady) {
         when (hasProviders) {
@@ -141,34 +146,91 @@ fun WelcomeScreen(
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            Color.Black.copy(alpha = 0.22f),
-                            AppColors.HeroTop,
-                            AppColors.HeroBottom
+        if (!isTelevisionDevice) {
+            Image(
+                painter = painterResource(R.drawable.coovery_handheld_welcome_background),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+        } else {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                Color.Black.copy(alpha = 0.22f),
+                                AppColors.HeroTop,
+                                AppColors.HeroBottom
+                            )
                         )
                     )
-                )
-        )
+            )
+        }
 
         when (hasProviders) {
-            false -> WelcomeStartCard(
-                onNavigateToHome = onNavigateToHome,
-                onNavigateToSetup = onNavigateToSetup,
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .padding(32.dp)
-            )
+            false -> if (isTelevisionDevice) {
+                WelcomeStartCard(
+                    onNavigateToHome = onNavigateToHome,
+                    onNavigateToSetup = onNavigateToSetup,
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .padding(32.dp)
+                )
+            } else {
+                HandheldWelcomeStartActions(
+                    onNavigateToHome = onNavigateToHome,
+                    onNavigateToSetup = onNavigateToSetup,
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .padding(horizontal = 28.dp)
+                        .fillMaxWidth()
+                )
+            }
 
             else -> WelcomeLoadingCard(
                 syncProgress = syncProgress,
                 modifier = Modifier
                     .align(Alignment.Center)
                     .padding(32.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun HandheldWelcomeStartActions(
+    onNavigateToHome: () -> Unit,
+    onNavigateToSetup: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier.widthIn(max = 520.dp),
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        TvButton(
+            onClick = onNavigateToSetup,
+            modifier = Modifier.weight(1f)
+        ) {
+            Text(
+                text = stringResource(R.string.welcome_setup_provider),
+                textAlign = TextAlign.Center
+            )
+        }
+        TvButton(
+            onClick = onNavigateToHome,
+            modifier = Modifier.weight(1f),
+            colors = ButtonDefaults.colors(
+                containerColor = AppColors.SurfaceElevated.copy(alpha = 0.92f),
+                focusedContainerColor = Color.White,
+                contentColor = AppColors.TextPrimary
+            )
+        ) {
+            Text(
+                text = stringResource(R.string.welcome_setup_later),
+                textAlign = TextAlign.Center
             )
         }
     }

@@ -2,6 +2,12 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.63]
+
+### Changed
+
+- Handheld welcome: poster collage background with only Setup Provider and Set up later actions centered. Android TV welcome unchanged.
+
 ## [1.0.62]
 
 ### Changed
