@@ -1104,6 +1104,10 @@
     <string name="setup_phone_pairing_receiving">Adding</string>
     <string name="setup_phone_pairing_complete">Added</string>
     <string name="setup_phone_pairing_error">Error</string>
+    <string name="qr_pairing_document_title">Coovery tv+ Pairing</string>
+    <string name="qr_pairing_form_heading">Add provider to Coovery tv+</string>
+    <string name="qr_pairing_success_heading">Sent to TV</string>
+    <string name="qr_pairing_success_body">%1$s was added to Coovery tv+. You can close this page.</string>
     <string name="setup_connecting">Connecting...</string>
     <string name="setup_save">Save Changes</string>
     <string name="setup_login">Login</string>
