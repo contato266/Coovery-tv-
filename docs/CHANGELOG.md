@@ -2,6 +2,12 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.73]
+
+### Changed
+
+- GitHub release workflow now ships a signed Android App Bundle (`.aab`) for Google Play and other store uploads, alongside the existing APK downloads.
+
 ## [1.0.72]
 
 ### Changed
