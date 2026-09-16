@@ -19,7 +19,8 @@ const val HANDHELD_SERIES_BROWSE_RESET_KEY = "handheld_series_browse_reset_token
 fun rememberHandheldVodPortraitBrowse(): Boolean {
     val isTelevisionDevice = rememberIsTelevisionDevice()
     val screenWidthDp = LocalConfiguration.current.screenWidthDp
-    return remember(isTelevisionDevice, screenWidthDp) {
-        !isTelevisionDevice && screenWidthDp < 700
+    val isPcDevice = rememberIsPcDevice()
+    return remember(isTelevisionDevice, isPcDevice, screenWidthDp) {
+        !isTelevisionDevice && !isPcDevice && screenWidthDp < 700
     }
 }

@@ -51,7 +51,7 @@ import androidx.tv.material3.SurfaceDefaults
 import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
 import com.streamvault.app.R
-import com.streamvault.app.device.rememberIsTelevisionDevice
+import com.streamvault.app.device.rememberUseLivingRoomUi
 import com.streamvault.app.ui.components.ChannelLogoBadge
 import com.streamvault.app.navigation.Routes
 import com.streamvault.app.ui.components.CategoryRow
@@ -107,7 +107,7 @@ fun DashboardScreen(
     val recordingChannelIds by viewModel.recordingChannelIds.collectAsStateWithLifecycle()
     val scheduledChannelIds by viewModel.scheduledChannelIds.collectAsStateWithLifecycle()
     val provider = uiState.provider
-    val isTelevisionDevice = rememberIsTelevisionDevice()
+    val useLivingRoomUi = rememberUseLivingRoomUi()
     val isHandheldPortraitHome = rememberHandheldPortraitHome()
     val handheldBottomScrollInset = rememberHandheldBottomScrollInset()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -161,8 +161,8 @@ fun DashboardScreen(
             androidx.compose.foundation.lazy.LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(
-                    top = if (isTelevisionDevice) 0.dp else MobileHandheldTopBarHeight,
-                    bottom = if (isTelevisionDevice) 28.dp else handheldBottomScrollInset + 12.dp
+                    top = if (useLivingRoomUi) 0.dp else MobileHandheldTopBarHeight,
+                    bottom = if (useLivingRoomUi) 28.dp else handheldBottomScrollInset + 12.dp
                 )
             ) {
                 if (uiState.isLoading && orderedSections.isEmpty()) {
@@ -177,7 +177,7 @@ fun DashboardScreen(
                         }
                     }
                 }
-                if (isTelevisionDevice && uiState.providerWarnings.isNotEmpty()) {
+                if (useLivingRoomUi && uiState.providerWarnings.isNotEmpty()) {
                     item(key = "provider_warnings") {
                         DashboardProviderWarningCard(
                             warnings = uiState.providerWarnings,
@@ -197,7 +197,7 @@ fun DashboardScreen(
                 item(key = "home_hero_carousel") {
                     HomeHeroCarousel(
                         modifier = Modifier.padding(
-                            top = if (isTelevisionDevice) 8.dp else 0.dp,
+                            top = if (useLivingRoomUi) 8.dp else 0.dp,
                             bottom = 6.dp
                         ),
                         onCardClick = { onNavigate(Routes.SERIES) }
@@ -390,10 +390,10 @@ private fun DashboardHero(
     onFeatureAction: () -> Unit
 ) {
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
-    val isTelevisionDevice = rememberIsTelevisionDevice()
+    val useLivingRoomUi = rememberUseLivingRoomUi()
     val heroHeight = when {
         screenWidth < 700.dp -> 176.dp
-        !isTelevisionDevice && screenWidth < 1280.dp -> 196.dp
+        !useLivingRoomUi && screenWidth < 1280.dp -> 196.dp
         else -> 220.dp
     }
     Box(
@@ -544,10 +544,10 @@ private fun DashboardShortcutCard(
     onClick: () -> Unit
 ) {
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
-    val isTelevisionDevice = rememberIsTelevisionDevice()
+    val useLivingRoomUi = rememberUseLivingRoomUi()
     val cardWidth = when {
         screenWidth < 700.dp -> 148.dp
-        !isTelevisionDevice && screenWidth < 1280.dp -> 160.dp
+        !useLivingRoomUi && screenWidth < 1280.dp -> 160.dp
         else -> 170.dp
     }
     val accentColor = when (shortcut.type) {
@@ -869,10 +869,10 @@ private fun EmptyDashboard(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        val isTelevisionDevice = rememberIsTelevisionDevice()
+        val useLivingRoomUi = rememberUseLivingRoomUi()
         val contentModifier = if (maxWidth < 900.dp) {
             Modifier.fillMaxWidth(0.9f)
-        } else if (!isTelevisionDevice && maxWidth < 1280.dp) {
+        } else if (!useLivingRoomUi && maxWidth < 1280.dp) {
             Modifier.fillMaxWidth(0.76f)
         } else {
             Modifier.width(720.dp)
@@ -922,10 +922,10 @@ private fun EmptyDashboard(
 
 @Composable
 private fun rememberHandheldPortraitHome(): Boolean {
-    val isTelevisionDevice = rememberIsTelevisionDevice()
+    val useLivingRoomUi = rememberUseLivingRoomUi()
     val screenWidthDp = LocalConfiguration.current.screenWidthDp
-    return remember(isTelevisionDevice, screenWidthDp) {
-        !isTelevisionDevice && screenWidthDp < 700
+    return remember(useLivingRoomUi, screenWidthDp) {
+        !useLivingRoomUi && screenWidthDp < 700
     }
 }
 

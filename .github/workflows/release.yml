@@ -78,26 +78,29 @@ jobs:
           done
 
       - name: Run unit tests, lint, and coverage
-        run: ./gradlew --console=plain testDebugUnitTest :app:lintDebug :data:lintDebug :player:lintDebug verifyLintBaseline koverXmlReportCi koverHtmlReportCi
+        run: ./gradlew --console=plain testStandardDebugUnitTest :app:lintStandardDebug :data:lintDebug :player:lintDebug verifyLintBaseline koverXmlReportCi koverHtmlReportCi
 
       - name: Compile instrumentation release gates
-        run: ./gradlew --console=plain :app:assembleDebugAndroidTest :data:assembleDebugAndroidTest
+        run: ./gradlew --console=plain :app:assembleStandardDebugAndroidTest :data:assembleDebugAndroidTest
 
-      - name: Build release APK
-        run: ./gradlew --console=plain :app:assembleRelease
+      - name: Build release APKs
+        run: ./gradlew --console=plain :app:assembleStandardRelease :app:assemblePcRelease
 
       - name: Prepare release artifact
         if: github.event_name == 'workflow_dispatch'
         shell: bash
         run: |
           mkdir -p dist
-          APK_PATH=$(find app/build/outputs/apk/release -maxdepth 1 -name '*.apk' | head -n 1)
-          if [ -z "$APK_PATH" ]; then
-            echo "No release APK produced."
+          STANDARD_APK=$(find app/build/outputs/apk/standard/release -maxdepth 1 -name '*.apk' | head -n 1)
+          PC_APK=$(find app/build/outputs/apk/pc/release -maxdepth 1 -name '*.apk' | head -n 1)
+          if [ -z "$STANDARD_APK" ] || [ -z "$PC_APK" ]; then
+            echo "Missing release APK (standard=$STANDARD_APK pc=$PC_APK)."
             exit 1
           fi
-          cp "$APK_PATH" "dist/${{ steps.app_version.outputs.apk_name }}"
-          cp "$APK_PATH" dist/Coovery.apk
+          cp "$STANDARD_APK" "dist/${{ steps.app_version.outputs.apk_name }}"
+          cp "$STANDARD_APK" dist/Coovery.apk
+          cp "$PC_APK" "dist/Coovery-tv+-PC-${{ steps.app_version.outputs.version_name }}.apk"
+          cp "$PC_APK" dist/Coovery-PC.apk
 
       - name: Upload release APK artifact
         if: github.event_name == 'workflow_dispatch'
@@ -107,6 +110,8 @@ jobs:
           path: |
             dist/${{ steps.app_version.outputs.apk_name }}
             dist/Coovery.apk
+            dist/Coovery-tv+-PC-${{ steps.app_version.outputs.version_name }}.apk
+            dist/Coovery-PC.apk
 
       - name: Upload test reports
         if: always()
@@ -190,6 +195,8 @@ jobs:
           files: |
             dist/${{ steps.app_version.outputs.apk_name }}
             dist/Coovery.apk
+            dist/Coovery-tv+-PC-${{ steps.app_version.outputs.version_name }}.apk
+            dist/Coovery-PC.apk
           make_latest: true
           generate_release_notes: false
 

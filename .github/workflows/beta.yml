@@ -76,13 +76,13 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build beta APK
-        run: ./gradlew --console=plain :app:assembleBeta
+        run: ./gradlew --console=plain :app:assembleStandardBeta
 
       - name: Prepare beta artifact
         shell: bash
         run: |
           mkdir -p dist
-          APK_PATH=$(find app/build/outputs/apk/beta -maxdepth 1 -name '*.apk' | head -n 1)
+          APK_PATH=$(find app/build/outputs/apk/standard/beta -maxdepth 1 -name '*.apk' | head -n 1)
 
           if [ -z "$APK_PATH" ]; then
             echo "No beta APK produced."

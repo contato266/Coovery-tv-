@@ -59,8 +59,8 @@ android {
         applicationId = "com.coovery.app"
         minSdk = 25
         targetSdk = 36
-        versionCode = 72
-        versionName = "1.0.71"
+        versionCode = 73
+        versionName = "1.0.72"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         providers.gradleProperty("compatApi").orNull?.let { expectedApi ->
             testInstrumentationRunnerArguments["expected_api"] = expectedApi
@@ -69,12 +69,6 @@ android {
         buildConfigField("String", "OFFICIAL_SIGNING_CERT_SHA256", "\"$officialSigningCertSha256\"")
         buildConfigField("String", "APP_UPDATE_CHANNEL", "\"stable\"")
         buildConfigField("long", "BUILD_TIMESTAMP_UTC", "0L")
-        ndk {
-            abiFilters += listOf("arm64-v8a", "armeabi-v7a")
-            providers.gradleProperty("compatAbi").orNull
-                ?.takeIf(String::isNotBlank)
-                ?.let { abiFilters += it }
-        }
         // Dev seeding hooks — populated from rootProject/local.properties in the
         // `debug` build type only. Release builds inherit these empty defaults so
         // a release APK can never ship a contributor's credentials. See
@@ -85,6 +79,31 @@ android {
         buildConfigField("String", "XTREAM_DEV_NAME", "\"\"")
         buildConfigField("String", "M3U_DEV_URL", "\"\"")
         buildConfigField("String", "M3U_DEV_NAME", "\"\"")
+        buildConfigField("boolean", "IS_PC_DISTRIBUTION", "false")
+    }
+
+    flavorDimensions += "distribution"
+    productFlavors {
+        create("standard") {
+            dimension = "distribution"
+            isDefault = true
+            buildConfigField("boolean", "IS_PC_DISTRIBUTION", "false")
+            ndk {
+                abiFilters.clear()
+                abiFilters += listOf("arm64-v8a", "armeabi-v7a")
+                providers.gradleProperty("compatAbi").orNull
+                    ?.takeIf(String::isNotBlank)
+                    ?.let { abiFilters += it }
+            }
+        }
+        create("pc") {
+            dimension = "distribution"
+            buildConfigField("boolean", "IS_PC_DISTRIBUTION", "true")
+            ndk {
+                abiFilters.clear()
+                abiFilters += listOf("x86_64", "x86")
+            }
+        }
     }
 
     signingConfigs {
@@ -174,7 +193,7 @@ kotlin {
 kover {
     currentProject {
         createVariant("ci") {
-            add("debug")
+            add("standardDebug")
         }
     }
 }

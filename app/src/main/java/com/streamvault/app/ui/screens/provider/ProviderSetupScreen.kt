@@ -76,6 +76,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.tv.material3.*
 import com.streamvault.app.R
+import com.streamvault.app.device.rememberIsPcDevice
 import com.streamvault.app.device.rememberIsTelevisionDevice
 import com.streamvault.app.pairing.ProviderQrPairingState
 import com.streamvault.app.pairing.ProviderQrPairingStatus
@@ -530,9 +531,10 @@ fun ProviderSetupScreen(
     ) {
         val isWide = maxWidth >= 700.dp
         val isTelevisionDevice = rememberIsTelevisionDevice()
+        val isPcDevice = rememberIsPcDevice()
         val isTvUiMode = (LocalConfiguration.current.uiMode and Configuration.UI_MODE_TYPE_MASK) ==
             Configuration.UI_MODE_TYPE_TELEVISION
-        val televisionProviderSetup = isTelevisionDevice || isTvUiMode
+        val televisionProviderSetup = isTelevisionDevice || isTvUiMode || isPcDevice
         val handheldLayout = !isWide && !televisionProviderSetup
         val hPad = if (isWide) 24.dp else 16.dp
 

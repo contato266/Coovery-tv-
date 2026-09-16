@@ -13,7 +13,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 @Composable
 fun rememberUseHandheldStackedLayout(): Boolean {
     val isTelevisionDevice = rememberIsTelevisionDevice()
-    if (isTelevisionDevice) return false
+    if (isTelevisionDevice || rememberIsPcDevice()) return false
     val configuration = LocalConfiguration.current
     return remember(configuration.screenWidthDp, configuration.screenHeightDp) {
         configuration.screenWidthDp < 900 ||
@@ -22,26 +22,27 @@ fun rememberUseHandheldStackedLayout(): Boolean {
 }
 
 @Composable
-fun rememberIsHandheldDevice(): Boolean = !rememberIsTelevisionDevice()
+fun rememberIsHandheldDevice(): Boolean =
+    !rememberIsTelevisionDevice() && !rememberIsPcDevice()
 
 fun ComponentActivity.applyPlatformScreenOrientation() {
-    if (isTelevisionDevice()) {
-        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
-    } else {
-        applyHandheldBrowseOrientation()
+    when {
+        isTelevisionDevice() || isPcDevice() ->
+            requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+        else -> applyHandheldBrowseOrientation()
     }
 }
 
-/** Portrait for app browsing on phones; no-op on TV. */
+/** Portrait for app browsing on phones; no-op on TV and PC. */
 fun ComponentActivity.applyHandheldBrowseOrientation() {
-    if (!isTelevisionDevice()) {
+    if (isHandheldPhoneExperience()) {
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
     }
 }
 
-/** Landscape while watching movies, series, or live channels on phones; no-op on TV. */
+/** Landscape while watching movies, series, or live channels on phones; no-op on TV and PC. */
 fun ComponentActivity.applyHandheldPlayerOrientation() {
-    if (!isTelevisionDevice()) {
+    if (isHandheldPhoneExperience()) {
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
     }
 }

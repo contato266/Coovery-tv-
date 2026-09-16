@@ -43,6 +43,7 @@ import com.streamvault.app.MainActivity
 import com.streamvault.app.device.applyHandheldBrowseOrientation
 import com.streamvault.app.device.applyHandheldPlayerOrientation
 import com.streamvault.app.device.HANDHELD_SERIES_BROWSE_RESET_KEY
+import com.streamvault.app.device.isHandheldPhoneExperience
 import com.streamvault.app.device.isTelevisionDevice
 import com.streamvault.domain.model.AppLandingDestination
 import com.streamvault.domain.model.AppTopLevelDestination
@@ -382,7 +383,7 @@ fun AppNavigation(mainActivity: MainActivity) {
             (route == Routes.PLAYER || route.startsWith("${Routes.PLAYER}?"))
         val onHandheldImmersiveVodDetailRoute = route != null &&
             (route.startsWith("movie_detail") || route.startsWith("series_detail"))
-        val isHandheld = !mainActivity.isTelevisionDevice()
+        val isHandheld = mainActivity.isHandheldPhoneExperience()
         val onHandheldProviderSetupRoute = route != null && route.startsWith("provider_setup")
         if (onPlayerRoute) {
             mainActivity.applyHandheldPlayerOrientation()
@@ -542,7 +543,7 @@ fun AppNavigation(mainActivity: MainActivity) {
             launchSingleTop = true
             restoreState = true
         }
-        if (!mainActivity.isTelevisionDevice() && resolvedRoute == Routes.SERIES) {
+        if (mainActivity.isHandheldPhoneExperience() && resolvedRoute == Routes.SERIES) {
             navController.currentBackStackEntry
                 ?.savedStateHandle
                 ?.set(HANDHELD_SERIES_BROWSE_RESET_KEY, System.nanoTime())

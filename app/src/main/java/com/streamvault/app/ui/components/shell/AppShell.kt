@@ -80,6 +80,7 @@ import androidx.tv.material3.SurfaceDefaults
 import androidx.tv.material3.Text
 import com.streamvault.app.R
 import com.streamvault.app.MainActivity
+import com.streamvault.app.device.rememberIsPcDevice
 import com.streamvault.app.device.rememberIsTelevisionDevice
 import com.streamvault.app.navigation.toAppRoute
 import com.streamvault.app.navigation.Routes
@@ -124,10 +125,15 @@ fun AppScreenScaffold(
 ) {
     val spacing = LocalAppSpacing.current
     val isTelevisionDevice = rememberIsTelevisionDevice()
+    val isPcDevice = rememberIsPcDevice()
     val resolvedChrome = when (navigationChrome) {
         AppNavigationChrome.Rail -> ResolvedAppNavigationChrome.Rail
         AppNavigationChrome.TopBar ->
-            if (isTelevisionDevice) ResolvedAppNavigationChrome.TopBar else ResolvedAppNavigationChrome.BottomBar
+            if (isTelevisionDevice || isPcDevice) {
+                ResolvedAppNavigationChrome.TopBar
+            } else {
+                ResolvedAppNavigationChrome.BottomBar
+            }
     }
 
     Box(

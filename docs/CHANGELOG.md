@@ -2,6 +2,12 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.72]
+
+### Added
+
+- PC distribution APK (`x86` / `x86_64`) with desktop-style top navigation, landscape browsing, and TV-like provider setup. Android TV and handheld phone behavior in the standard ARM APK are unchanged.
+
 ## [1.0.71]
 
 ### Fixed
