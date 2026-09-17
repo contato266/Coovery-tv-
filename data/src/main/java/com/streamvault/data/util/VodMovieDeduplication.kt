@@ -257,7 +257,7 @@ private fun toVodMovieVariant(movie: Movie): VodMovieVariant = VodMovieVariant(
     label = movieVariantLabel(movie)
 )
 
-private fun movieQualityScore(value: String): Int {
+internal fun movieQualityScore(value: String): Int {
     val normalized = normalizeTokenText(value)
     var score = 0
     QUALITY_TOKENS.forEach { (token, tokenScore) ->
