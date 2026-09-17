@@ -18,6 +18,7 @@ import com.streamvault.data.local.entity.M3uClassificationOverrideEntity
 import com.streamvault.data.local.entity.MovieEntity
 import com.streamvault.data.local.entity.SeriesEntity
 import com.streamvault.data.parser.M3uSourceIdentity
+import com.streamvault.data.util.isUltraHighDefinitionMovieSignal
 import com.streamvault.domain.model.ContentType
 import com.streamvault.domain.model.ProviderType
 import com.streamvault.domain.model.Result
@@ -311,6 +312,17 @@ class M3uClassificationRepositoryImpl @Inject constructor(
     }
 
     private suspend fun upsertMovie(channel: ChannelEntity): Long {
+        if (isUltraHighDefinitionMovieSignal(
+                name = channel.name,
+                categoryName = channel.groupTitle,
+                streamUrl = channel.streamUrl
+            )
+        ) {
+            movieDao.getByStreamId(channel.providerId, channel.streamId)?.let { existing ->
+                movieDao.deleteById(existing.id)
+            }
+            return 0L
+        }
         ensureCategory(channel.providerId, ContentType.MOVIE, "Movies")
         val existing = movieDao.getByStreamId(channel.providerId, channel.streamId)
         return movieDao.insert(

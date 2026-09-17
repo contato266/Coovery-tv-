@@ -30,6 +30,10 @@ import com.streamvault.data.sync.ContentCachePolicy
 import com.streamvault.data.sync.CatalogHydrationCommands
 import com.streamvault.data.util.MoviePresentationSettings
 import com.streamvault.data.util.buildPresentedMovies
+import com.streamvault.data.util.filterPresentableMovies
+import com.streamvault.data.util.isUltraHighDefinitionMovie
+import com.streamvault.data.util.isUltraHighDefinitionMovieCategoryName
+import com.streamvault.data.util.isUltraHighDefinitionMovieSignal
 import com.streamvault.data.util.rankSearchResults
 import com.streamvault.data.util.toFtsPrefixQuery
 import com.streamvault.domain.model.Category
@@ -365,7 +369,9 @@ class MovieRepositoryImpl @Inject constructor(
         }
 
     override fun getMoviesByIds(ids: List<Long>): Flow<List<Movie>> =
-        movieDao.getByIds(ids).map { entities -> entities.map { it.toDomain() } }
+        movieDao.getByIds(ids).map { entities ->
+            filterPresentableMovies(entities.map { it.toDomain() })
+        }
 
     override fun getCategories(providerId: Long): Flow<List<Category>> =
         combine(
@@ -373,6 +379,7 @@ class MovieRepositoryImpl @Inject constructor(
             preferencesRepository.parentalControlLevel
         ) { entities: List<CategoryEntity>, level: Int ->
             val mapped = entities.map { it.toDomain() }
+                .filterNot { isUltraHighDefinitionMovieCategoryName(it.name) }
             if (level >= 3) {
                 mapped.filter { !it.isAdult && !it.isUserProtected }
             } else {
@@ -536,7 +543,7 @@ class MovieRepositoryImpl @Inject constructor(
         }
 
     override suspend fun getMovie(movieId: Long): Movie? =
-        movieDao.getById(movieId)?.toDomain()
+        movieDao.getById(movieId)?.toDomain()?.takeUnless(::isUltraHighDefinitionMovie)
 
     override suspend fun getMovieVariants(movieId: Long): List<VodMovieVariant> =
         movieDao.getById(movieId)
@@ -697,7 +704,7 @@ class MovieRepositoryImpl @Inject constructor(
                 return attachPresentedMovie(
                     movie = movie,
                     logicalGroupId = hint.logicalGroupId,
-                    variants = hint.variants,
+                    variants = hint.variants.filterNot(::isBlockedMovieVariant),
                     duplicateConfidence = hint.duplicateConfidence
                 )
             }
@@ -737,6 +744,14 @@ class MovieRepositoryImpl @Inject constructor(
         return listOfNotNull(movieDao.getById(movie.id))
     }
 
+    private fun isBlockedMovieVariant(variant: VodMovieVariant): Boolean =
+        variant.qualityScore >= 2160 ||
+            isUltraHighDefinitionMovieSignal(
+                name = variant.name,
+                streamUrl = variant.streamUrl,
+                containerExtension = variant.containerExtension
+            )
+
     private fun attachPresentedMovie(
         movie: Movie,
         logicalGroupId: String?,
@@ -744,11 +759,12 @@ class MovieRepositoryImpl @Inject constructor(
         duplicateConfidence: VodDuplicateConfidence,
         fallbackVariantLabel: String? = null
     ): Movie {
-        val selectedVariant = variants.firstOrNull { it.rawMovieId == movie.id }
+        val allowedVariants = variants.filterNot(::isBlockedMovieVariant)
+        val selectedVariant = allowedVariants.firstOrNull { it.rawMovieId == movie.id }
         return movie.copy(
             logicalGroupId = logicalGroupId,
             selectedVariantId = movie.id,
-            variants = variants,
+            variants = allowedVariants,
             duplicateConfidence = duplicateConfidence,
             variantLabel = selectedVariant?.label ?: fallbackVariantLabel
         )

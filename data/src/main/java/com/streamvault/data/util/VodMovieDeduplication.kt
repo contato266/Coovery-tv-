@@ -83,11 +83,12 @@ fun buildPresentedMovies(
     movies: List<Movie>,
     settings: MoviePresentationSettings
 ): List<Movie> {
-    if (settings.duplicateHandlingMode == VodDuplicateHandlingMode.SHOW_ALL || movies.size < 2) {
-        return movies
+    val presentableMovies = filterPresentableMovies(movies)
+    if (settings.duplicateHandlingMode == VodDuplicateHandlingMode.SHOW_ALL || presentableMovies.size < 2) {
+        return presentableMovies
     }
 
-    return movies
+    return presentableMovies
         .groupBy(::movieLogicalGroupId)
         .values
         .flatMap { group ->
@@ -275,10 +276,9 @@ private fun movieQualityScore(value: String): Int {
 private fun movieVariantLabel(movie: Movie): String {
     val normalized = normalizeTokenText(movie.name)
     val parts = mutableListOf<String>()
-    QUALITY_TOKENS.firstOrNull { (token, _) -> containsToken(normalized, token) }?.let { (token, score) ->
+    QUALITY_TOKENS.firstOrNull { (token, score) -> containsToken(normalized, token) && score < 2160 }
+        ?.let { (token, score) ->
         parts += when (score) {
-            4320 -> "8K"
-            2160 -> "4K"
             1440 -> "2K"
             1080 -> "1080p"
             720 -> "720p"

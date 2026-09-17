@@ -4,6 +4,7 @@ import com.streamvault.data.local.entity.ChannelEntity
 import com.streamvault.data.local.entity.MovieEntity
 import com.streamvault.data.local.entity.SeriesEntity
 import com.streamvault.data.mapper.toEntity
+import com.streamvault.data.util.isUltraHighDefinitionMovie
 import com.streamvault.domain.model.Channel
 import com.streamvault.domain.model.Movie
 import com.streamvault.domain.model.Series
@@ -22,6 +23,9 @@ internal class SyncManagerCatalogStager(
         var resolvedSessionId = sessionId
         val acceptedEntities = ArrayList<MovieEntity>(items.size)
         items.forEach { movie ->
+            if (isUltraHighDefinitionMovie(movie)) {
+                return@forEach
+            }
             val streamId = movieKey(movie)
             if (streamId <= 0L || !seenStreamIds.add(streamId)) {
                 return@forEach

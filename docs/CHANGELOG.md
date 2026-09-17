@@ -2,6 +2,12 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.75]
+
+### Changed
+
+- Movies (VOD): removed 4K / UHD tags and exclude ultra-high-definition movie entries and 4K category shelves from browse, sync, and playback selection.
+
 ## [1.0.74]
 
 ### Changed
