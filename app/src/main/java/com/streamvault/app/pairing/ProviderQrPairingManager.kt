@@ -1,6 +1,8 @@
 package com.streamvault.app.pairing
 
 import android.content.Context
+import android.content.res.Configuration
+import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.net.ConnectivityManager
@@ -174,13 +176,22 @@ class ProviderQrPairingManager @Inject constructor(
                 if (key.isNotBlank()) headers[key] = value
             }
 
+            val acceptLanguage = headers["accept-language"]
+
             when {
                 method == "GET" && pathAndQuery.startsWith("/pair") -> {
                     val token = queryParams(pathAndQuery)["t"]
                     if (!isTokenValid(token)) {
-                        writeHtml(client.getOutputStream(), 403, errorPage("Pairing link expired or invalid. Start a new QR session on the TV."))
+                        writeHtml(
+                            client.getOutputStream(),
+                            403,
+                            errorPage(
+                                "Pairing link expired or invalid. Start a new QR session on the TV.",
+                                acceptLanguage
+                            )
+                        )
                     } else {
-                        writeHtml(client.getOutputStream(), 200, formPage(token.orEmpty()))
+                        writeHtml(client.getOutputStream(), 200, formPage(token.orEmpty(), acceptLanguage))
                     }
                 }
                 method == "POST" && pathAndQuery.startsWith("/submit") -> {
@@ -195,17 +206,21 @@ class ProviderQrPairingManager @Inject constructor(
                     val form = parseForm(String(body, 0, read))
                     val token = form["token"]
                     if (!isTokenValid(token)) {
-                        writeHtml(client.getOutputStream(), 403, errorPage("Pairing session expired. Start a new QR session on the TV."))
+                        writeHtml(
+                            client.getOutputStream(),
+                            403,
+                            errorPage("Pairing session expired. Start a new QR session on the TV.", acceptLanguage)
+                        )
                         return
                     }
                     _state.value = _state.value.copy(
                         status = ProviderQrPairingStatus.RECEIVING,
                         message = "Phone submitted provider details. Validating..."
                     )
-                    val saveResult = addProviderFromForm(form)
+                    val saveResult = addProviderFromForm(form, acceptLanguage)
                     when (saveResult) {
                         is ProviderPairingSubmitResult.Success -> {
-                            writeHtml(client.getOutputStream(), 200, successPage(saveResult.providerName))
+                            writeHtml(client.getOutputStream(), 200, successPage(saveResult.providerName, acceptLanguage))
                             invalidateAfterSuccess(saveResult.providerName)
                         }
                         is ProviderPairingSubmitResult.Error -> {
@@ -213,7 +228,7 @@ class ProviderQrPairingManager @Inject constructor(
                                 status = ProviderQrPairingStatus.READY,
                                 message = saveResult.message
                             )
-                            writeHtml(client.getOutputStream(), 400, errorPage(saveResult.message))
+                            writeHtml(client.getOutputStream(), 400, errorPage(saveResult.message, acceptLanguage))
                         }
                     }
                 }
@@ -223,7 +238,10 @@ class ProviderQrPairingManager @Inject constructor(
     }
 
 
-    private suspend fun addProviderFromForm(form: Map<String, String>): ProviderPairingSubmitResult {
+    private suspend fun addProviderFromForm(
+        form: Map<String, String>,
+        acceptLanguage: String?
+    ): ProviderPairingSubmitResult {
         val type = form["type"].orEmpty().lowercase(Locale.US)
         val name = form["name"].orEmpty().ifBlank {
             when (type) {
@@ -290,11 +308,11 @@ class ProviderQrPairingManager @Inject constructor(
                 ProviderPairingSubmitResult.Error(result.message)
             is ValidateAndAddProviderResult.TransportConsentRequired ->
                 ProviderPairingSubmitResult.Error(
-                    "Open StreamVault on the TV to review this provider's connection warning."
+                    pairingResources(acceptLanguage).getString(R.string.qr_pairing_open_on_tv_transport)
                 )
             is ValidateAndAddProviderResult.VerificationInconclusive ->
                 ProviderPairingSubmitResult.Error(
-                    "Open StreamVault on the TV to decide whether to save this provider with verification pending."
+                    pairingResources(acceptLanguage).getString(R.string.qr_pairing_open_on_tv_verification)
                 )
             is ValidateAndAddProviderResult.Error ->
                 ProviderPairingSubmitResult.Error(result.message)
@@ -414,12 +432,16 @@ class ProviderQrPairingManager @Inject constructor(
         }
     }
 
-    private fun formPage(token: String): String {
-        val documentTitle = context.getString(R.string.qr_pairing_document_title).escapeHtml()
-        val heading = context.getString(R.string.qr_pairing_form_heading).escapeHtml()
+    private fun formPage(token: String, acceptLanguage: String?): String {
+        val resources = pairingResources(acceptLanguage)
+        val locale = resolvePairingLocale(acceptLanguage)
+        val htmlLang = locale.toLanguageTag().ifBlank { "en" }
+        fun res(id: Int): String = resources.getString(id).escapeHtml()
+        val documentTitle = res(R.string.qr_pairing_document_title)
+        val heading = res(R.string.qr_pairing_form_heading)
         return """
         <!doctype html>
-        <html lang="en">
+        <html lang="${htmlLang.escapeHtml()}">
         <head>
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -437,39 +459,39 @@ class ProviderQrPairingManager @Inject constructor(
         <body>
         <main>
           <h1>$heading</h1>
-          <p>Enter details on your phone. They are sent directly to your TV over your local Wi-Fi only.</p>
+          <p>${res(R.string.qr_pairing_form_intro)}</p>
           <form method="post" action="/submit">
             <input type="hidden" name="token" value="${token.escapeHtml()}">
-            <label>Provider type</label>
+            <label>${res(R.string.qr_pairing_label_provider_type)}</label>
             <select name="type" id="type" onchange="updateType()">
-              <option value="xtream">Xtream Codes</option>
-              <option value="m3u">M3U Playlist URL</option>
-              <option value="stalker">Stalker / MAG Portal</option>
-              <option value="jellyfin">Jellyfin</option>
+              <option value="xtream">${res(R.string.qr_pairing_type_xtream)}</option>
+              <option value="m3u">${res(R.string.qr_pairing_type_m3u)}</option>
+              <option value="stalker">${res(R.string.qr_pairing_type_stalker)}</option>
+              <option value="jellyfin">${res(R.string.qr_pairing_type_jellyfin)}</option>
             </select>
-            <label>Provider name</label>
-            <input name="name" placeholder="Provider Name">
+            <label>${res(R.string.qr_pairing_label_provider_name)}</label>
+            <input name="name" placeholder="${res(R.string.qr_pairing_placeholder_provider_name)}">
             <div id="serverFields" class="field-group active">
-              <label>Server / portal URL</label>
-              <input name="serverUrl" placeholder="https://example.com">
-              <label>Username</label>
+              <label>${res(R.string.qr_pairing_label_server_url)}</label>
+              <input name="serverUrl" placeholder="${res(R.string.qr_pairing_placeholder_server_url)}">
+              <label>${res(R.string.qr_pairing_label_username)}</label>
               <input name="username" autocomplete="username">
-              <label>Password</label>
+              <label>${res(R.string.qr_pairing_label_password)}</label>
               <input name="password" type="password" autocomplete="current-password">
             </div>
             <div id="m3uFields" class="field-group">
-              <label>M3U playlist URL</label>
-              <input name="m3uUrl" placeholder="https://example.com/get.php?...">
+              <label>${res(R.string.qr_pairing_label_m3u_url)}</label>
+              <input name="m3uUrl" placeholder="${res(R.string.qr_pairing_placeholder_m3u_url)}">
             </div>
             <div id="stalkerFields" class="field-group">
-              <label>MAC address</label>
-              <input name="macAddress" placeholder="00:1A:79:AA:BB:CC">
-              <p class="hint">For credential-only portals, leave MAC blank and fill username/password above.</p>
+              <label>${res(R.string.qr_pairing_label_mac)}</label>
+              <input name="macAddress" placeholder="${res(R.string.qr_pairing_placeholder_mac)}">
+              <p class="hint">${res(R.string.qr_pairing_hint_stalker_mac)}</p>
             </div>
             <div id="jellyfinFields" class="field-group">
-              <p class="hint">Enter your Jellyfin server details below, then press Quick Connect in the app.</p>
+              <p class="hint">${res(R.string.qr_pairing_hint_jellyfin)}</p>
             </div>
-            <button type="submit">Send to TV</button>
+            <button type="submit">${res(R.string.qr_pairing_submit_button)}</button>
           </form>
         </main>
         <script>
@@ -479,16 +501,19 @@ class ProviderQrPairingManager @Inject constructor(
             document.getElementById('serverFields').classList.toggle('active', showServer);
             document.getElementById('m3uFields').classList.toggle('active', t === 'm3u');
             document.getElementById('stalkerFields').classList.toggle('active', t === 'stalker');
+            document.getElementById('jellyfinFields').classList.toggle('active', t === 'jellyfin');
           }
+          updateType();
         </script>
         </body>
         </html>
     """.trimIndent()
     }
 
-    private fun successPage(providerName: String): String {
-        val heading = context.getString(R.string.qr_pairing_success_heading).escapeHtml()
-        val body = context.getString(R.string.qr_pairing_success_body, providerName).escapeHtml()
+    private fun successPage(providerName: String, acceptLanguage: String?): String {
+        val resources = pairingResources(acceptLanguage)
+        val heading = resources.getString(R.string.qr_pairing_success_heading).escapeHtml()
+        val body = resources.getString(R.string.qr_pairing_success_body, providerName).escapeHtml()
         return """
         <!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1">
         <style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#101820;color:#f8fafc;padding:28px}main{max-width:520px;margin:auto;background:#172635;border-radius:22px;padding:24px}h1{color:#32d6a0}</style>
@@ -496,11 +521,26 @@ class ProviderQrPairingManager @Inject constructor(
     """.trimIndent()
     }
 
-    private fun errorPage(message: String): String = """
+    private fun errorPage(message: String, acceptLanguage: String?): String {
+        val resources = pairingResources(acceptLanguage)
+        val heading = resources.getString(R.string.qr_pairing_error_heading).escapeHtml()
+        val footer = resources.getString(R.string.qr_pairing_error_footer).escapeHtml()
+        return """
         <!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1">
         <style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#101820;color:#f8fafc;padding:28px}main{max-width:520px;margin:auto;background:#2a1720;border-radius:22px;padding:24px}h1{color:#ff8b8b}</style>
-        </head><body><main><h1>Could not add provider</h1><p>${message.escapeHtml()}</p><p>Go back and check the details, or start a new QR session on the TV.</p></main></body></html>
+        </head><body><main><h1>$heading</h1><p>${message.escapeHtml()}</p><p>$footer</p></main></body></html>
     """.trimIndent()
+    }
+
+    private fun pairingResources(acceptLanguage: String?): Resources {
+        val locale = resolvePairingLocale(acceptLanguage)
+        val config = Configuration(context.resources.configuration)
+        config.setLocale(locale)
+        return context.createConfigurationContext(config).resources
+    }
+
+    private fun resolvePairingLocale(acceptLanguage: String?): Locale =
+        resolvePairingLocale(acceptLanguage, context.resources.configuration.locales[0] ?: Locale.getDefault())
 
     private fun String.escapeHtml(): String =
         replace("&", "&amp;")
@@ -528,4 +568,19 @@ enum class ProviderQrPairingStatus {
 private sealed interface ProviderPairingSubmitResult {
     data class Success(val providerName: String) : ProviderPairingSubmitResult
     data class Error(val message: String) : ProviderPairingSubmitResult
+}
+
+internal fun resolvePairingLocale(acceptLanguage: String?, deviceLocale: Locale): Locale {
+    if (!acceptLanguage.isNullOrBlank()) {
+        acceptLanguage.split(',')
+            .asSequence()
+            .map { it.trim().substringBefore(';').lowercase(Locale.US) }
+            .forEach { tag ->
+                when {
+                    tag.startsWith("pt") -> return Locale.forLanguageTag(tag.replace('_', '-'))
+                    tag.startsWith("en") -> return Locale.ENGLISH
+                }
+            }
+    }
+    return deviceLocale
 }

@@ -2,6 +2,12 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.74]
+
+### Changed
+
+- QR phone pairing web page: **Coovery** branding (replacing StreamVault) on the add-provider form, labels, and confirmation for TV and mobile; Portuguese and English strings follow the phone browser language when possible.
+
 ## [1.0.73]
 
 ### Changed
