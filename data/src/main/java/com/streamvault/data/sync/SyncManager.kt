@@ -70,6 +70,7 @@ import com.streamvault.data.provider.TypedProviderClientFactory
 import com.streamvault.data.provider.XtreamClientOptions
 import com.streamvault.data.provider.StalkerPlaybackCapabilityCache
 import com.streamvault.data.util.AdultContentClassifier
+import com.streamvault.data.util.isUltraHighDefinitionMovie
 import com.streamvault.data.util.runSuspendCatching
 import com.streamvault.data.util.UrlSecurityPolicy
 import com.streamvault.domain.model.Channel
@@ -1785,7 +1786,9 @@ class SyncManager @Inject constructor(
         restoreWatchProgress: Boolean = true
     ): Int {
         if (movies.isEmpty()) return 0
-        val incoming = movies.map { movie -> movie.toEntity().copy(cacheState = "SUMMARY_ONLY", detailHydratedAt = 0L, remoteStaleAt = 0L) }
+        val allowedMovies = movies.filterNot(::isUltraHighDefinitionMovie)
+        if (allowedMovies.isEmpty()) return 0
+        val incoming = allowedMovies.map { movie -> movie.toEntity().copy(cacheState = "SUMMARY_ONLY", detailHydratedAt = 0L, remoteStaleAt = 0L) }
         val existingByStreamId = loadMoviesByStreamIds(providerId, incoming.map { it.streamId })
         val merged = incoming.map { summary ->
             val existing = existingByStreamId[summary.streamId]

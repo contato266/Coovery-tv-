@@ -33,7 +33,7 @@ class VodMovieDeduplicationTest {
     }
 
     @Test
-    fun `best quality prefers older higher quality version over latest hd`() {
+    fun `best quality ignores ultra hd variants when selecting grouped versions`() {
         val older4k = movie(
             id = 1L,
             name = "Space Run 4K HDR Remux",
@@ -47,12 +47,17 @@ class VodMovieDeduplicationTest {
             streamUrl = "http://example.test/movie/2.mp4"
         )
 
-        val selected = selectPreferredMovieVariant(
+        val presented = buildPresentedMovies(
             movies = listOf(older4k, newerHd),
-            preferenceMode = VodVariantPreferenceMode.BEST_QUALITY
+            settings = MoviePresentationSettings(
+                duplicateHandlingMode = VodDuplicateHandlingMode.SMART,
+                preferenceMode = VodVariantPreferenceMode.BEST_QUALITY
+            )
         )
 
-        assertThat(selected?.id).isEqualTo(1L)
+        assertThat(presented).hasSize(1)
+        assertThat(presented.single().id).isEqualTo(2L)
+        assertThat(presented.single().variants.map { it.rawMovieId }).containsExactly(2L)
     }
 
     @Test
