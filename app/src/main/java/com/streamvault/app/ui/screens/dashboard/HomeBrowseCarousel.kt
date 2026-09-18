@@ -65,6 +65,7 @@ import com.streamvault.app.R
 import com.streamvault.app.device.rememberIsTelevisionDevice
 import com.streamvault.app.homecarousel.HomeHeroCarouselSlide
 import com.streamvault.app.homecarousel.defaultTelevisionBannerRes
+import com.streamvault.app.homecarousel.defaultHandheldHomeHeroSlides
 import com.streamvault.app.homecarousel.defaultTelevisionHomeHeroSlides
 import com.streamvault.app.ui.components.rememberCrossfadeImageModel
 import com.streamvault.app.ui.components.MovieCard
@@ -112,29 +113,27 @@ internal data class HomeSubscriptionCard(
 internal fun HomeHeroCarousel(
     modifier: Modifier = Modifier,
     televisionSlides: List<HomeHeroCarouselSlide> = emptyList(),
+    handheldSlides: List<HomeHeroCarouselSlide> = emptyList(),
     onCardClick: (HomeHeroCarouselSlide) -> Unit = {}
 ) {
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val isTelevisionDevice = rememberIsTelevisionDevice()
     if (!isTelevisionDevice && screenWidth < 700.dp) {
+        val resolvedHandheldSlides = remember(handheldSlides) {
+            handheldSlides.takeIf { it.isNotEmpty() } ?: defaultHandheldHomeHeroSlides()
+        }
         HandheldPortraitHeroCarousel(
             modifier = modifier,
-            onCardClick = { index ->
-                onCardClick(
-                    HomeHeroCarouselSlide(
-                        id = "handheld-$index",
-                        imageUrl = null,
-                        fallbackBannerRes = defaultTelevisionBannerRes(index),
-                        linkTarget = com.streamvault.app.homecarousel.HomeHeroCarouselLinkTarget.None
-                    )
-                )
-            }
+            slides = resolvedHandheldSlides,
+            onCardClick = onCardClick
         )
         return
     }
-    val resolvedSlides = remember(televisionSlides) {
-        televisionSlides.takeIf { it.isNotEmpty() } ?: defaultTelevisionHomeHeroSlides()
+    val resolvedSlides = remember(televisionSlides, handheldSlides, isTelevisionDevice) {
+        val remote = if (isTelevisionDevice) televisionSlides else handheldSlides
+        remote.takeIf { it.isNotEmpty() }
+            ?: if (isTelevisionDevice) defaultTelevisionHomeHeroSlides() else defaultHandheldHomeHeroSlides()
     }
     val carouselCardCount = resolvedSlides.size.coerceAtLeast(1)
     val horizontalPadding = when {
@@ -147,7 +146,12 @@ internal fun HomeHeroCarousel(
         !isTelevisionDevice && screenWidth < 1280.dp -> (screenWidth - horizontalPadding * 2) * 0.94f
         else -> (screenWidth - horizontalPadding * 2) * 0.92f
     }
-    val cardHeight = (cardWidth / COOVERY_BANNER_ASPECT_RATIO)
+    val aspectRatio = if (isTelevisionDevice) {
+        COOVERY_BANNER_ASPECT_RATIO
+    } else {
+        HANDHELD_CAROUSEL_ASPECT_RATIO
+    }
+    val cardHeight = (cardWidth / aspectRatio)
         .coerceAtMost(screenHeight * 0.42f)
         .coerceAtLeast(140.dp)
     val cardShape = RoundedCornerShape(20.dp)
@@ -234,33 +238,47 @@ internal fun HomeHeroCarousel(
 
 @Composable
 private fun HandheldPortraitHeroCarousel(
+    slides: List<HomeHeroCarouselSlide>,
     modifier: Modifier = Modifier,
-    onCardClick: (Int) -> Unit = {}
+    onCardClick: (HomeHeroCarouselSlide) -> Unit = {}
 ) {
     val cardShape = RoundedCornerShape(18.dp)
+    val itemCount = slides.size.coerceAtLeast(1)
     HandheldCenteredPeekCarousel(
-        itemCount = 5,
+        itemCount = itemCount,
         widthHeightRatio = HANDHELD_CAROUSEL_ASPECT_RATIO,
         modifier = modifier,
         widthFraction = HANDHELD_CAROUSEL_CENTERED_WIDTH_FRACTION,
         autoAdvance = true,
         pagerExtraHeightFraction = 1.06f
     ) { index, pageWidth, pageHeight, scale, alpha ->
-        Image(
-            painter = painterResource(R.drawable.coovery_handheld_carousel_promo),
-            contentDescription = stringResource(R.string.home_carousel_banner_content_description),
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .width(pageWidth)
-                .height(pageHeight)
-                .graphicsLayer {
-                    scaleX = scale
-                    scaleY = scale
-                    this.alpha = alpha
-                }
-                .clip(cardShape)
-                .clickable { onCardClick(index) }
-        )
+        val slide = slides[index.coerceIn(0, slides.lastIndex)]
+        val remoteImageUrl = slide.imageUrl?.takeIf { it.isNotBlank() }
+        val contentModifier = Modifier
+            .width(pageWidth)
+            .height(pageHeight)
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+                this.alpha = alpha
+            }
+            .clip(cardShape)
+            .clickable { onCardClick(slide) }
+        if (remoteImageUrl != null) {
+            AsyncImage(
+                model = rememberCrossfadeImageModel(remoteImageUrl),
+                contentDescription = stringResource(R.string.home_carousel_banner_content_description),
+                contentScale = ContentScale.Crop,
+                modifier = contentModifier
+            )
+        } else {
+            Image(
+                painter = painterResource(slide.fallbackBannerRes),
+                contentDescription = stringResource(R.string.home_carousel_banner_content_description),
+                contentScale = ContentScale.Crop,
+                modifier = contentModifier
+            )
+        }
     }
 }
 

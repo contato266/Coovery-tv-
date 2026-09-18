@@ -41,6 +41,7 @@ import android.content.Context
 import com.streamvault.app.R
 import com.streamvault.app.homecarousel.CooveryHomeCarouselRepository
 import com.streamvault.app.homecarousel.HomeHeroCarouselSlide
+import com.streamvault.app.homecarousel.defaultHandheldHomeHeroSlides
 import com.streamvault.app.homecarousel.defaultTelevisionHomeHeroSlides
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -103,7 +104,7 @@ class DashboardViewModel @Inject constructor(
     val scheduledChannelIds: StateFlow<Set<Long>> = _scheduledChannelIds.asStateFlow()
 
     init {
-        refreshTelevisionHomeCarousel()
+        refreshHomeCarousels()
         viewModelScope.launch {
             recordingManager.observeRecordingItems().collect { items ->
                 _recordingChannelIds.value = items
@@ -337,7 +338,8 @@ class DashboardViewModel @Inject constructor(
                 },
                 updateNotice = snapshot.updateNotice,
                 isLoading = false,
-                homeHeroCarouselSlides = _uiState.value.homeHeroCarouselSlides
+                homeHeroCarouselSlides = _uiState.value.homeHeroCarouselSlides,
+                homeHeroCarouselMobileSlides = _uiState.value.homeHeroCarouselMobileSlides
             )
         }
     }
@@ -819,12 +821,20 @@ class DashboardViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(userMessage = null)
     }
 
-    fun refreshTelevisionHomeCarousel(forceRefresh: Boolean = false) {
+    fun refreshHomeCarousels(forceRefresh: Boolean = false) {
         viewModelScope.launch {
-            val slides = runCatching {
+            val tvSlides = runCatching {
                 homeCarouselRepository.getTelevisionSlides(forceRefresh = forceRefresh)
             }.getOrElse { defaultTelevisionHomeHeroSlides() }
-            _uiState.update { it.copy(homeHeroCarouselSlides = slides) }
+            val mobileSlides = runCatching {
+                homeCarouselRepository.getMobileSlides(forceRefresh = forceRefresh)
+            }.getOrElse { defaultHandheldHomeHeroSlides() }
+            _uiState.update {
+                it.copy(
+                    homeHeroCarouselSlides = tvSlides,
+                    homeHeroCarouselMobileSlides = mobileSlides
+                )
+            }
         }
     }
 }
@@ -903,7 +913,8 @@ data class DashboardUiState(
     val stats: DashboardStats = DashboardStats(),
     val userMessage: String? = null,
     val isLoading: Boolean = true,
-    val homeHeroCarouselSlides: List<HomeHeroCarouselSlide> = emptyList()
+    val homeHeroCarouselSlides: List<HomeHeroCarouselSlide> = emptyList(),
+    val homeHeroCarouselMobileSlides: List<HomeHeroCarouselSlide> = emptyList()
 )
 
 data class DashboardUpdateNotice(

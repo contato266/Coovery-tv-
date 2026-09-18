@@ -4,7 +4,10 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 internal object CooveryHomeCarouselParser {
-    fun parseRemotePayload(body: String): List<HomeHeroCarouselSlide> {
+    fun parseRemotePayload(
+        body: String,
+        fallbackBannerResForIndex: (Int) -> Int = ::defaultTelevisionBannerRes
+    ): List<HomeHeroCarouselSlide> {
         val root = JSONObject(body)
         val slides = root.optJSONArray("slides") ?: JSONArray()
         val parsed = ArrayList<HomeHeroCarouselSlide>(slides.length())
@@ -18,7 +21,7 @@ internal object CooveryHomeCarouselParser {
             parsed += HomeHeroCarouselSlide(
                 id = id,
                 imageUrl = imageUrl,
-                fallbackBannerRes = defaultTelevisionBannerRes(index),
+                fallbackBannerRes = fallbackBannerResForIndex(index),
                 linkTarget = resolveHomeHeroCarouselLink(slide.optString("linkUrl"))
             )
         }

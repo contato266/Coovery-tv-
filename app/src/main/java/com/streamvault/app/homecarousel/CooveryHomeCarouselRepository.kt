@@ -21,34 +21,69 @@ class CooveryHomeCarouselRepository @Inject constructor(
     private val preferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
     suspend fun getTelevisionSlides(forceRefresh: Boolean = false): List<HomeHeroCarouselSlide> =
-        withContext(Dispatchers.IO) {
-            val cached = readCachedSlides()
-            val cacheFresh = cached != null && !forceRefresh && !isCacheExpired()
-            if (cacheFresh) {
-                return@withContext cached
-            }
+        getSlides(
+            apiUrl = BuildConfig.COOVERY_HOME_CAROUSEL_API_URL,
+            payloadKey = KEY_TV_PAYLOAD,
+            fetchedAtKey = KEY_TV_FETCHED_AT,
+            forceRefresh = forceRefresh,
+            fallbackDefaults = ::defaultTelevisionHomeHeroSlides,
+            fallbackBannerResForIndex = ::defaultTelevisionBannerRes
+        )
 
-            val remote = runCatching { fetchRemoteSlides() }.getOrNull()
-            if (remote != null && remote.isNotEmpty()) {
-                writeCache(remote)
-                remote
-            } else {
-                cached ?: defaultTelevisionHomeHeroSlides()
-            }
+    suspend fun getMobileSlides(forceRefresh: Boolean = false): List<HomeHeroCarouselSlide> =
+        getSlides(
+            apiUrl = BuildConfig.COOVERY_HOME_CAROUSEL_MOBILE_API_URL,
+            payloadKey = KEY_MOBILE_PAYLOAD,
+            fetchedAtKey = KEY_MOBILE_FETCHED_AT,
+            forceRefresh = forceRefresh,
+            fallbackDefaults = ::defaultHandheldHomeHeroSlides,
+            fallbackBannerResForIndex = ::defaultHandheldBannerRes
+        )
+
+    private suspend fun getSlides(
+        apiUrl: String,
+        payloadKey: String,
+        fetchedAtKey: String,
+        forceRefresh: Boolean,
+        fallbackDefaults: () -> List<HomeHeroCarouselSlide>,
+        fallbackBannerResForIndex: (Int) -> Int
+    ): List<HomeHeroCarouselSlide> = withContext(Dispatchers.IO) {
+        val cached = readCachedSlides(payloadKey, fallbackBannerResForIndex)
+        val cacheFresh = cached != null && !forceRefresh && !isCacheExpired(fetchedAtKey)
+        if (cacheFresh) {
+            return@withContext cached
         }
 
-    private fun isCacheExpired(): Boolean {
-        val fetchedAt = preferences.getLong(KEY_FETCHED_AT, 0L)
+        val remote = runCatching { fetchRemoteSlides(apiUrl, fallbackBannerResForIndex) }.getOrNull()
+        if (remote != null && remote.isNotEmpty()) {
+            writeCache(payloadKey, fetchedAtKey, remote)
+            remote
+        } else {
+            cached ?: fallbackDefaults()
+        }
+    }
+
+    private fun isCacheExpired(fetchedAtKey: String): Boolean {
+        val fetchedAt = preferences.getLong(fetchedAtKey, 0L)
         if (fetchedAt <= 0L) return true
         return System.currentTimeMillis() - fetchedAt > CACHE_TTL_MS
     }
 
-    private fun readCachedSlides(): List<HomeHeroCarouselSlide>? {
-        val raw = preferences.getString(KEY_PAYLOAD, null) ?: return null
-        return runCatching { parseSlidesJson(raw) }.getOrNull()?.takeIf { it.isNotEmpty() }
+    private fun readCachedSlides(
+        payloadKey: String,
+        fallbackBannerResForIndex: (Int) -> Int
+    ): List<HomeHeroCarouselSlide>? {
+        val raw = preferences.getString(payloadKey, null) ?: return null
+        return runCatching {
+            parseSlidesJson(raw, fallbackBannerResForIndex)
+        }.getOrNull()?.takeIf { it.isNotEmpty() }
     }
 
-    private fun writeCache(slides: List<HomeHeroCarouselSlide>) {
+    private fun writeCache(
+        payloadKey: String,
+        fetchedAtKey: String,
+        slides: List<HomeHeroCarouselSlide>
+    ) {
         val array = JSONArray()
         slides.forEach { slide ->
             array.put(
@@ -71,17 +106,20 @@ class CooveryHomeCarouselRepository @Inject constructor(
             )
         }
         preferences.edit()
-            .putString(KEY_PAYLOAD, array.toString())
-            .putLong(KEY_FETCHED_AT, System.currentTimeMillis())
+            .putString(payloadKey, array.toString())
+            .putLong(fetchedAtKey, System.currentTimeMillis())
             .apply()
     }
 
     @Throws(IOException::class)
-    private fun fetchRemoteSlides(): List<HomeHeroCarouselSlide> {
+    private fun fetchRemoteSlides(
+        apiUrl: String,
+        fallbackBannerResForIndex: (Int) -> Int
+    ): List<HomeHeroCarouselSlide> {
         val request = Request.Builder()
-            .url(BuildConfig.COOVERY_HOME_CAROUSEL_API_URL)
+            .url(apiUrl)
             .header("Accept", "application/json")
-            .header("User-Agent", "Coovery-Home-Carousel/ ${BuildConfig.VERSION_NAME}")
+            .header("User-Agent", "Coovery-Home-Carousel/${BuildConfig.VERSION_NAME}")
             .get()
             .build()
 
@@ -93,11 +131,14 @@ class CooveryHomeCarouselRepository @Inject constructor(
             if (body.isBlank()) {
                 throw IOException("Home carousel response was empty")
             }
-            return CooveryHomeCarouselParser.parseRemotePayload(body)
+            return CooveryHomeCarouselParser.parseRemotePayload(body, fallbackBannerResForIndex)
         }
     }
 
-    private fun parseSlidesJson(raw: String): List<HomeHeroCarouselSlide> {
+    private fun parseSlidesJson(
+        raw: String,
+        fallbackBannerResForIndex: (Int) -> Int
+    ): List<HomeHeroCarouselSlide> {
         val slides = JSONArray(raw)
         val parsed = ArrayList<HomeHeroCarouselSlide>(slides.length())
         for (index in 0 until slides.length()) {
@@ -111,7 +152,10 @@ class CooveryHomeCarouselRepository @Inject constructor(
             parsed += HomeHeroCarouselSlide(
                 id = slide.optString("id").ifBlank { "cached-$index" },
                 imageUrl = slide.optString("imageUrl").takeIf { it.isNotBlank() },
-                fallbackBannerRes = slide.optInt("fallbackBannerRes", defaultTelevisionBannerRes(index)),
+                fallbackBannerRes = slide.optInt(
+                    "fallbackBannerRes",
+                    fallbackBannerResForIndex(index)
+                ),
                 linkTarget = linkTarget
             )
         }
@@ -120,8 +164,10 @@ class CooveryHomeCarouselRepository @Inject constructor(
 
     private companion object {
         private const val PREFS_NAME = "coovery_home_carousel"
-        private const val KEY_PAYLOAD = "payload"
-        private const val KEY_FETCHED_AT = "fetched_at"
+        private const val KEY_TV_PAYLOAD = "tv_payload"
+        private const val KEY_TV_FETCHED_AT = "tv_fetched_at"
+        private const val KEY_MOBILE_PAYLOAD = "mobile_payload"
+        private const val KEY_MOBILE_FETCHED_AT = "mobile_fetched_at"
         private const val CACHE_TTL_MS = 15 * 60 * 1000L
     }
 }

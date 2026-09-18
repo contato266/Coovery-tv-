@@ -182,14 +182,6 @@ fun DashboardScreen(
                         }
                     }
                 }
-                if (isTelevisionDevice && uiState.providerWarnings.isNotEmpty()) {
-                    item(key = "provider_warnings") {
-                        DashboardProviderWarningCard(
-                            warnings = uiState.providerWarnings,
-                            onOpenSettings = { onNavigate(Routes.SETTINGS) }
-                        )
-                    }
-                }
                 uiState.updateNotice?.let { updateNotice ->
                     item(key = "update_notice") {
                         DashboardUpdateCard(
@@ -205,7 +197,8 @@ fun DashboardScreen(
                             top = if (isTelevisionDevice) 8.dp else 0.dp,
                             bottom = 6.dp
                         ),
-                        televisionSlides = if (isTelevisionDevice) uiState.homeHeroCarouselSlides else emptyList(),
+                        televisionSlides = uiState.homeHeroCarouselSlides,
+                        handheldSlides = uiState.homeHeroCarouselMobileSlides,
                         onCardClick = { slide ->
                             when (val target = slide.linkTarget) {
                                 is HomeHeroCarouselLinkTarget.AppRoute -> onNavigate(target.route)
@@ -778,42 +771,6 @@ private fun DashboardHealthPill(
                 style = MaterialTheme.typography.labelLarge,
                 color = TextPrimary
             )
-        }
-    }
-}
-
-@Composable
-private fun DashboardProviderWarningCard(
-    warnings: List<String>,
-    onOpenSettings: () -> Unit
-) {
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 48.dp, vertical = 6.dp),
-        shape = RoundedCornerShape(20.dp),
-        colors = SurfaceDefaults.colors(containerColor = SurfaceElevated)
-    ) {
-        Column(
-            modifier = Modifier.padding(horizontal = 22.dp, vertical = 18.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Text(
-                text = stringResource(R.string.dashboard_warning_title),
-                style = MaterialTheme.typography.titleMedium,
-                color = Primary
-            )
-            Text(
-                text = warnings.take(3).joinToString(" | "),
-                style = MaterialTheme.typography.bodyMedium,
-                color = OnSurfaceDim
-            )
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                DashboardActionButton(
-                    label = stringResource(R.string.dashboard_warning_review),
-                    onClick = onOpenSettings
-                )
-            }
         }
     }
 }

@@ -11,16 +11,34 @@ final class Coovery_Android_Tv_Rest {
             '/android-tv/home-carousel',
             [
                 'methods' => WP_REST_Server::READABLE,
-                'callback' => [self::class, 'get_home_carousel'],
+                'callback' => [self::class, 'get_tv_home_carousel'],
+                'permission_callback' => '__return_true',
+            ]
+        );
+        register_rest_route(
+            'coovery/v1',
+            '/android-mobile/home-carousel',
+            [
+                'methods' => WP_REST_Server::READABLE,
+                'callback' => [self::class, 'get_mobile_home_carousel'],
                 'permission_callback' => '__return_true',
             ]
         );
     }
 
-    public static function get_home_carousel(WP_REST_Request $request): WP_REST_Response {
+    public static function get_tv_home_carousel(WP_REST_Request $request): WP_REST_Response {
         $config = Coovery_Android_Tv_Plugin::get_config();
+        return self::build_carousel_response($config['tvSlides']);
+    }
+
+    public static function get_mobile_home_carousel(WP_REST_Request $request): WP_REST_Response {
+        $config = Coovery_Android_Tv_Plugin::get_config();
+        return self::build_carousel_response($config['mobileSlides']);
+    }
+
+    private static function build_carousel_response(array $slide_config): WP_REST_Response {
         $slides = [];
-        foreach ($config['slides'] as $index => $slide) {
+        foreach ($slide_config as $index => $slide) {
             if (!is_array($slide)) {
                 continue;
             }
