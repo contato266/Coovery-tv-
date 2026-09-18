@@ -129,7 +129,6 @@ class Media3PlayerEngine @Inject constructor(
         private const val TAG = "Media3PlayerEngine"
         private const val AUDIO_RENDERER_RECOVERY_COOLDOWN_MS = 15_000L
         private const val LEGACY_TEXTURE_VIEW_MAX_SDK = Build.VERSION_CODES.N_MR1
-        private const val FIRE_TV_MEDIATEK_TEXTURE_VIEW_MAX_SDK = Build.VERSION_CODES.P
         private const val TEXTURE_VIEW_STARTUP_TIMEOUT_MS = 9_000L
         private const val TEXTURE_VIEW_BUFFERED_STARTUP_THRESHOLD_MS = 4_000L
         private const val LIVE_HLS_STARTUP_GRACE_MS = 15_000L
@@ -375,7 +374,10 @@ class Media3PlayerEngine @Inject constructor(
                     bufferedDurationMs = stats.bufferedDurationMs,
                     playWhenReady = exoPlayer?.playWhenReady == true,
                     recoverBufferingStalls = bufferingRecoveryEligible,
-                    recoverReadyStalls = shouldRecoverReadyStalls(currentResolvedStreamType),
+                    recoverReadyStalls = shouldRecoverReadyStalls(
+                        currentResolvedStreamType,
+                        televisionDevice = televisionDevice
+                    ),
                     recoverPositionAdvancingReadyStalls =
                         shouldRecoverPositionAdvancingReadyStalls(
                             currentResolvedStreamType,
@@ -1694,7 +1696,7 @@ class Media3PlayerEngine @Inject constructor(
 
     private fun updateRenderSurfaceForMode() {
         val surfaceMode = when {
-            shouldForceSurfaceViewForFireTvLiveHls() -> PlayerSurfaceMode.SURFACE_VIEW
+            shouldForceSurfaceViewForFireTv() -> PlayerSurfaceMode.SURFACE_VIEW
             else -> sessionSurfaceModeOverride
             ?: when {
                 requestedSurfaceMode == PlayerSurfaceMode.TEXTURE_VIEW &&
@@ -1716,16 +1718,14 @@ class Media3PlayerEngine @Inject constructor(
     }
 
     private fun shouldPreferTextureViewForAutoSurface(): Boolean {
+        if (Build.MANUFACTURER.equals("Amazon", ignoreCase = true)) return false
         if (Build.VERSION.SDK_INT <= LEGACY_TEXTURE_VIEW_MAX_SDK) return true
-        return Build.MANUFACTURER.equals("Amazon", ignoreCase = true) &&
-            Build.HARDWARE.orEmpty().startsWith("mt", ignoreCase = true) &&
-            Build.VERSION.SDK_INT <= FIRE_TV_MEDIATEK_TEXTURE_VIEW_MAX_SDK
+        return false
     }
 
-    private fun shouldForceSurfaceViewForFireTvLiveHls(): Boolean {
-        return Build.MANUFACTURER.equals("Amazon", ignoreCase = true) &&
-            Build.HARDWARE.orEmpty().startsWith("mt", ignoreCase = true) &&
-            currentResolvedStreamType == ResolvedStreamType.HLS
+    /** Fire TV Stick decoders stall on TextureView for progressive (movie) VOD; SurfaceView is stable. */
+    private fun shouldForceSurfaceViewForFireTv(): Boolean {
+        return Build.MANUFACTURER.equals("Amazon", ignoreCase = true)
     }
 
     private fun refreshKnownBadCompatibilityRecords() {

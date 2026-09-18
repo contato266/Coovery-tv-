@@ -2,8 +2,15 @@ package com.streamvault.player.playback
 
 import com.streamvault.player.PlaybackState
 
-internal fun shouldRecoverReadyStalls(resolvedStreamType: ResolvedStreamType): Boolean =
-    true
+internal fun shouldRecoverReadyStalls(
+    resolvedStreamType: ResolvedStreamType,
+    televisionDevice: Boolean = false
+): Boolean {
+    if (televisionDevice && resolvedStreamType == ResolvedStreamType.PROGRESSIVE) {
+        return false
+    }
+    return true
+}
 
 internal fun shouldRecoverPositionAdvancingReadyStalls(
     resolvedStreamType: ResolvedStreamType,

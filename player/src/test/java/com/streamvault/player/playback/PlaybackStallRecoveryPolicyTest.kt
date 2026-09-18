@@ -11,6 +11,17 @@ class PlaybackStallRecoveryPolicyTest {
     }
 
     @Test
+    fun `android tv progressive vod disables ready stall recovery`() {
+        assertThat(
+            shouldRecoverReadyStalls(
+                ResolvedStreamType.PROGRESSIVE,
+                televisionDevice = true
+            )
+        ).isFalse()
+        assertThat(shouldRecoverReadyStalls(ResolvedStreamType.PROGRESSIVE)).isTrue()
+    }
+
+    @Test
     fun `position advancing ready stalls are not recovered for live streams`() {
         assertThat(shouldRecoverPositionAdvancingReadyStalls(ResolvedStreamType.MPEG_TS_LIVE)).isFalse()
         assertThat(shouldRecoverPositionAdvancingReadyStalls(ResolvedStreamType.HLS)).isFalse()
@@ -89,6 +100,12 @@ class PlaybackStallRecoveryPolicyTest {
                 resolvedStreamType = ResolvedStreamType.PROGRESSIVE,
                 liveStream = false,
                 playbackStarted = true,
+                televisionDevice = true
+            )
+        ).isFalse()
+        assertThat(
+            shouldRecoverReadyStalls(
+                ResolvedStreamType.PROGRESSIVE,
                 televisionDevice = true
             )
         ).isFalse()
