@@ -12,6 +12,7 @@ import coil3.request.crossfade
 import com.streamvault.app.diagnostics.CrashReportStore
 import com.streamvault.app.diagnostics.RuntimeDiagnosticsManager
 import com.streamvault.app.plugins.StreamVaultPluginManager
+import com.streamvault.app.device.isTelevisionDevice
 import com.streamvault.app.ui.accessibility.isReducedMotionEnabled
 import com.streamvault.data.remote.jellyfin.JellyfinImageAuthInterceptor
 import com.streamvault.domain.repository.DownloadManager
@@ -149,7 +150,7 @@ class StreamVaultApp : Application(), SingletonImageLoader.Factory {
             // Limit concurrent decoding and fetching to 6 for TV hardware constraints
             .fetcherCoroutineContext(Dispatchers.IO.limitedParallelism(6))
             .decoderCoroutineContext(Dispatchers.Default.limitedParallelism(4))
-            .crossfade(!isReducedMotionEnabled(context))
+            .crossfade(!isReducedMotionEnabled(context) && !context.isTelevisionDevice())
             .build()
     }
 }

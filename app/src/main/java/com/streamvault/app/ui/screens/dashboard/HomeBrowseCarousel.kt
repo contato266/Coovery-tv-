@@ -2,6 +2,7 @@ package com.streamvault.app.ui.screens.dashboard
 
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.foundation.BorderStroke
@@ -81,6 +82,7 @@ import kotlinx.coroutines.delay
 import kotlin.math.absoluteValue
 
 private const val HOME_CAROUSEL_AUTO_ADVANCE_MS = 3_000L
+private const val HOME_CAROUSEL_TV_AUTO_ADVANCE_MS = 6_000L
 private const val COOVERY_BANNER_ASPECT_RATIO = 2000f / 626f
 /** Portrait promo card (1200×1600) for handheld home carousel. */
 private const val HANDHELD_CAROUSEL_ASPECT_RATIO = 1200f / 1600f
@@ -154,10 +156,15 @@ internal fun HomeHeroCarousel(
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { carouselActive = true }
     LifecycleEventEffect(Lifecycle.Event.ON_PAUSE) { carouselActive = false }
 
-    LaunchedEffect(carouselCardCount, carouselActive) {
+    val carouselAdvanceMs = if (isTelevisionDevice) {
+        HOME_CAROUSEL_TV_AUTO_ADVANCE_MS
+    } else {
+        HOME_CAROUSEL_AUTO_ADVANCE_MS
+    }
+    LaunchedEffect(carouselCardCount, carouselActive, carouselAdvanceMs) {
         if (!carouselActive) return@LaunchedEffect
         while (carouselActive) {
-            delay(HOME_CAROUSEL_AUTO_ADVANCE_MS)
+            delay(carouselAdvanceMs)
             currentIndex = (currentIndex + 1) % carouselCardCount
         }
     }
@@ -170,7 +177,11 @@ internal fun HomeHeroCarousel(
     ) {
         Crossfade(
             targetState = currentIndex,
-            animationSpec = tween(durationMillis = 450),
+            animationSpec = if (isTelevisionDevice) {
+                snap()
+            } else {
+                tween(durationMillis = 450)
+            },
             label = "home_hero_carousel"
         ) { index ->
             val slide = resolvedSlides[index.coerceIn(0, resolvedSlides.lastIndex)]

@@ -2,6 +2,17 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.78]
+
+### Fixed
+
+- Amazon Fire TV / Fire Stick movie playback: force `SurfaceView` for all VOD (progressive) streams instead of `TextureView`, which caused image freezes while audio continued.
+- Android TV navigation: disable Coil image crossfades on TV, use instant hero-carousel transitions, and slow carousel auto-advance to reduce UI jank on low-power boxes.
+
+### Changed
+
+- Android TV progressive VOD: disable ready-state stall recovery (extends the v1.0.77 buffering/position stall policy) to avoid unnecessary player seeks on Fire TV and other TV devices.
+
 ## [1.0.77]
 
 ### Fixed
