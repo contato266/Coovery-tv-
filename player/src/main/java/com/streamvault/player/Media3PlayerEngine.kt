@@ -83,7 +83,9 @@ import com.streamvault.player.playback.shouldPreservePlaybackStateForRetry
 import com.streamvault.player.playback.shouldRecoverFrameSilentReadyStalls
 import com.streamvault.player.playback.shouldRecoverPositionAdvancingReadyStalls
 import com.streamvault.player.playback.shouldRecoverReadyStalls
+import com.streamvault.player.playback.shouldRecoverBufferingStalls
 import com.streamvault.player.playback.shouldReconnectLiveStall
+import com.streamvault.player.platform.isTelevisionDevice
 import com.streamvault.player.playback.shouldForceSoftwareForAmbiguousDecoderFallback
 import com.streamvault.player.stats.PlayerStatsCollector
 import com.streamvault.player.timeshift.DefaultLiveTimeshiftManager
@@ -325,6 +327,7 @@ class Media3PlayerEngine @Inject constructor(
     private val audioDecoderPreferencePolicy = DefaultDecoderPreferencePolicy()
     private val videoDecoderPreferencePolicy = DefaultDecoderPreferencePolicy()
     private val videoStallDetector = VideoStallDetector()
+    private val televisionDevice: Boolean by lazy { context.isTelevisionDevice() }
     // All reads/writes on Dispatchers.Main.immediate (engine scope).
     @get:MainThread private var activeLiveTimeshiftStreamInfo: StreamInfo? = null
     @get:MainThread private var activeLiveTimeshiftChannelKey: String? = null
@@ -358,8 +361,11 @@ class Media3PlayerEngine @Inject constructor(
                 val stats = _playerStats.value
                 val liveStream = isCurrentStreamLive()
                 val effectivePlaybackStarted = isEffectivelyPlaybackStarted()
-                val bufferingRecoveryEligible = effectivePlaybackStarted && (
-                    liveStream || currentResolvedStreamType == ResolvedStreamType.PROGRESSIVE
+                val bufferingRecoveryEligible = shouldRecoverBufferingStalls(
+                    resolvedStreamType = currentResolvedStreamType,
+                    liveStream = liveStream,
+                    playbackStarted = effectivePlaybackStarted,
+                    televisionDevice = televisionDevice
                 )
                 val stalled = videoStallDetector.shouldReportStall(
                     playbackState = _playbackState.value,
@@ -371,7 +377,10 @@ class Media3PlayerEngine @Inject constructor(
                     recoverBufferingStalls = bufferingRecoveryEligible,
                     recoverReadyStalls = shouldRecoverReadyStalls(currentResolvedStreamType),
                     recoverPositionAdvancingReadyStalls =
-                        shouldRecoverPositionAdvancingReadyStalls(currentResolvedStreamType),
+                        shouldRecoverPositionAdvancingReadyStalls(
+                            currentResolvedStreamType,
+                            televisionDevice = televisionDevice
+                        ),
                     recoverFrameSilentReadyStalls =
                         shouldRecoverFrameSilentReadyStalls(currentResolvedStreamType)
                 )
@@ -1818,7 +1827,8 @@ class Media3PlayerEngine @Inject constructor(
         val liveReconnectionStall = shouldReconnectLiveStall(
             playbackState = _playbackState.value,
             resolvedStreamType = currentResolvedStreamType,
-            recoveryAttempt = nextRecoveryAttempt
+            recoveryAttempt = nextRecoveryAttempt,
+            televisionDevice = televisionDevice
         )
         Log.w(
             TAG,

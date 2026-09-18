@@ -3,6 +3,7 @@ package com.streamvault.app.ui.components
 import android.view.View
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import com.streamvault.player.PlayerEngine
@@ -17,7 +18,10 @@ fun PlayerRenderView(
     surfaceType: PlayerRenderSurfaceType = PlayerRenderSurfaceType.AUTO,
     configureView: (View.() -> Unit)? = null
 ) {
-    key(playerEngine, surfaceType) {
+    val bindSignature = remember(playerEngine, resizeMode, surfaceType) {
+        Triple(System.identityHashCode(playerEngine), resizeMode, surfaceType)
+    }
+    key(bindSignature) {
         AndroidView(
             factory = { context ->
                 playerEngine.createRenderView(context, resizeMode, surfaceType).apply {

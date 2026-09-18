@@ -31,8 +31,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.compose.runtime.snapshotFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import androidx.compose.ui.Alignment
@@ -147,9 +150,13 @@ internal fun HomeHeroCarousel(
         .coerceAtLeast(140.dp)
     val cardShape = RoundedCornerShape(20.dp)
     var currentIndex by remember { mutableIntStateOf(0) }
+    var carouselActive by remember { mutableStateOf(true) }
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { carouselActive = true }
+    LifecycleEventEffect(Lifecycle.Event.ON_PAUSE) { carouselActive = false }
 
-    LaunchedEffect(carouselCardCount) {
-        while (true) {
+    LaunchedEffect(carouselCardCount, carouselActive) {
+        if (!carouselActive) return@LaunchedEffect
+        while (carouselActive) {
             delay(HOME_CAROUSEL_AUTO_ADVANCE_MS)
             currentIndex = (currentIndex + 1) % carouselCardCount
         }
