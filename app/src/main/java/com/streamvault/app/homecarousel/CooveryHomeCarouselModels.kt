@@ -26,6 +26,20 @@ internal fun defaultTelevisionHomeHeroSlides(): List<HomeHeroCarouselSlide> =
         )
     }
 
+internal fun defaultHandheldHomeHeroSlides(): List<HomeHeroCarouselSlide> =
+    List(5) { index ->
+        HomeHeroCarouselSlide(
+            id = "default-handheld-$index",
+            imageUrl = null,
+            fallbackBannerRes = defaultHandheldBannerRes(index),
+            linkTarget = HomeHeroCarouselLinkTarget.None
+        )
+    }
+
+@DrawableRes
+internal fun defaultHandheldBannerRes(@Suppress("UNUSED_PARAMETER") index: Int): Int =
+    R.drawable.coovery_handheld_carousel_promo
+
 @DrawableRes
 internal fun defaultTelevisionBannerRes(index: Int): Int = when (index) {
     1 -> R.drawable.coovery_carousel_banner_2

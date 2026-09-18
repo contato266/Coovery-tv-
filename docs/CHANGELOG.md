@@ -2,6 +2,16 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.79]
+
+### Added
+
+- WordPress plugin **Coovery Android TV 1.1.0**: separate home carousel configuration for **Android TV** and **mobile** (`/android-mobile/home-carousel`). The app loads the matching feed on each form factor.
+
+### Changed
+
+- Android TV home: removed the **provider attention** warning banner from the dashboard (EPG/sync messages no longer block the home layout).
+
 ## [1.0.78]
 
 ### Fixed

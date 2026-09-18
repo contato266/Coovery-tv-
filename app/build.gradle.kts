@@ -59,8 +59,8 @@ android {
         applicationId = "com.coovery.app"
         minSdk = 25
         targetSdk = 36
-        versionCode = 79
-        versionName = "1.0.78"
+        versionCode = 80
+        versionName = "1.0.79"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         providers.gradleProperty("compatApi").orNull?.let { expectedApi ->
             testInstrumentationRunnerArguments["expected_api"] = expectedApi
@@ -72,6 +72,11 @@ android {
             "String",
             "COOVERY_HOME_CAROUSEL_API_URL",
             "\"https://coovery.com.br/wp-json/coovery/v1/android-tv/home-carousel\""
+        )
+        buildConfigField(
+            "String",
+            "COOVERY_HOME_CAROUSEL_MOBILE_API_URL",
+            "\"https://coovery.com.br/wp-json/coovery/v1/android-mobile/home-carousel\""
         )
         buildConfigField("long", "BUILD_TIMESTAMP_UTC", "0L")
         ndk {
