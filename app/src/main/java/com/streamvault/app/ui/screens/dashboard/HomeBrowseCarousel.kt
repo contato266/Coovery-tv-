@@ -56,8 +56,13 @@ import androidx.tv.material3.Border
 import androidx.tv.material3.ClickableSurfaceDefaults
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
+import coil3.compose.AsyncImage
 import com.streamvault.app.R
 import com.streamvault.app.device.rememberIsTelevisionDevice
+import com.streamvault.app.homecarousel.HomeHeroCarouselSlide
+import com.streamvault.app.homecarousel.defaultTelevisionBannerRes
+import com.streamvault.app.homecarousel.defaultTelevisionHomeHeroSlides
+import com.streamvault.app.ui.components.rememberCrossfadeImageModel
 import com.streamvault.app.ui.components.MovieCard
 import com.streamvault.app.ui.components.SeriesCard
 import com.streamvault.app.ui.components.shell.AppSectionHeader
@@ -72,7 +77,6 @@ import com.streamvault.domain.model.Series
 import kotlinx.coroutines.delay
 import kotlin.math.absoluteValue
 
-private const val HOME_CAROUSEL_CARD_COUNT = 5
 private const val HOME_CAROUSEL_AUTO_ADVANCE_MS = 3_000L
 private const val COOVERY_BANNER_ASPECT_RATIO = 2000f / 626f
 /** Portrait promo card (1200×1600) for handheld home carousel. */
@@ -83,15 +87,6 @@ private const val HANDHELD_CAROUSEL_SIDE_SCALE = 0.88f
 private const val HANDHELD_CAROUSEL_SIDE_ALPHA = 0.78f
 private const val HANDHELD_POSTER_WIDTH_HEIGHT_RATIO = 136f / 204f
 private const val HANDHELD_SHELF_POSTER_WIDTH_FRACTION = 0.64f
-
-@DrawableRes
-private fun homeCarouselBannerRes(index: Int): Int = when (index) {
-    1 -> R.drawable.coovery_carousel_banner_2
-    2 -> R.drawable.coovery_carousel_banner_3
-    3 -> R.drawable.coovery_carousel_banner_4
-    4 -> R.drawable.coovery_carousel_banner_5
-    else -> R.drawable.coovery_hero_banner
-}
 
 internal enum class HomeSubscriptionDestination {
     LIVE,
@@ -111,15 +106,32 @@ internal data class HomeSubscriptionCard(
 @Composable
 internal fun HomeHeroCarousel(
     modifier: Modifier = Modifier,
-    onCardClick: (Int) -> Unit = {}
+    televisionSlides: List<HomeHeroCarouselSlide> = emptyList(),
+    onCardClick: (HomeHeroCarouselSlide) -> Unit = {}
 ) {
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val isTelevisionDevice = rememberIsTelevisionDevice()
     if (!isTelevisionDevice && screenWidth < 700.dp) {
-        HandheldPortraitHeroCarousel(modifier = modifier, onCardClick = onCardClick)
+        HandheldPortraitHeroCarousel(
+            modifier = modifier,
+            onCardClick = { index ->
+                onCardClick(
+                    HomeHeroCarouselSlide(
+                        id = "handheld-$index",
+                        imageUrl = null,
+                        fallbackBannerRes = defaultTelevisionBannerRes(index),
+                        linkTarget = com.streamvault.app.homecarousel.HomeHeroCarouselLinkTarget.None
+                    )
+                )
+            }
+        )
         return
     }
+    val resolvedSlides = remember(televisionSlides) {
+        televisionSlides.takeIf { it.isNotEmpty() } ?: defaultTelevisionHomeHeroSlides()
+    }
+    val carouselCardCount = resolvedSlides.size.coerceAtLeast(1)
     val horizontalPadding = when {
         screenWidth < 700.dp -> 16.dp
         !isTelevisionDevice && screenWidth < 1280.dp -> 20.dp
@@ -136,10 +148,10 @@ internal fun HomeHeroCarousel(
     val cardShape = RoundedCornerShape(20.dp)
     var currentIndex by remember { mutableIntStateOf(0) }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(carouselCardCount) {
         while (true) {
             delay(HOME_CAROUSEL_AUTO_ADVANCE_MS)
-            currentIndex = (currentIndex + 1) % HOME_CAROUSEL_CARD_COUNT
+            currentIndex = (currentIndex + 1) % carouselCardCount
         }
     }
 
@@ -154,8 +166,9 @@ internal fun HomeHeroCarousel(
             animationSpec = tween(durationMillis = 450),
             label = "home_hero_carousel"
         ) { index ->
+            val slide = resolvedSlides[index.coerceIn(0, resolvedSlides.lastIndex)]
             TvClickableSurface(
-                onClick = { onCardClick(index) },
+                onClick = { onCardClick(slide) },
                 modifier = Modifier
                     .width(cardWidth)
                     .height(cardHeight),
@@ -176,14 +189,26 @@ internal fun HomeHeroCarousel(
                 ),
                 scale = ClickableSurfaceDefaults.scale(focusedScale = 1.01f)
             ) {
-                Image(
-                    painter = painterResource(homeCarouselBannerRes(index)),
-                    contentDescription = stringResource(R.string.home_carousel_banner_content_description),
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .clip(cardShape)
-                )
+                val remoteImageUrl = slide.imageUrl?.takeIf { it.isNotBlank() }
+                if (remoteImageUrl != null) {
+                    AsyncImage(
+                        model = rememberCrossfadeImageModel(remoteImageUrl),
+                        contentDescription = stringResource(R.string.home_carousel_banner_content_description),
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(cardShape)
+                    )
+                } else {
+                    Image(
+                        painter = painterResource(slide.fallbackBannerRes),
+                        contentDescription = stringResource(R.string.home_carousel_banner_content_description),
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(cardShape)
+                    )
+                }
             }
         }
     }
@@ -196,7 +221,7 @@ private fun HandheldPortraitHeroCarousel(
 ) {
     val cardShape = RoundedCornerShape(18.dp)
     HandheldCenteredPeekCarousel(
-        itemCount = HOME_CAROUSEL_CARD_COUNT,
+        itemCount = 5,
         widthHeightRatio = HANDHELD_CAROUSEL_ASPECT_RATIO,
         modifier = modifier,
         widthFraction = HANDHELD_CAROUSEL_CENTERED_WIDTH_FRACTION,

@@ -59,8 +59,8 @@ android {
         applicationId = "com.coovery.app"
         minSdk = 25
         targetSdk = 36
-        versionCode = 76
-        versionName = "1.0.75"
+        versionCode = 77
+        versionName = "1.0.76"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         providers.gradleProperty("compatApi").orNull?.let { expectedApi ->
             testInstrumentationRunnerArguments["expected_api"] = expectedApi
@@ -68,6 +68,11 @@ android {
         buildConfigField("String", "OFFICIAL_APPLICATION_ID", "\"com.coovery.app\"")
         buildConfigField("String", "OFFICIAL_SIGNING_CERT_SHA256", "\"$officialSigningCertSha256\"")
         buildConfigField("String", "APP_UPDATE_CHANNEL", "\"stable\"")
+        buildConfigField(
+            "String",
+            "COOVERY_HOME_CAROUSEL_API_URL",
+            "\"https://coovery.com.br/wp-json/coovery/v1/android-tv/home-carousel\""
+        )
         buildConfigField("long", "BUILD_TIMESTAMP_UTC", "0L")
         ndk {
             abiFilters += listOf("arm64-v8a", "armeabi-v7a")

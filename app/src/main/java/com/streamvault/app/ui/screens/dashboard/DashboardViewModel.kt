@@ -39,6 +39,9 @@ import com.streamvault.domain.manager.RecordingManager
 import com.streamvault.domain.model.RecordingStatus
 import android.content.Context
 import com.streamvault.app.R
+import com.streamvault.app.homecarousel.CooveryHomeCarouselRepository
+import com.streamvault.app.homecarousel.HomeHeroCarouselSlide
+import com.streamvault.app.homecarousel.defaultTelevisionHomeHeroSlides
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.time.LocalDate
@@ -59,6 +62,7 @@ import com.streamvault.domain.util.AdultContentVisibilityPolicy
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 @HiltViewModel
@@ -77,7 +81,8 @@ class DashboardViewModel @Inject constructor(
     private val getCustomCategories: GetCustomCategories,
     private val syncManager: ProviderSyncStateSource,
     private val appUpdateInstaller: AppUpdateInstaller,
-    private val recordingManager: RecordingManager
+    private val recordingManager: RecordingManager,
+    private val homeCarouselRepository: CooveryHomeCarouselRepository
 ) : ViewModel() {
     private companion object {
         const val FAVORITE_CHANNEL_LIMIT = 12
@@ -98,6 +103,7 @@ class DashboardViewModel @Inject constructor(
     val scheduledChannelIds: StateFlow<Set<Long>> = _scheduledChannelIds.asStateFlow()
 
     init {
+        refreshTelevisionHomeCarousel()
         viewModelScope.launch {
             recordingManager.observeRecordingItems().collect { items ->
                 _recordingChannelIds.value = items
@@ -330,7 +336,8 @@ class DashboardViewModel @Inject constructor(
                     else -> emptyList()
                 },
                 updateNotice = snapshot.updateNotice,
-                isLoading = false
+                isLoading = false,
+                homeHeroCarouselSlides = _uiState.value.homeHeroCarouselSlides
             )
         }
     }
@@ -811,6 +818,15 @@ class DashboardViewModel @Inject constructor(
     fun userMessageShown() {
         _uiState.value = _uiState.value.copy(userMessage = null)
     }
+
+    fun refreshTelevisionHomeCarousel(forceRefresh: Boolean = false) {
+        viewModelScope.launch {
+            val slides = runCatching {
+                homeCarouselRepository.getTelevisionSlides(forceRefresh = forceRefresh)
+            }.getOrElse { defaultTelevisionHomeHeroSlides() }
+            _uiState.update { it.copy(homeHeroCarouselSlides = slides) }
+        }
+    }
 }
 
 private data class DashboardLiveContext(
@@ -886,7 +902,8 @@ data class DashboardUiState(
     val updateNotice: DashboardUpdateNotice? = null,
     val stats: DashboardStats = DashboardStats(),
     val userMessage: String? = null,
-    val isLoading: Boolean = true
+    val isLoading: Boolean = true,
+    val homeHeroCarouselSlides: List<HomeHeroCarouselSlide> = emptyList()
 )
 
 data class DashboardUpdateNotice(
