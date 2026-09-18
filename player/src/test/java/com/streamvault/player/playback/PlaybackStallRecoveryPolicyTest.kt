@@ -67,4 +67,30 @@ class PlaybackStallRecoveryPolicyTest {
             )
         ).isTrue()
     }
+
+    @Test
+    fun `android tv vod disables aggressive ready and buffering stall recovery`() {
+        assertThat(
+            shouldRecoverPositionAdvancingReadyStalls(
+                ResolvedStreamType.PROGRESSIVE,
+                televisionDevice = true
+            )
+        ).isFalse()
+        assertThat(
+            shouldReconnectLiveStall(
+                playbackState = PlaybackState.BUFFERING,
+                resolvedStreamType = ResolvedStreamType.PROGRESSIVE,
+                recoveryAttempt = 1,
+                televisionDevice = true
+            )
+        ).isFalse()
+        assertThat(
+            shouldRecoverBufferingStalls(
+                resolvedStreamType = ResolvedStreamType.PROGRESSIVE,
+                liveStream = false,
+                playbackStarted = true,
+                televisionDevice = true
+            )
+        ).isFalse()
+    }
 }

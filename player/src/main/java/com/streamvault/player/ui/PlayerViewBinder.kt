@@ -17,6 +17,7 @@ class PlayerViewBinder(
 ) {
     private var boundPlayerView: PlayerView? = null
     private var boundResizeMode: PlayerSurfaceResizeMode = PlayerSurfaceResizeMode.FIT
+    private var boundPlayerIdentity: Int? = null
     private var injectedSubtitleCues: List<Cue> = emptyList()
 
     fun createRenderView(
@@ -36,8 +37,15 @@ class PlayerViewBinder(
 
     fun bind(renderView: View, player: androidx.media3.exoplayer.ExoPlayer, resizeMode: PlayerSurfaceResizeMode) {
         val playerView = renderView as? PlayerView ?: return
+        val playerIdentity = System.identityHashCode(player)
+        val viewChanged = boundPlayerView !== playerView
+        val playerChanged = boundPlayerIdentity != playerIdentity || playerView.player !== player
+        val resizeChanged = boundResizeMode != resizeMode
+        if (!viewChanged && !playerChanged && !resizeChanged && injectedSubtitleCues.isEmpty()) {
+            return
+        }
         boundResizeMode = resizeMode
-        if (boundPlayerView !== playerView) {
+        if (viewChanged) {
             runCatching {
                 PlayerView.switchTargetView(player, boundPlayerView, playerView)
             }.getOrElse {
@@ -45,12 +53,17 @@ class PlayerViewBinder(
                 playerView.player = player
             }
             boundPlayerView = playerView
-        } else if (playerView.player !== player) {
+        } else if (playerChanged) {
             playerView.player = player
         }
-        playerView.applyResizeMode(resizeMode)
-        subtitleStyleController.apply(playerView)
-        applyInjectedCues(playerView)
+        boundPlayerIdentity = playerIdentity
+        if (resizeChanged || viewChanged) {
+            playerView.applyResizeMode(resizeMode)
+        }
+        if (viewChanged || playerChanged) {
+            subtitleStyleController.apply(playerView)
+            applyInjectedCues(playerView)
+        }
     }
 
     fun attachPlayer(player: androidx.media3.exoplayer.ExoPlayer?) {

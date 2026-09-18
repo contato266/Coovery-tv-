@@ -2,6 +2,12 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.77]
+
+### Fixed
+
+- Android TV movie and series playback: reduced false video-stall recovery that could cause brief image freezes while audio kept playing (conservative VOD stall policy on TV only). Also pauses the home hero carousel while the home screen is not visible and avoids redundant player-surface rebinding during Compose updates.
+
 ## [1.0.76]
 
 ### Added
