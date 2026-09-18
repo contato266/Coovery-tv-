@@ -82,7 +82,11 @@ import com.streamvault.domain.model.Channel
 import com.streamvault.domain.model.Movie
 import com.streamvault.domain.model.PlaybackHistory
 import com.streamvault.domain.model.Series
+import android.content.Intent
+import android.net.Uri
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import com.streamvault.app.homecarousel.HomeHeroCarouselLinkTarget
 import androidx.compose.foundation.BorderStroke
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -112,6 +116,7 @@ fun DashboardScreen(
     val handheldBottomScrollInset = rememberHandheldBottomScrollInset()
     val snackbarHostState = remember { SnackbarHostState() }
     var showHomeCustomizationDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
 
     LaunchedEffect(uiState.userMessage) {
         uiState.userMessage?.let { message ->
@@ -200,7 +205,20 @@ fun DashboardScreen(
                             top = if (isTelevisionDevice) 8.dp else 0.dp,
                             bottom = 6.dp
                         ),
-                        onCardClick = { onNavigate(Routes.SERIES) }
+                        televisionSlides = if (isTelevisionDevice) uiState.homeHeroCarouselSlides else emptyList(),
+                        onCardClick = { slide ->
+                            when (val target = slide.linkTarget) {
+                                is HomeHeroCarouselLinkTarget.AppRoute -> onNavigate(target.route)
+                                is HomeHeroCarouselLinkTarget.ExternalUrl -> {
+                                    runCatching {
+                                        context.startActivity(
+                                            Intent(Intent.ACTION_VIEW, Uri.parse(target.url))
+                                        )
+                                    }
+                                }
+                                HomeHeroCarouselLinkTarget.None -> Unit
+                            }
+                        }
                     )
                 }
                 item(key = "home_assinaturas_cards") {

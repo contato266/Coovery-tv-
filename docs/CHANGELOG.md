@@ -2,6 +2,12 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.76]
+
+### Added
+
+- Android TV home hero carousel can be managed from the **Coovery Android TV** WordPress plugin on `coovery.com.br` (remote banner images and tap links via REST). Handheld home carousel unchanged; local artwork remains the fallback when the feed is unavailable.
+
 ## [1.0.75]
 
 ### Changed
