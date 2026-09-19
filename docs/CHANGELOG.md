@@ -2,6 +2,12 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.80]
+
+### Changed
+
+- App launcher icon updated to the Coovery tv+ logo on black (Android TV and mobile home screen / launcher).
+
 ## [1.0.79]
 
 ### Added
