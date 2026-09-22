@@ -704,12 +704,8 @@ class SettingsViewModel @Inject constructor(
         )
     }
 
-    fun downloadLatestUpdate() {
-        appUpdateActions.downloadLatestUpdate(viewModelScope)
-    }
-
-    fun installDownloadedUpdate() {
-        appUpdateActions.installDownloadedUpdate(viewModelScope)
+    fun openLatestAppUpdateRelease() {
+        appUpdateActions.openLatestRelease(viewModelScope)
     }
 
     fun setCategorySortMode(type: ContentType, mode: CategorySortMode) {

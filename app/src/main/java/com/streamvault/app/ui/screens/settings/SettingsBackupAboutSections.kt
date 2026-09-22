@@ -383,25 +383,13 @@ internal fun LazyListScope.settingsAboutSection(
     buildVerificationLabel: String,
     onOpenUri: (String) -> Unit,
     onCheckForUpdates: () -> Unit,
-    onInstallDownloadedUpdate: () -> Unit,
-    onDownloadLatestUpdate: () -> Unit,
+    onOpenLatestRelease: () -> Unit,
     onSetAutoCheckAppUpdates: (Boolean) -> Unit,
-    onSetAutoDownloadAppUpdates: (Boolean) -> Unit,
-    onRefreshDownloadState: () -> Unit,
     onViewCrashReport: () -> Unit,
     onShareCrashReport: () -> Unit,
     onDeleteCrashReport: () -> Unit
 ) {
     item {
-        val downloadStatus = uiState.appUpdate.downloadStatus
-        LaunchedEffect(downloadStatus) {
-            if (downloadStatus == com.streamvault.app.update.AppUpdateDownloadStatus.Downloading) {
-                while (true) {
-                    kotlinx.coroutines.delay(2000L)
-                    onRefreshDownloadState()
-                }
-            }
-        }
         SettingsSectionHeader(
             title = stringResource(R.string.settings_updates_title),
             subtitle = stringResource(R.string.settings_updates_subtitle)
@@ -415,16 +403,6 @@ internal fun LazyListScope.settingsAboutSection(
             checked = uiState.autoCheckAppUpdates,
             onCheckedChange = onSetAutoCheckAppUpdates
         )
-        if (uiState.autoCheckAppUpdates) {
-            SwitchSettingsRow(
-                label = stringResource(R.string.settings_update_auto_download),
-                value = stringResource(
-                    if (uiState.autoDownloadAppUpdates) R.string.settings_enabled else R.string.settings_disabled
-                ),
-                checked = uiState.autoDownloadAppUpdates,
-                onCheckedChange = onSetAutoDownloadAppUpdates
-            )
-        }
         SettingsRow(
             label = stringResource(R.string.settings_update_latest_release),
             value = formatLatestReleaseLabel(uiState.appUpdate, context)
@@ -452,15 +430,7 @@ internal fun LazyListScope.settingsAboutSection(
             ClickableSettingsRow(
                 label = stringResource(R.string.settings_update_download),
                 value = formatUpdateDownloadLabel(uiState.appUpdate, context),
-                onClick = {
-                    when (uiState.appUpdate.latestActionState()) {
-                        AppUpdateActionState.InstallLatest,
-                        AppUpdateActionState.InstallPermissionRequired -> onInstallDownloadedUpdate()
-                        AppUpdateActionState.DownloadLatest -> onDownloadLatestUpdate()
-                        AppUpdateActionState.Downloading,
-                        AppUpdateActionState.None -> Unit
-                    }
-                }
+                onClick = onOpenLatestRelease
             )
         }
         if (!uiState.appUpdate.releaseUrl.isNullOrBlank()) {

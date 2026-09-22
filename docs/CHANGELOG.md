@@ -2,6 +2,12 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.82]
+
+### Changed
+
+- Removed `REQUEST_INSTALL_PACKAGES` for Google Play policy compliance. In-app APK installs (self-update and plugin sideload) are disabled; updates open the GitHub release page in the browser. Use Play Store builds for production updates.
+
 ## [1.0.81]
 
 ### Changed

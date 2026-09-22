@@ -12,7 +12,6 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.Settings
-import androidx.core.content.FileProvider
 import androidx.core.content.ContextCompat
 import com.streamvault.app.BuildConfig
 import com.streamvault.app.cast.CastMediaRequest
@@ -303,40 +302,15 @@ class StreamVaultPluginManager @Inject constructor(
         }
     }
 
-    suspend fun installApkFromUri(uri: Uri): Result<Unit> = withContext(Dispatchers.IO) {
-        val target = pluginApkFile("local-${System.currentTimeMillis()}.apk")
-        runPluginCatching {
-            target.parentFile?.mkdirs()
-            context.contentResolver.openInputStream(uri).use { input ->
-                requireNotNull(input) { "Cannot open selected APK" }
-                target.outputStream().use { output -> input.copyTo(output) }
-            }
-        }.onFailure { error ->
-            return@withContext Result.error("Could not copy selected plugin APK", error)
-        }
-        launchPackageInstaller(target)
-    }
+    suspend fun installApkFromUri(@Suppress("UNUSED_PARAMETER") uri: Uri): Result<Unit> =
+        Result.error(
+            "Installing plugin APKs from the app is disabled. Install the plugin APK with the device file manager or Play Store."
+        )
 
-    suspend fun installApkFromUrl(url: String): Result<Unit> = withContext(Dispatchers.IO) {
-        val normalizedUrl = url.trim()
-        if (!isHttpOrHttpsUrl(normalizedUrl)) {
-            return@withContext Result.error("Plugin URL must be http or https")
-        }
-
-        val target = pluginApkFile("plugin-${System.currentTimeMillis()}.apk")
-        runPluginCatching {
-            target.parentFile?.mkdirs()
-            val request = Request.Builder().url(normalizedUrl).build()
-            okHttpClient.newCall(request).useCancellableResponse { response ->
-                if (!response.isSuccessful) error("HTTP ${response.code}")
-                val body = response.body ?: error("Empty response")
-                target.outputStream().use { output -> body.byteStream().copyTo(output) }
-            }
-        }.onFailure { error ->
-            return@withContext Result.error("Could not download plugin APK", error)
-        }
-        launchPackageInstaller(target)
-    }
+    suspend fun installApkFromUrl(@Suppress("UNUSED_PARAMETER") url: String): Result<Unit> =
+        Result.error(
+            "Installing plugin APKs from the app is disabled. Install the plugin APK with the device file manager or Play Store."
+        )
 
     fun openPluginConfiguration(plugin: InstalledStreamVaultPlugin): PluginActionResult {
         val action = plugin.manifest.configurationActivityAction?.takeIf { it.isNotBlank() }
@@ -949,43 +923,6 @@ class StreamVaultPluginManager @Inject constructor(
         val packageName = serviceInfo.packageName ?: return null
         val serviceName = serviceInfo.name ?: return null
         return StreamVaultPluginComponent(packageName, serviceName)
-    }
-
-    private fun launchPackageInstaller(apkFile: File): Result<Unit> {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !context.packageManager.canRequestPackageInstalls()) {
-            val settingsIntent = Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES).apply {
-                data = Uri.parse("package:${context.packageName}")
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
-            context.startActivity(settingsIntent)
-            return Result.error("Allow installs from StreamVault, then choose the plugin APK again")
-        }
-
-        val apkUri = FileProvider.getUriForFile(
-            context,
-            "${BuildConfig.APPLICATION_ID}.fileprovider",
-            apkFile
-        )
-        val installIntent = Intent(Intent.ACTION_VIEW).apply {
-            setDataAndType(apkUri, "application/vnd.android.package-archive")
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        }
-
-        return try {
-            context.startActivity(installIntent)
-            Result.success(Unit)
-        } catch (error: ActivityNotFoundException) {
-            Result.error("No package installer is available on this device", error)
-        } catch (error: SecurityException) {
-            Result.error("The package installer could not be launched", error)
-        }
-    }
-
-    private fun pluginApkFile(fileName: String): File {
-        val downloadsDir = context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
-            ?: File(context.cacheDir, "downloads")
-        return File(downloadsDir, "plugin-apks/$fileName")
     }
 
     private fun isHttpOrHttpsUrl(value: String): Boolean =
