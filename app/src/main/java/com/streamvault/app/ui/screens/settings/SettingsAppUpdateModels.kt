@@ -1,7 +1,6 @@
 package com.streamvault.app.ui.screens.settings
 
 import com.streamvault.app.update.AppUpdateActionState
-import com.streamvault.app.update.AppUpdateDownloadState
 import com.streamvault.app.update.AppUpdateDownloadStatus
 import com.streamvault.app.update.GitHubReleaseInfo
 import com.streamvault.app.update.isCooveryAppUpdateRelease
@@ -38,28 +37,11 @@ internal fun AppUpdateUiModel.toReleaseInfoOrNull(): GitHubReleaseInfo? {
     )
 }
 
-internal fun AppUpdateUiModel.withDownloadState(downloadState: AppUpdateDownloadState): AppUpdateUiModel {
-    return copy(
-        downloadStatus = downloadState.status,
-        downloadedVersionName = downloadState.versionName,
-        installPermissionRequired = downloadState.installPermissionRequired
-    )
-}
-
-internal fun AppUpdateUiModel.toDownloadState(): AppUpdateDownloadState {
-    return AppUpdateDownloadState(
-        status = downloadStatus,
-        versionName = downloadedVersionName,
-        installPermissionRequired = installPermissionRequired
-    )
-}
-
 internal fun AppUpdateUiModel.latestActionState(): AppUpdateActionState {
     return latestAppUpdateAction(
         latestVersionName = latestVersionName,
-        downloadUrl = downloadUrl,
-        isUpdateAvailable = isUpdateAvailable,
-        downloadState = toDownloadState()
+        releaseUrl = releaseUrl,
+        isUpdateAvailable = isUpdateAvailable
     )
 }
 

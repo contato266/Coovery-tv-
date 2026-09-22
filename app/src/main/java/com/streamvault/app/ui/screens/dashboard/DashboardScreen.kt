@@ -187,7 +187,7 @@ fun DashboardScreen(
                         DashboardUpdateCard(
                             notice = updateNotice,
                             onOpenSettings = { onNavigate(Routes.SETTINGS) },
-                            onInstallUpdate = viewModel::installDownloadedUpdate
+                            onOpenRelease = viewModel::openUpdateReleasePage
                         )
                     }
                 }
@@ -779,7 +779,7 @@ private fun DashboardHealthPill(
 private fun DashboardUpdateCard(
     notice: DashboardUpdateNotice,
     onOpenSettings: () -> Unit,
-    onInstallUpdate: () -> Unit
+    onOpenRelease: () -> Unit
 ) {
     Surface(
         modifier = Modifier
@@ -800,10 +800,8 @@ private fun DashboardUpdateCard(
             )
             Text(
                 text = stringResource(
-                    if (notice.installPermissionRequired) {
-                        R.string.dashboard_update_install_permission_required
-                    } else if (notice.installReady) {
-                        R.string.dashboard_update_install_ready
+                    if (notice.openReleaseReady) {
+                        R.string.dashboard_update_available
                     } else {
                         R.string.dashboard_update_available
                     }
@@ -814,17 +812,15 @@ private fun DashboardUpdateCard(
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 DashboardActionButton(
                     label = stringResource(
-                        if (notice.installPermissionRequired) {
-                            R.string.dashboard_update_allow_installs
-                        } else if (notice.installReady) {
-                            R.string.dashboard_update_open_installer
+                        if (notice.openReleaseReady) {
+                            R.string.settings_update_view_release
                         } else {
                             R.string.dashboard_update_open_settings
                         }
                     ),
                     onClick = {
-                        if (notice.installReady || notice.installPermissionRequired) {
-                            onInstallUpdate()
+                        if (notice.openReleaseReady) {
+                            onOpenRelease()
                         } else {
                             onOpenSettings()
                         }

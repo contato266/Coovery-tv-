@@ -204,11 +204,8 @@ internal fun SettingsContentPane(
                 buildVerificationLabel = screenLabels.buildVerificationLabel,
                 onOpenUri = onOpenUri,
                 onCheckForUpdates = viewModel::checkForAppUpdates,
-                onInstallDownloadedUpdate = viewModel::installDownloadedUpdate,
-                onDownloadLatestUpdate = viewModel::downloadLatestUpdate,
+                onOpenLatestRelease = viewModel::openLatestAppUpdateRelease,
                 onSetAutoCheckAppUpdates = viewModel::setAutoCheckAppUpdates,
-                onSetAutoDownloadAppUpdates = viewModel::setAutoDownloadAppUpdates,
-                onRefreshDownloadState = viewModel::refreshDownloadState,
                 onViewCrashReport = onViewCrashReport,
                 onShareCrashReport = onShareCrashReport,
                 onDeleteCrashReport = onDeleteCrashReport

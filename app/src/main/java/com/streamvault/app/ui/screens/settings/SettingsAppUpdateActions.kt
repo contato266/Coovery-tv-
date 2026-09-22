@@ -6,9 +6,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import com.streamvault.app.R
-import com.streamvault.app.update.AppUpdateActionState
-import com.streamvault.app.update.AppUpdateInstaller
 import com.streamvault.app.update.AppUpdateCheckPolicy
+import com.streamvault.app.update.AppUpdateInstaller
 import com.streamvault.app.update.GitHubReleaseChecker
 import com.streamvault.data.preferences.PreferencesRepository
 import com.streamvault.domain.model.Result
@@ -28,8 +27,7 @@ internal class SettingsAppUpdateActions(
     fun checkForAppUpdates(
         scope: CoroutineScope,
         manual: Boolean,
-        isRemoteVersionNewer: (Int?, String, String?) -> Boolean,
-        autoDownload: Boolean = false
+        isRemoteVersionNewer: (Int?, String, String?) -> Boolean
     ) {
         if (updateCheckInFlight) return
         updateCheckInFlight = true
@@ -77,7 +75,7 @@ internal class SettingsAppUpdateActions(
                         release.versionName,
                         release.publishedAt
                     )
-                    var latestUpdateModel = AppUpdateUiModel(
+                    val latestUpdateModel = AppUpdateUiModel(
                         latestVersionName = release.versionName,
                         latestVersionCode = release.versionCode,
                         releaseUrl = release.releaseUrl,
@@ -101,17 +99,8 @@ internal class SettingsAppUpdateActions(
                             } else {
                                 it.userMessage
                             },
-                            appUpdate = latestUpdateModel.withDownloadState(it.appUpdate.toDownloadState())
+                            appUpdate = latestUpdateModel
                         )
-                    }
-                    val refreshedDownloadState = appUpdateInstaller.refreshState()
-                    latestUpdateModel = latestUpdateModel.withDownloadState(refreshedDownloadState)
-                    uiState.update { it.copy(appUpdate = latestUpdateModel) }
-                    if (autoDownload &&
-                        updateAvailable &&
-                        latestUpdateModel.latestActionState() == AppUpdateActionState.DownloadLatest
-                    ) {
-                        downloadLatestUpdate(scope)
                     }
                 }
                 Result.Loading -> {
@@ -122,32 +111,17 @@ internal class SettingsAppUpdateActions(
         }
     }
 
-    fun downloadLatestUpdate(scope: CoroutineScope) {
-        val latestRelease = uiState.value.appUpdate.toReleaseInfoOrNull() ?: run {
+    fun openLatestRelease(scope: CoroutineScope) {
+        val releaseUrl = uiState.value.appUpdate.releaseUrl ?: run {
             uiState.update {
                 it.copy(userMessage = appContext.getString(R.string.settings_update_download_unavailable))
             }
             return
         }
-
         scope.launch {
-            when (val result = appUpdateInstaller.startDownload(latestRelease)) {
+            when (val result = appUpdateInstaller.openReleasePage(releaseUrl)) {
                 is Result.Error -> uiState.update { it.copy(userMessage = result.message) }
-                is Result.Success -> uiState.update {
-                    it.copy(userMessage = appContext.getString(R.string.settings_update_download_started))
-                }
-                Result.Loading -> Unit
-            }
-        }
-    }
-
-    fun installDownloadedUpdate(scope: CoroutineScope) {
-        scope.launch {
-            when (val result = appUpdateInstaller.installDownloadedUpdate(uiState.value.appUpdate.downloadSha256)) {
-                is Result.Error -> uiState.update { it.copy(userMessage = result.message) }
-                is Result.Success -> uiState.update {
-                    it.copy(userMessage = appContext.getString(R.string.settings_update_install_started))
-                }
+                is Result.Success -> Unit
                 Result.Loading -> Unit
             }
         }

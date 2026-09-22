@@ -6,10 +6,7 @@ import kotlin.math.max
 
 enum class AppUpdateActionState {
     None,
-    DownloadLatest,
-    Downloading,
-    InstallLatest,
-    InstallPermissionRequired
+    OpenRelease
 }
 
 fun isRemoteVersionNewer(
@@ -76,42 +73,16 @@ fun compareVersionNamesStatic(left: String, right: String): Int {
     return 0
 }
 
-fun isLatestAppUpdateDownloaded(
-    latestVersionName: String?,
-    downloadState: AppUpdateDownloadState
-): Boolean {
-    return !latestVersionName.isNullOrBlank() &&
-        downloadState.status == AppUpdateDownloadStatus.Downloaded &&
-        downloadState.versionName == latestVersionName
-}
-
 fun latestAppUpdateAction(
     latestVersionName: String?,
-    downloadUrl: String?,
-    isUpdateAvailable: Boolean,
-    downloadState: AppUpdateDownloadState
+    releaseUrl: String?,
+    isUpdateAvailable: Boolean
 ): AppUpdateActionState {
     if (latestVersionName.isNullOrBlank()) {
         return AppUpdateActionState.None
     }
-
-    val latestDownloaded = isLatestAppUpdateDownloaded(latestVersionName, downloadState)
-    if (latestDownloaded) {
-        return if (downloadState.installPermissionRequired) {
-            AppUpdateActionState.InstallPermissionRequired
-        } else {
-            AppUpdateActionState.InstallLatest
-        }
-    }
-
-    if (downloadState.status == AppUpdateDownloadStatus.Downloading &&
-        downloadState.versionName == latestVersionName
-    ) {
-        return AppUpdateActionState.Downloading
-    }
-
-    return if (isUpdateAvailable && !downloadUrl.isNullOrBlank()) {
-        AppUpdateActionState.DownloadLatest
+    return if (isUpdateAvailable && !releaseUrl.isNullOrBlank()) {
+        AppUpdateActionState.OpenRelease
     } else {
         AppUpdateActionState.None
     }

@@ -634,10 +634,10 @@ class DashboardViewModel @Inject constructor(
             release.copy(releaseUrl = releaseUrl)
         }
 
-        return cachedRelease.combine(appUpdateInstaller.downloadState) { release, downloadState ->
+        return cachedRelease.map { release ->
             val latestVersionName = release.latestVersionName
             if (latestVersionName.isNullOrBlank() || !isCooveryAppUpdateRelease(release.releaseUrl)) {
-                return@combine null
+                return@map null
             }
 
             val updateAvailable = isRemoteVersionNewer(
@@ -646,17 +646,16 @@ class DashboardViewModel @Inject constructor(
                 release.publishedAt
             )
             if (!updateAvailable) {
-                return@combine null
+                return@map null
             }
 
             DashboardUpdateNotice(
                 latestVersionName = latestVersionName,
-                downloadSha256 = release.downloadSha256,
+                releaseUrl = release.releaseUrl,
                 actionState = latestAppUpdateAction(
                     latestVersionName = latestVersionName,
-                    downloadUrl = release.downloadUrl,
-                    isUpdateAvailable = updateAvailable,
-                    downloadState = downloadState
+                    releaseUrl = release.releaseUrl,
+                    isUpdateAvailable = updateAvailable
                 )
             )
         }
@@ -800,18 +799,20 @@ class DashboardViewModel @Inject constructor(
         }
     }
 
-    fun installDownloadedUpdate() {
+    fun openUpdateReleasePage() {
         viewModelScope.launch {
-            val expectedSha256 = _uiState.value.updateNotice?.downloadSha256
-            when (val result = appUpdateInstaller.installDownloadedUpdate(expectedSha256)) {
+            val releaseUrl = _uiState.value.updateNotice?.releaseUrl
+            if (releaseUrl.isNullOrBlank()) {
+                _uiState.value = _uiState.value.copy(
+                    userMessage = appContext.getString(R.string.settings_update_download_unavailable)
+                )
+                return@launch
+            }
+            when (val result = appUpdateInstaller.openReleasePage(releaseUrl)) {
                 is com.streamvault.domain.model.Result.Error -> {
                     _uiState.value = _uiState.value.copy(userMessage = result.message)
                 }
-                is com.streamvault.domain.model.Result.Success -> {
-                    _uiState.value = _uiState.value.copy(
-                        userMessage = appContext.getString(R.string.settings_update_install_started)
-                    )
-                }
+                is com.streamvault.domain.model.Result.Success -> Unit
                 else -> Unit
             }
         }
@@ -919,14 +920,11 @@ data class DashboardUiState(
 
 data class DashboardUpdateNotice(
     val latestVersionName: String,
-    val downloadSha256: String?,
+    val releaseUrl: String?,
     val actionState: AppUpdateActionState
 ) {
-    val installReady: Boolean
-        get() = actionState == AppUpdateActionState.InstallLatest
-
-    val installPermissionRequired: Boolean
-        get() = actionState == AppUpdateActionState.InstallPermissionRequired
+    val openReleaseReady: Boolean
+        get() = actionState == AppUpdateActionState.OpenRelease && !releaseUrl.isNullOrBlank()
 }
 
 data class DashboardProviderHealth(
