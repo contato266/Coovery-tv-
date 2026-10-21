@@ -2,6 +2,12 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.83]
+
+### Changed
+
+- Android TV launcher banner updated to the Coovery tv+ logo. This is the wide image shown on the TV home screen before the app opens.
+
 ## [1.0.82]
 
 ### Changed
