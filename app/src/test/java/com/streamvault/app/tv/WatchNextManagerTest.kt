@@ -1,4 +1,4 @@
-package com.coovery.app.tv
+package com.streamvault.app.tv
 
 import android.content.ContentResolver
 import android.content.Context
@@ -8,7 +8,7 @@ import android.net.Uri
 import android.os.Build
 import android.provider.BaseColumns
 import com.google.common.truth.Truth.assertThat
-import com.coovery.app.R
+import com.streamvault.app.R
 import com.streamvault.domain.model.ContentType
 import com.streamvault.domain.model.PlaybackHistory
 import com.streamvault.domain.repository.PlaybackHistoryRepository
