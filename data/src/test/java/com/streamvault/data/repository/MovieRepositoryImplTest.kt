@@ -382,7 +382,7 @@ class MovieRepositoryImplTest {
         ).getMovieDetails(7L, 99L)
 
         assertThat(result.getOrNull()?.selectedVariantId).isEqualTo(99L)
-        assertThat(result.getOrNull()?.variants?.map { it.rawMovieId }).containsExactly(99L, 100L)
+        assertThat(result.getOrNull()?.variants?.map { it.rawMovieId }).containsExactly(99L)
         verify(movieDao).getByProviderAndTmdbIdSync(7L, 777L)
         verify(movieDao, never()).getByProvider(7L)
         verify(movieDao, never()).getByProviderSync(7L)

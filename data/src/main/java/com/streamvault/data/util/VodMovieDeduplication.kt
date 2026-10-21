@@ -84,7 +84,20 @@ fun buildPresentedMovies(
     settings: MoviePresentationSettings
 ): List<Movie> {
     val presentableMovies = filterPresentableMovies(movies)
-    if (settings.duplicateHandlingMode == VodDuplicateHandlingMode.SHOW_ALL || presentableMovies.size < 2) {
+    if (settings.duplicateHandlingMode == VodDuplicateHandlingMode.SHOW_ALL) {
+        return presentableMovies
+    }
+    if (presentableMovies.size < 2) {
+        val survivor = presentableMovies.singleOrNull()
+        if (survivor != null && movies.size > presentableMovies.size) {
+            return listOf(
+                buildGroupedMovie(
+                    group = listOf(survivor),
+                    confidence = VodDuplicateConfidence.STRONG,
+                    settings = settings
+                )
+            )
+        }
         return presentableMovies
     }
 
