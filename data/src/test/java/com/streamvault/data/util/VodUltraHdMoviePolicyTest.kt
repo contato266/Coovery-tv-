@@ -10,7 +10,7 @@ class VodUltraHdMoviePolicyTest {
 
     @Test
     fun `detects ultra hd movie from title tokens`() {
-        val movie = movie(name = "Galaxy Quest 4K HDR")
+        val movie = movie(id = 1L, name = "Galaxy Quest 4K HDR")
         assertThat(isUltraHighDefinitionMovie(movie)).isTrue()
     }
 

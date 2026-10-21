@@ -825,6 +825,7 @@ private fun PlayerLiveInfo(
     onOpenExternalPlayer: () -> Unit
 ) {
     val showTimeshiftControls = timeshiftUiState.available && !isCastConnected
+    val offerPictureInPicture = !rememberIsTelevisionDevice()
     val appTimeFormat = LocalAppTimeFormat.current
     val timeFormat = remember(appTimeFormat) { appTimeFormat.createTimeFormat() }
     val canRestartProgram = currentChannel != null &&
@@ -864,7 +865,9 @@ private fun PlayerLiveInfo(
             ),
             onOpenIdleStandbyTimer
         ))
-        add(PlayerActionSpec(stringResource(R.string.player_picture_in_picture), onEnterPictureInPicture))
+        if (offerPictureInPicture) {
+            add(PlayerActionSpec(stringResource(R.string.player_picture_in_picture), onEnterPictureInPicture))
+        }
         if (showExternalPlayerAction) {
             add(PlayerActionSpec(stringResource(R.string.player_open_in_external_player), onOpenExternalPlayer))
         }
