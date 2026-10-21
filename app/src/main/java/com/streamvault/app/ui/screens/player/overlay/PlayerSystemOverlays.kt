@@ -26,6 +26,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import com.streamvault.app.device.rememberIsTelevisionDevice
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -270,6 +271,7 @@ fun PlayerVodMoreOptionsDialog(
     onOpenAudioTracks: () -> Unit
 ) {
     val firstItemFocusRequester = remember { FocusRequester() }
+    val offerPictureInPicture = !rememberIsTelevisionDevice()
     val options = buildList {
         add(
             OptionItem(
@@ -311,12 +313,14 @@ fun PlayerVodMoreOptionsDialog(
                 )
             )
         }
-        add(
-            OptionItem(
-                label = stringResource(R.string.player_picture_in_picture),
-                onClick = onEnterPictureInPicture
+        if (offerPictureInPicture) {
+            add(
+                OptionItem(
+                    label = stringResource(R.string.player_picture_in_picture),
+                    onClick = onEnterPictureInPicture
+                )
             )
-        )
+        }
         if (showExternalPlayerAction) {
             add(
                 OptionItem(

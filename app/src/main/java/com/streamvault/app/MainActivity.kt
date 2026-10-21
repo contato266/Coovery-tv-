@@ -15,6 +15,7 @@ import com.streamvault.app.cast.CastRouteChooserActivity
 import com.streamvault.app.backup.BackupFileBridge
 import com.streamvault.app.device.applyPlatformScreenOrientation
 import com.streamvault.app.device.isTelevisionDevice
+import com.streamvault.app.device.shouldOfferPictureInPicture
 import com.streamvault.app.localization.resolveAppLocale
 import com.streamvault.app.navigation.AppNavigation
 import com.streamvault.app.navigation.ExternalDestination
@@ -136,6 +137,7 @@ class MainActivity : ComponentActivity() {
     private var playerPictureInPictureState = PlayerPictureInPictureState()
     private var handheldPlayerImmersiveActive = false
     private var handheldWelcomeEdgeToEdgeActive = false
+    private var restoringTelevisionFullscreen = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         if (BuildConfig.DEBUG) {
@@ -148,6 +150,7 @@ class MainActivity : ComponentActivity() {
         }
         super.onCreate(savedInstanceState)
         applyPlatformScreenOrientation()
+        disableTelevisionPictureInPicture()
         // Disable legacy window-fitting so Compose receives IME insets directly.
         // This fixes keyboard-covers-input-field on API 30+ where adjustResize is
         // ignored when the theme sets windowFullscreen=true.
@@ -260,6 +263,11 @@ class MainActivity : ComponentActivity() {
     ) {
         super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
         _pictureInPictureModeFlow.value = isInPictureInPictureMode
+        if (isInPictureInPictureMode && isTelevisionDevice()) {
+            restoreTelevisionFullscreen()
+        } else if (!isInPictureInPictureMode) {
+            restoringTelevisionFullscreen = false
+        }
     }
 
     fun updatePlayerPictureInPictureState(
@@ -437,8 +445,42 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun supportsPictureInPicture(): Boolean {
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
-            packageManager.hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)
+        return shouldOfferPictureInPicture(
+            isTelevisionDevice = isTelevisionDevice(),
+            sdkInt = Build.VERSION.SDK_INT,
+            hasPictureInPictureFeature = packageManager.hasSystemFeature(
+                PackageManager.FEATURE_PICTURE_IN_PICTURE
+            )
+        )
+    }
+
+    /**
+     * Fire OS can shrink a playing activity into a corner window when picture-in-picture
+     * auto-enter stays enabled. Television playback should remain fullscreen.
+     */
+    private fun disableTelevisionPictureInPicture() {
+        if (!isTelevisionDevice()) return
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+        if (!packageManager.hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)) return
+        runCatching {
+            val builder = android.app.PictureInPictureParams.Builder()
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                builder.setAutoEnterEnabled(false)
+            }
+            setPictureInPictureParams(builder.build())
+        }
+    }
+
+    private fun restoreTelevisionFullscreen() {
+        if (restoringTelevisionFullscreen) return
+        restoringTelevisionFullscreen = true
+        runCatching {
+            startActivity(
+                Intent(this, MainActivity::class.java).addFlags(
+                    Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                )
+            )
+        }
     }
 
     @androidx.annotation.RequiresApi(Build.VERSION_CODES.O)

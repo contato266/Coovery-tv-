@@ -1,6 +1,7 @@
 package com.streamvault.app.ui.screens.player.overlay
 
 import androidx.activity.compose.BackHandler
+import com.streamvault.app.device.rememberIsTelevisionDevice
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -380,6 +381,7 @@ fun ChannelInfoOverlay(
                 )
             }
 
+            val offerPictureInPicture = !rememberIsTelevisionDevice()
             LazyRow(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -592,16 +594,18 @@ fun ChannelInfoOverlay(
                         onInteraction = { handleMainActionFocus(null) }
                     )
                 }
-                item {
-                    QuickActionButton(
-                        icon = stringResource(R.string.player_action_pip),
-                        label = stringResource(R.string.player_pip_short),
-                        onClick = {
-                            expandedPanel = null
-                            onEnterPictureInPicture()
-                        },
-                        onInteraction = { handleMainActionFocus(null) }
-                    )
+                if (offerPictureInPicture) {
+                    item {
+                        QuickActionButton(
+                            icon = stringResource(R.string.player_action_pip),
+                            label = stringResource(R.string.player_pip_short),
+                            onClick = {
+                                expandedPanel = null
+                                onEnterPictureInPicture()
+                            },
+                            onInteraction = { handleMainActionFocus(null) }
+                        )
+                    }
                 }
                 item {
                     QuickActionButton(

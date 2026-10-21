@@ -2,6 +2,12 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.84]
+
+### Fixed
+
+- Fire TV HD and other television devices stay in fullscreen while watching. The player no longer shrinks into a background picture-in-picture window after a few minutes.
+
 ## [1.0.83]
 
 ### Changed
