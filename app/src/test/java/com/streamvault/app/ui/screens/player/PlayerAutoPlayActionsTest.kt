@@ -19,7 +19,12 @@ class PlayerAutoPlayActionsTest {
                 seasonNumber = 1,
                 episodes = listOf(
                     episode(id = 101L, season = 1, number = 1, title = "Pilot"),
-                    episode(id = 102L, season = 1, number = 2, title = "Second"),
+                    episode(id = 102L, season = 1, number = 2, title = "Second")
+                )
+            ),
+            Season(
+                seasonNumber = 2,
+                episodes = listOf(
                     episode(id = 201L, season = 2, number = 1, title = "Season 2 Premiere")
                 )
             )

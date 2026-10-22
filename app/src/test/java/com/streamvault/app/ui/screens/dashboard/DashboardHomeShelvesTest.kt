@@ -62,10 +62,10 @@ class DashboardHomeShelvesTest {
 
         assertThat(reordered).containsExactly(
             AppHomeDashboardShelf.FAVORITE_CHANNELS,
-            AppHomeDashboardShelf.CONTINUE_WATCHING,
             AppHomeDashboardShelf.RECENT_MOVIES,
             AppHomeDashboardShelf.RECENT_SERIES,
-            AppHomeDashboardShelf.RECENT_CHANNELS
+            AppHomeDashboardShelf.RECENT_CHANNELS,
+            AppHomeDashboardShelf.CONTINUE_WATCHING
         ).inOrder()
     }
 }
