@@ -1,5 +1,6 @@
 package com.streamvault.app.device
 
+import android.annotation.SuppressLint
 import android.content.pm.ActivityInfo
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.Composable
@@ -24,6 +25,7 @@ fun rememberUseHandheldStackedLayout(): Boolean {
 @Composable
 fun rememberIsHandheldDevice(): Boolean = !rememberIsTelevisionDevice()
 
+@SuppressLint("SourceLockedOrientationActivity")
 fun ComponentActivity.applyPlatformScreenOrientation() {
     if (isTelevisionDevice()) {
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
@@ -33,6 +35,7 @@ fun ComponentActivity.applyPlatformScreenOrientation() {
 }
 
 /** Portrait for app browsing on phones; no-op on TV. */
+@SuppressLint("SourceLockedOrientationActivity")
 fun ComponentActivity.applyHandheldBrowseOrientation() {
     if (!isTelevisionDevice()) {
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
@@ -40,6 +43,7 @@ fun ComponentActivity.applyHandheldBrowseOrientation() {
 }
 
 /** Landscape while watching movies, series, or live channels on phones; no-op on TV. */
+@SuppressLint("SourceLockedOrientationActivity")
 fun ComponentActivity.applyHandheldPlayerOrientation() {
     if (!isTelevisionDevice()) {
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
