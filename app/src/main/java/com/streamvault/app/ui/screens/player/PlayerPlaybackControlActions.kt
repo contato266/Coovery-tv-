@@ -76,8 +76,12 @@ fun PlayerViewModel.toggleAspectRatio() {
     }
     _aspectRatio.value = nextRatio
 
-    if (currentContentId != -1L) {
-        viewModelScope.launch {
+    // Channel preferences are keyed to the live channel table. Movies and series
+    // reuse the same content id space, and writing those ids violates the foreign
+    // key and closes the phone app.
+    if (!shouldResolveChannelPlaybackContext(currentContentType.name, currentContentId)) return
+    viewModelScope.launch {
+        runCatching {
             playerPreferencesCoordinator.setAspectRatioForChannel(currentContentId, nextRatio.name)
         }
     }

@@ -18,10 +18,13 @@ fun PlayerRenderView(
     surfaceType: PlayerRenderSurfaceType = PlayerRenderSurfaceType.AUTO,
     configureView: (View.() -> Unit)? = null
 ) {
-    val bindSignature = remember(playerEngine, resizeMode, surfaceType) {
-        Triple(System.identityHashCode(playerEngine), resizeMode, surfaceType)
+    // Keep the same surface when only the zoom mode changes. Recreating the
+    // view detaches ExoPlayer and closes the phone player on movies, series,
+    // and live channels.
+    val viewIdentity = remember(playerEngine, surfaceType) {
+        System.identityHashCode(playerEngine) to surfaceType
     }
-    key(bindSignature) {
+    key(viewIdentity) {
         AndroidView(
             factory = { context ->
                 playerEngine.createRenderView(context, resizeMode, surfaceType).apply {
