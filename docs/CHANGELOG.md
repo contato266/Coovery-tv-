@@ -2,6 +2,13 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.86]
+
+### Changed
+
+- Mobile home header shows the red Coovery mark instead of the Coovery tv+ wordmark.
+- The home banner keeps “Do cine pra” and uses the same mark in place of the Coovery tv+ wordmark.
+
 ## [1.0.85]
 
 ### Fixed

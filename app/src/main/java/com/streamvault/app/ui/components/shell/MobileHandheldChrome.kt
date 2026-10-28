@@ -177,7 +177,7 @@ fun MobileHandheldTopBar(
             Image(
                 painter = painterResource(R.drawable.coovery_brand_logo),
                 contentDescription = stringResource(R.string.app_name),
-                modifier = Modifier.height(30.dp),
+                modifier = Modifier.height(44.dp),
                 contentScale = ContentScale.Fit
             )
 
