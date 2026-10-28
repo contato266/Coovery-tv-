@@ -2,6 +2,12 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.87]
+
+### Fixed
+
+- The same APK opens on Android TV, Fire TV, and phones. Televisions stay in landscape instead of being forced into the phone portrait layout, which kept the app from opening on TV.
+
 ## [1.0.86]
 
 ### Changed

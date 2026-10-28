@@ -2,6 +2,7 @@ package com.streamvault.app.device
 
 import android.annotation.SuppressLint
 import android.content.pm.ActivityInfo
+import android.content.pm.PackageManager
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -27,25 +28,46 @@ fun rememberIsHandheldDevice(): Boolean = !rememberIsTelevisionDevice()
 
 @SuppressLint("SourceLockedOrientationActivity")
 fun ComponentActivity.applyPlatformScreenOrientation() {
-    if (isTelevisionDevice()) {
-        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
-    } else {
-        applyHandheldBrowseOrientation()
-    }
+    applyResolvedOrientation(
+        startupScreenOrientation(
+            isTelevisionDevice = isTelevisionDevice(),
+            isFireTvDevice = isFireTvDevice(),
+            supportsPortrait = packageManager.hasSystemFeature(PackageManager.FEATURE_SCREEN_PORTRAIT)
+        )
+    )
 }
 
-/** Portrait for app browsing on phones; no-op on TV. */
+/** Portrait for app browsing on phones. Televisions stay in landscape so the activity can open. */
 @SuppressLint("SourceLockedOrientationActivity")
 fun ComponentActivity.applyHandheldBrowseOrientation() {
-    if (!isTelevisionDevice()) {
-        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
-    }
+    if (!canLockPortrait()) return
+    applyResolvedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT)
 }
 
 /** Landscape while watching movies, series, or live channels on phones; no-op on TV. */
 @SuppressLint("SourceLockedOrientationActivity")
 fun ComponentActivity.applyHandheldPlayerOrientation() {
-    if (!isTelevisionDevice()) {
-        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
-    }
+    if (isTelevisionDevice() || isFireTvDevice()) return
+    applyResolvedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE)
+}
+
+internal fun startupScreenOrientation(
+    isTelevisionDevice: Boolean,
+    isFireTvDevice: Boolean,
+    supportsPortrait: Boolean
+): Int = when {
+    isTelevisionDevice || isFireTvDevice || !supportsPortrait ->
+        ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+    else -> ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
+}
+
+private fun ComponentActivity.canLockPortrait(): Boolean =
+    startupScreenOrientation(
+        isTelevisionDevice = isTelevisionDevice(),
+        isFireTvDevice = isFireTvDevice(),
+        supportsPortrait = packageManager.hasSystemFeature(PackageManager.FEATURE_SCREEN_PORTRAIT)
+    ) == ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
+
+private fun ComponentActivity.applyResolvedOrientation(orientation: Int) {
+    runCatching { requestedOrientation = orientation }
 }
