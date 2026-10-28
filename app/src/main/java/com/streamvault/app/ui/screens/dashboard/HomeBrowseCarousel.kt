@@ -94,6 +94,10 @@ private const val HANDHELD_CAROUSEL_SIDE_ALPHA = 0.78f
 private const val HANDHELD_POSTER_WIDTH_HEIGHT_RATIO = 136f / 204f
 private const val HANDHELD_SHELF_POSTER_WIDTH_FRACTION = 0.64f
 
+/** Remote slide that still prints the Coovery tv+ wordmark. The home banner uses the mark instead. */
+private fun String?.isCineWordmarkBanner(): Boolean =
+    this?.contains("image-13", ignoreCase = true) == true
+
 internal enum class HomeSubscriptionDestination {
     LIVE,
     SERIES
@@ -212,7 +216,8 @@ internal fun HomeHeroCarousel(
                 scale = ClickableSurfaceDefaults.scale(focusedScale = 1.01f)
             ) {
                 val remoteImageUrl = slide.imageUrl?.takeIf { it.isNotBlank() }
-                if (remoteImageUrl != null) {
+                val localCineMark = remoteImageUrl.isCineWordmarkBanner()
+                if (remoteImageUrl != null && !localCineMark) {
                     AsyncImage(
                         model = rememberCrossfadeImageModel(remoteImageUrl),
                         contentDescription = stringResource(R.string.home_carousel_banner_content_description),
@@ -223,7 +228,13 @@ internal fun HomeHeroCarousel(
                     )
                 } else {
                     Image(
-                        painter = painterResource(slide.fallbackBannerRes),
+                        painter = painterResource(
+                            if (localCineMark) {
+                                R.drawable.coovery_carousel_banner_cine
+                            } else {
+                                slide.fallbackBannerRes
+                            }
+                        ),
                         contentDescription = stringResource(R.string.home_carousel_banner_content_description),
                         contentScale = ContentScale.Crop,
                         modifier = Modifier
