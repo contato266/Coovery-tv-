@@ -2,6 +2,12 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.89]
+
+### Changed
+
+- The mobile account button, which opens settings, now shows the round Coovery mascot.
+
 ## [1.0.88]
 
 ### Added
