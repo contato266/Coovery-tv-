@@ -2,6 +2,12 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.88]
+
+### Added
+
+- On Android TV and Fire TV, holding the right button during a movie or episode jumps forward 20 seconds at a time until the button is released. Holding the left button jumps back 20 seconds the same way.
+
 ## [1.0.87]
 
 ### Fixed

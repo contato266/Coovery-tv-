@@ -20,6 +20,7 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.LocalViewConfiguration
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.focus.focusProperties
@@ -43,6 +44,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.util.UnstableApi
 import androidx.tv.material3.*
+import com.streamvault.app.device.isFireTvDevice
 import com.streamvault.app.device.rememberIsTelevisionDevice
 import com.streamvault.app.ui.theme.*
 import com.streamvault.domain.model.Channel
@@ -561,6 +563,38 @@ fun PlayerScreen(
         handleBackPress()
     }
 
+    val televisionHoldSeekEnabled = isTelevisionDevice || LocalContext.current.isFireTvDevice()
+    val holdSeekTimeoutMs = LocalViewConfiguration.current.longPressTimeoutMillis
+    val holdSeekScope = rememberCoroutineScope()
+    val holdSeekController = remember(viewModel, holdSeekTimeoutMs) {
+        TelevisionHoldSeekController(
+            scope = holdSeekScope,
+            longPressTimeoutMs = holdSeekTimeoutMs,
+            onStep = { direction ->
+                viewModel.seekTelevisionHoldStep(
+                    forward = direction == TelevisionHoldSeekDirection.FORWARD
+                )
+            },
+            onReleased = viewModel::clearTelevisionHoldSeek
+        )
+    }
+    DisposableEffect(holdSeekController) {
+        onDispose { holdSeekController.cancel() }
+    }
+
+    fun seekTelevisionNavigationStep(forward: Boolean, keyCode: Int) {
+        val trackHold = televisionHoldSeekEnabled &&
+            supportsTelevisionHoldSeek(contentType) &&
+            holdSeekController.isTracking(keyCode)
+        if (trackHold) {
+            viewModel.anchorTelevisionHoldSeek(forward = forward, stepMs = 10_000L)
+        } else if (forward) {
+            viewModel.seekForward()
+        } else {
+            viewModel.seekBackward()
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -595,7 +629,34 @@ fun PlayerScreen(
             // cases (non-LIVE content, sub-panel open). This is intentional — the preview
             // handler returns false for those remaining cases, letting onKeyEvent run.
             .onPreviewKeyEvent { event ->
-                if (event.nativeKeyEvent.action != KeyEvent.ACTION_DOWN) {
+                val nativeKey = event.nativeKeyEvent
+                val holdSeekBlocked = nextEpisodeCountdownVisible ||
+                    showTrackSelection != null ||
+                    showVariantSelection ||
+                    showSpeedSelection ||
+                    showAudioVideoOffsetDialog ||
+                    showStopPlaybackTimerDialog ||
+                    showIdleStandbyTimerDialog ||
+                    showProgramHistory ||
+                    showSplitDialog ||
+                    showEpisodePicker ||
+                    showDiagnostics ||
+                    resumePrompt.show
+                if (
+                    holdSeekController.onKey(
+                        keyCode = nativeKey.keyCode,
+                        action = nativeKey.action,
+                        repeatCount = nativeKey.repeatCount,
+                        isRtl = isRtl,
+                        enabled = televisionHoldSeekEnabled &&
+                            supportsTelevisionHoldSeek(contentType) &&
+                            !holdSeekBlocked
+                    )
+                ) {
+                    viewModel.notifyUserActivity()
+                    return@onPreviewKeyEvent true
+                }
+                if (nativeKey.action != KeyEvent.ACTION_DOWN) {
                     return@onPreviewKeyEvent false
                 }
                 viewModel.notifyUserActivity()
@@ -749,7 +810,7 @@ fun PlayerScreen(
                                 if (isRtl) viewModel.openEpgOverlay() else viewModel.openChannelListOverlay()
                                 true
                             } else if (!showChannelListOverlay && !showCategoryListOverlay && !showEpgOverlay && !showChannelInfoOverlay) {
-                                if (isRtl) viewModel.seekForward() else viewModel.seekBackward()
+                                seekTelevisionNavigationStep(forward = isRtl, keyCode = KeyEvent.KEYCODE_DPAD_LEFT)
                                 true
                             } else {
                                 false
@@ -764,7 +825,7 @@ fun PlayerScreen(
                                 if (isRtl) viewModel.openChannelListOverlay() else viewModel.openEpgOverlay()
                                 true
                             } else if (!showChannelListOverlay && !showEpgOverlay && !showChannelInfoOverlay) {
-                                if (isRtl) viewModel.seekBackward() else viewModel.seekForward()
+                                seekTelevisionNavigationStep(forward = !isRtl, keyCode = KeyEvent.KEYCODE_DPAD_RIGHT)
                                 true
                             } else {
                                 false

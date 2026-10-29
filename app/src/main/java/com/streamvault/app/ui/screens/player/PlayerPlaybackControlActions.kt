@@ -19,6 +19,31 @@ fun PlayerViewModel.seekBackward() {
     playerEngine.seekBackward()
 }
 
+fun PlayerViewModel.anchorTelevisionHoldSeek(forward: Boolean, stepMs: Long) {
+    notifyUserActivity()
+    val target = nextTelevisionHoldSeekPosition(
+        anchorMs = televisionHoldSeekAnchorMs,
+        currentPositionMs = playerEngine.currentPosition.value,
+        durationMs = playerEngine.duration.value,
+        forward = forward,
+        stepMs = stepMs
+    )
+    televisionHoldSeekAnchorMs = target
+    playerEngine.seekTo(target)
+}
+
+fun PlayerViewModel.seekTelevisionHoldStep(forward: Boolean) {
+    anchorTelevisionHoldSeek(forward = forward, stepMs = TELEVISION_HOLD_SEEK_STEP_MS)
+    if (!showControlsFlow.value) {
+        showControlsFlow.value = true
+    }
+    refreshControlsAutoHide()
+}
+
+fun PlayerViewModel.clearTelevisionHoldSeek() {
+    televisionHoldSeekAnchorMs = null
+}
+
 fun PlayerViewModel.seekToLiveEdge() {
     notifyUserActivity()
     playerEngine.seekToLiveEdge()
