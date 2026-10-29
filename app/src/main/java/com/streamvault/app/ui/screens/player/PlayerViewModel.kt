@@ -391,6 +391,7 @@ class PlayerViewModel @Inject constructor(
     internal var shouldResumeAfterForeground: Boolean = false
     internal var seekPreviewRequestVersion: Long = 0L
     internal var lastMuteToggleAtMs: Long = 0L
+    internal var televisionHoldSeekAnchorMs: Long? = null
     internal var stopPlaybackTimerEndsAtMs: Long = 0L
     internal var idleStandbyTimerEndsAtMs: Long = 0L
     private var defaultStopPlaybackTimerMinutes: Int = 0
