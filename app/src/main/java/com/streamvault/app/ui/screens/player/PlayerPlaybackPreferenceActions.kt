@@ -304,6 +304,12 @@ fun PlayerViewModel.seekTo(positionMs: Long) {
     clearSeekPreview()
 }
 
+fun PlayerViewModel.playFromTimeline(positionMs: Long) {
+    seekTo(positionMs)
+    refreshControlsAutoHide()
+    play()
+}
+
 fun PlayerViewModel.setScrubbingMode(enabled: Boolean) {
     playerEngine.setScrubbingMode(enabled)
     if (!enabled) {
@@ -317,6 +323,7 @@ fun PlayerViewModel.updateSeekPreview(positionMs: Long?) {
         return
     }
 
+    refreshControlsAutoHide()
     val previewPositionMs = positionMs.coerceAtLeast(0L)
     val previewUrl = currentResolvedPlaybackUrl.ifBlank { currentStreamUrl }
     val canExtractFrame = previewUrl.isNotBlank() && playerThumbnailCoordinator.supportsFrameExtraction(previewUrl)

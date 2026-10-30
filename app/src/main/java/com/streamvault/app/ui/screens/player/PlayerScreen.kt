@@ -564,6 +564,7 @@ fun PlayerScreen(
     }
 
     val televisionHoldSeekEnabled = isTelevisionDevice || LocalContext.current.isFireTvDevice()
+    val vodTimelineFocused = remember { mutableStateOf(false) }
     val holdSeekTimeoutMs = LocalViewConfiguration.current.longPressTimeoutMillis
     val holdSeekScope = rememberCoroutineScope()
     val holdSeekController = remember(viewModel, holdSeekTimeoutMs) {
@@ -650,7 +651,8 @@ fun PlayerScreen(
                         isRtl = isRtl,
                         enabled = televisionHoldSeekEnabled &&
                             supportsTelevisionHoldSeek(contentType) &&
-                            !holdSeekBlocked
+                            !holdSeekBlocked &&
+                            !vodTimelineFocused.value
                     )
                 ) {
                     viewModel.notifyUserActivity()
@@ -1132,6 +1134,11 @@ fun PlayerScreen(
             onStopCasting = viewModel::stopCasting,
             onSeekToLiveEdge = viewModel::seekToLiveEdge,
             onSeekToPosition = viewModel::seekTo,
+            onPlayFromTimeline = viewModel::playFromTimeline,
+            onVodTimelineFocusChanged = { focused ->
+                vodTimelineFocused.value = focused
+                if (focused) holdSeekController.cancel()
+            },
             onSetScrubbingMode = viewModel::setScrubbingMode,
             seekPreview = seekPreview,
             onSeekPreviewPositionChanged = viewModel::updateSeekPreview,
@@ -1506,6 +1513,8 @@ private fun PlayerControlsOverlayHost(
     onStopCasting: () -> Unit,
     onSeekToLiveEdge: () -> Unit,
     onSeekToPosition: (Long) -> Unit,
+    onPlayFromTimeline: (Long) -> Unit = onSeekToPosition,
+    onVodTimelineFocusChanged: (Boolean) -> Unit = {},
     onSetScrubbingMode: (Boolean) -> Unit,
     seekPreview: SeekPreviewState,
     onSeekPreviewPositionChanged: (Long?) -> Unit,
@@ -1578,6 +1587,8 @@ private fun PlayerControlsOverlayHost(
         onStopCasting = onStopCasting,
         onSeekToLiveEdge = onSeekToLiveEdge,
         onSeekToPosition = onSeekToPosition,
+        onPlayFromTimeline = onPlayFromTimeline,
+        onVodTimelineFocusChanged = onVodTimelineFocusChanged,
         onSetScrubbingMode = onSetScrubbingMode,
         seekPreview = seekPreview,
         onSeekPreviewPositionChanged = onSeekPreviewPositionChanged,

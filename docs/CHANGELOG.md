@@ -2,6 +2,12 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.90]
+
+### Added
+
+- On movies and episodes, move to the video timeline with the remote and press left or right. Playback starts at the position where the button is released.
+
 ## [1.0.89]
 
 ### Changed
