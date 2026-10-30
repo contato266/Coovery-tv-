@@ -9,8 +9,11 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
+import android.os.SystemClock
+import android.view.KeyEvent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -51,6 +54,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -58,12 +62,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -173,6 +180,8 @@ fun PlayerControlsOverlay(
     videoQualityLabel: String? = null,
     onBack: (() -> Unit)? = null,
     onWatchAgain: () -> Unit = {},
+    onPlayFromTimeline: (Long) -> Unit = onSeekToPosition,
+    onVodTimelineFocusChanged: (Boolean) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val isVodLayout = contentType != "LIVE" || isCatchUpPlayback
@@ -306,7 +315,9 @@ fun PlayerControlsOverlay(
                 onOpenExternalPlayer = onOpenExternalPlayer,
                 subtitle = subtitle,
                 videoQualityLabel = videoQualityLabel,
-                onWatchAgain = onWatchAgain
+                onWatchAgain = onWatchAgain,
+                onPlayFromTimeline = onPlayFromTimeline,
+                onVodTimelineFocusChanged = onVodTimelineFocusChanged
             )
         }
     }
@@ -643,6 +654,8 @@ private fun PlayerBottomBar(
     subtitle: String? = null,
     videoQualityLabel: String? = null,
     onWatchAgain: () -> Unit = {},
+    onPlayFromTimeline: (Long) -> Unit = onSeekToPosition,
+    onVodTimelineFocusChanged: (Boolean) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val isVod = contentType != "LIVE" || isCatchUpPlayback
@@ -693,6 +706,8 @@ private fun PlayerBottomBar(
                 onSeekBackward = onSeekBackward,
                 onSeekForward = onSeekForward,
                 onWatchAgain = onWatchAgain,
+                onPlayFromTimeline = onPlayFromTimeline,
+                onVodTimelineFocusChanged = onVodTimelineFocusChanged,
                 seekPreview = seekPreview,
                 onSeekPreviewPositionChanged = onSeekPreviewPositionChanged,
                 modifier = Modifier
@@ -1150,6 +1165,8 @@ private fun PlayerVodInfo(
     onSeekBackward: () -> Unit,
     onSeekForward: () -> Unit,
     onWatchAgain: () -> Unit,
+    onPlayFromTimeline: (Long) -> Unit = onSeekToPosition,
+    onVodTimelineFocusChanged: (Boolean) -> Unit = {},
     seekPreview: SeekPreviewState,
     onSeekPreviewPositionChanged: (Long?) -> Unit,
     modifier: Modifier = Modifier
@@ -1185,17 +1202,59 @@ private fun PlayerVodInfo(
     }
     val playbackLabel = stringResource(R.string.player_playback_label)
     val netflixRed = Color(0xFFE50914)
-    var sliderValue by remember(duration, currentPosition) {
+    var sliderValue by remember {
         mutableStateOf(if (duration > 0) currentPosition.toFloat() / duration.toFloat() else 0f)
     }
     var isScrubbing by remember { mutableStateOf(false) }
-    val latestSeekCallback by rememberUpdatedState(onSeekToPosition)
+    val latestPlayFromTimeline by rememberUpdatedState(onPlayFromTimeline)
     val latestScrubbingCallback by rememberUpdatedState(onSetScrubbingMode)
     val latestSeekPreviewPositionChanged by rememberUpdatedState(onSeekPreviewPositionChanged)
+    val latestTimelineFocusChanged by rememberUpdatedState(onVodTimelineFocusChanged)
+    val timelineFocusRequester = remember { FocusRequester() }
+    val isRtl = LocalLayoutDirection.current == LayoutDirection.Rtl
+    var timelineFocused by remember { mutableStateOf(false) }
+    var lastTimelineStepAtMs by remember { mutableLongStateOf(0L) }
+    val transportFocusModifier = Modifier.focusProperties {
+        down = quickActionsFocusRequester
+        if (duration > 0L) up = timelineFocusRequester
+    }
+
+    fun commitTimeline() {
+        if (duration <= 0L) return
+        latestPlayFromTimeline((sliderValue.coerceIn(0f, 1f) * duration).toLong())
+        if (isScrubbing) {
+            latestScrubbingCallback(false)
+            isScrubbing = false
+        }
+        latestSeekPreviewPositionChanged(null)
+    }
+
+    fun stepTimeline(forward: Boolean) {
+        if (duration <= 0L) return
+        if (!isScrubbing) {
+            isScrubbing = true
+            latestScrubbingCallback(true)
+        }
+        val base = (sliderValue.coerceIn(0f, 1f) * duration).toLong()
+        val next = nextVodTimelinePositionMs(
+            positionMs = base,
+            durationMs = duration,
+            forward = forward
+        )
+        sliderValue = next.toFloat() / duration.toFloat()
+        latestSeekPreviewPositionChanged(next)
+    }
 
     LaunchedEffect(duration, currentPosition, isScrubbing) {
         if (!isScrubbing) {
             sliderValue = if (duration > 0) currentPosition.toFloat() / duration.toFloat() else 0f
+        }
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            if (isScrubbing) commitTimeline()
+            latestTimelineFocusChanged(false)
         }
     }
 
@@ -1281,22 +1340,54 @@ private fun PlayerVodInfo(
                         latestSeekPreviewPositionChanged((clampedValue * duration).toLong())
                     }
                 },
-                onValueChangeFinished = {
-                    if (duration > 0) {
-                        latestSeekCallback((sliderValue.coerceIn(0f, 1f) * duration).toLong())
-                    }
-                    if (isScrubbing) {
-                        latestScrubbingCallback(false)
-                        isScrubbing = false
-                    }
-                    latestSeekPreviewPositionChanged(null)
-                },
+                onValueChangeFinished = { commitTimeline() },
                 modifier = Modifier
                     .weight(1f)
                     .padding(horizontal = 12.dp)
-                    .focusProperties {
-                        down = quickActionsFocusRequester
+                    .focusRequester(timelineFocusRequester)
+                    .onFocusChanged { state ->
+                        timelineFocused = state.isFocused
+                        latestTimelineFocusChanged(state.isFocused)
+                        if (!state.isFocused && isScrubbing) commitTimeline()
                     }
+                    .onPreviewKeyEvent { event ->
+                        if (duration <= 0L) return@onPreviewKeyEvent false
+                        val native = event.nativeKeyEvent
+                        val forward = when (native.keyCode) {
+                            KeyEvent.KEYCODE_DPAD_RIGHT -> !isRtl
+                            KeyEvent.KEYCODE_DPAD_LEFT -> isRtl
+                            else -> return@onPreviewKeyEvent false
+                        }
+                        when (native.action) {
+                            KeyEvent.ACTION_DOWN -> {
+                                val now = SystemClock.uptimeMillis()
+                                if (
+                                    shouldStepVodTimeline(
+                                        nowMs = now,
+                                        lastStepAtMs = lastTimelineStepAtMs,
+                                        repeatCount = native.repeatCount
+                                    )
+                                ) {
+                                    lastTimelineStepAtMs = now
+                                    stepTimeline(forward)
+                                }
+                                true
+                            }
+                            KeyEvent.ACTION_UP -> {
+                                if (isScrubbing) commitTimeline()
+                                true
+                            }
+                            else -> false
+                        }
+                    }
+                    .focusProperties {
+                        down = playButtonFocusRequester
+                    }
+                    .border(
+                        width = if (timelineFocused) 2.dp else 0.dp,
+                        color = Color.White,
+                        shape = RoundedCornerShape(8.dp)
+                    )
                     .semantics { contentDescription = playbackLabel },
                 enabled = duration > 0,
                 colors = SliderDefaults.colors(
@@ -1331,7 +1422,7 @@ private fun PlayerVodInfo(
                         contentDescription = stringResource(
                             if (isMuted) R.string.player_unmute else R.string.player_mute
                         ),
-                        modifier = Modifier.focusProperties { down = quickActionsFocusRequester }
+                        modifier = transportFocusModifier
                     ) {
                         Icon(
                             imageVector = if (isMuted) Icons.Default.VolumeOff else Icons.Default.VolumeUp,
@@ -1345,7 +1436,7 @@ private fun PlayerVodInfo(
                         contentDescription = stringResource(R.string.player_rewind),
                         onClick = onSeekBackward,
                         buttonSize = transportButtonSize,
-                        modifier = Modifier.focusProperties { down = quickActionsFocusRequester }
+                        modifier = transportFocusModifier
                     )
                     PlayerVodCircleButton(
                         onClick = onTogglePlayPause,
@@ -1353,7 +1444,7 @@ private fun PlayerVodInfo(
                         contentDescription = playbackLabel,
                         modifier = Modifier
                             .focusRequester(playButtonFocusRequester)
-                            .focusProperties { down = quickActionsFocusRequester }
+                            .then(transportFocusModifier)
                     ) {
                         if (isPlaying) {
                             Text(
@@ -1376,14 +1467,16 @@ private fun PlayerVodInfo(
                         contentDescription = stringResource(R.string.player_forward),
                         onClick = onSeekForward,
                         buttonSize = transportButtonSize,
-                        modifier = Modifier.focusProperties { down = quickActionsFocusRequester }
+                        modifier = transportFocusModifier
                     )
                 }
                 PlayerVodCircleButton(
                     onClick = onToggleAspectRatio,
                     buttonSize = transportButtonSize,
                     contentDescription = stringResource(R.string.player_aspect_ratio_label, aspectRatioLabel),
-                    modifier = Modifier.align(Alignment.CenterEnd)
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .then(transportFocusModifier)
                 ) {
                     Icon(
                         imageVector = Icons.Default.AspectRatio,
