@@ -105,6 +105,8 @@ import kotlinx.coroutines.launch
 import java.util.Date
 import java.util.Locale
 import com.streamvault.app.ui.interaction.TvClickableSurface
+import com.streamvault.app.ui.screens.player.nextVodTimelinePositionMs
+import com.streamvault.app.ui.screens.player.shouldStepVodTimeline
 import com.streamvault.app.ui.interaction.TvButton
 import com.streamvault.app.ui.interaction.TvIconButton
 
