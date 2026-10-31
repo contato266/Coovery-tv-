@@ -2,6 +2,12 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.92]
+
+### Added
+
+- Disney+ and ESPN appear in Assinaturas on TV and phones, just before Sky. Disney+ opens Disney series. ESPN opens ESPN channels.
+
 ## [1.0.91]
 
 ### Changed

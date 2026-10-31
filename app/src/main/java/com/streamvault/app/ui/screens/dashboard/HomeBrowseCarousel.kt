@@ -621,7 +621,7 @@ private data class ResolvedSubscriptionCard(
     val matchedCategory: Category?
 )
 
-private fun homeAssinaturasCards(): List<HomeSubscriptionCard> =
+internal fun homeAssinaturasCards(): List<HomeSubscriptionCard> =
     homeSeriesSubscriptionCards() + homeLiveSubscriptionCards()
 
 @Composable
@@ -725,6 +725,24 @@ private fun homeLiveSubscriptionCards(): List<HomeSubscriptionCard> = listOf(
         categoryMatchers = listOf("dogtv", "dog tv"),
         destination = HomeSubscriptionDestination.LIVE,
         imageRes = R.drawable.assinatura_card_dogtv
+    ),
+    HomeSubscriptionCard(
+        key = "disney_plus",
+        label = "Disney+",
+        backgroundColor = Color(0xFF0A3D5C),
+        contentColor = Color.White,
+        categoryMatchers = listOf("disney+", "disney plus", "disney"),
+        destination = HomeSubscriptionDestination.SERIES,
+        imageRes = R.drawable.assinatura_card_disney
+    ),
+    HomeSubscriptionCard(
+        key = "espn",
+        label = "ESPN",
+        backgroundColor = Color.White,
+        contentColor = Color(0xFFE10600),
+        categoryMatchers = listOf("espn"),
+        destination = HomeSubscriptionDestination.LIVE,
+        imageRes = R.drawable.assinatura_card_espn
     ),
     HomeSubscriptionCard(
         key = "sky",
