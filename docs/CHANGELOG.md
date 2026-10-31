@@ -2,6 +2,12 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.91]
+
+### Changed
+
+- Holding left or right during a movie or episode speeds up, like Netflix. Keep the button down to reach the middle or the end, then release to start playback there.
+
 ## [1.0.90]
 
 ### Added

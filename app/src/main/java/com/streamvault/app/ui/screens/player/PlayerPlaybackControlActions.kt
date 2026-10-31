@@ -32,8 +32,11 @@ fun PlayerViewModel.anchorTelevisionHoldSeek(forward: Boolean, stepMs: Long) {
     playerEngine.seekTo(target)
 }
 
-fun PlayerViewModel.seekTelevisionHoldStep(forward: Boolean) {
-    anchorTelevisionHoldSeek(forward = forward, stepMs = TELEVISION_HOLD_SEEK_STEP_MS)
+fun PlayerViewModel.seekTelevisionHoldStep(forward: Boolean, heldMs: Long = 0L) {
+    anchorTelevisionHoldSeek(
+        forward = forward,
+        stepMs = acceleratedSeekStepMs(heldMs, playerEngine.duration.value)
+    )
     if (!showControlsFlow.value) {
         showControlsFlow.value = true
     }
