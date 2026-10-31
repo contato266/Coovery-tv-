@@ -571,9 +571,10 @@ fun PlayerScreen(
         TelevisionHoldSeekController(
             scope = holdSeekScope,
             longPressTimeoutMs = holdSeekTimeoutMs,
-            onStep = { direction ->
+            onStep = { direction, heldMs ->
                 viewModel.seekTelevisionHoldStep(
-                    forward = direction == TelevisionHoldSeekDirection.FORWARD
+                    forward = direction == TelevisionHoldSeekDirection.FORWARD,
+                    heldMs = heldMs
                 )
             },
             onReleased = viewModel::clearTelevisionHoldSeek

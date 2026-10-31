@@ -75,6 +75,43 @@ class TelevisionHoldSeekTest {
     }
 
     @Test
+    fun holdingReachesTheMiddleAndTheEndOfATwoHourMovie() {
+        val durationMs = 120L * 60L * 1_000L
+        var positionMs = 0L
+        var heldMs = 0L
+        var steps = 0
+        while (positionMs < durationMs / 2 && steps < 40) {
+            positionMs = nextTelevisionHoldSeekPosition(
+                anchorMs = positionMs,
+                currentPositionMs = positionMs,
+                durationMs = durationMs,
+                forward = true,
+                stepMs = acceleratedSeekStepMs(heldMs, durationMs)
+            )
+            heldMs += TELEVISION_HOLD_SEEK_INTERVAL_MS
+            steps += 1
+        }
+
+        assertThat(positionMs).isAtLeast(durationMs / 2)
+        assertThat(heldMs).isLessThan(8_000L)
+
+        while (positionMs < durationMs && steps < 80) {
+            positionMs = nextTelevisionHoldSeekPosition(
+                anchorMs = positionMs,
+                currentPositionMs = positionMs,
+                durationMs = durationMs,
+                forward = true,
+                stepMs = acceleratedSeekStepMs(heldMs, durationMs)
+            )
+            heldMs += TELEVISION_HOLD_SEEK_INTERVAL_MS
+            steps += 1
+        }
+
+        assertThat(positionMs).isEqualTo(durationMs)
+        assertThat(heldMs).isLessThan(12_000L)
+    }
+
+    @Test
     fun holdingRightStepsUntilTheKeyIsReleased() = runBlocking {
         val steps = mutableListOf<TelevisionHoldSeekDirection>()
         var released = 0
@@ -82,7 +119,7 @@ class TelevisionHoldSeekTest {
             scope = this,
             longPressTimeoutMs = 40L,
             intervalMs = 40L,
-            onStep = { steps.add(it) },
+            onStep = { direction, _ -> steps.add(direction) },
             onReleased = { released += 1 }
         )
 
@@ -126,7 +163,7 @@ class TelevisionHoldSeekTest {
             scope = this,
             longPressTimeoutMs = 80L,
             intervalMs = 40L,
-            onStep = { steps.add(it) },
+            onStep = { direction, _ -> steps.add(direction) },
             onReleased = {}
         )
 
@@ -147,7 +184,7 @@ class TelevisionHoldSeekTest {
             scope = this,
             longPressTimeoutMs = 20L,
             intervalMs = 20L,
-            onStep = { steps.add(it) },
+            onStep = { direction, _ -> steps.add(direction) },
             onReleased = {}
         )
 

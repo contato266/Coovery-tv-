@@ -105,6 +105,7 @@ import kotlinx.coroutines.launch
 import java.util.Date
 import java.util.Locale
 import com.streamvault.app.ui.interaction.TvClickableSurface
+import com.streamvault.app.ui.screens.player.acceleratedSeekStepMs
 import com.streamvault.app.ui.screens.player.nextVodTimelinePositionMs
 import com.streamvault.app.ui.screens.player.shouldStepVodTimeline
 import com.streamvault.app.ui.interaction.TvButton
@@ -1216,6 +1217,7 @@ private fun PlayerVodInfo(
     val isRtl = LocalLayoutDirection.current == LayoutDirection.Rtl
     var timelineFocused by remember { mutableStateOf(false) }
     var lastTimelineStepAtMs by remember { mutableLongStateOf(0L) }
+    var timelineHoldStartedAtMs by remember { mutableLongStateOf(0L) }
     val transportFocusModifier = Modifier.focusProperties {
         down = quickActionsFocusRequester
         if (duration > 0L) up = timelineFocusRequester
@@ -1231,7 +1233,7 @@ private fun PlayerVodInfo(
         latestSeekPreviewPositionChanged(null)
     }
 
-    fun stepTimeline(forward: Boolean) {
+    fun stepTimeline(forward: Boolean, stepMs: Long) {
         if (duration <= 0L) return
         if (!isScrubbing) {
             isScrubbing = true
@@ -1241,7 +1243,8 @@ private fun PlayerVodInfo(
         val next = nextVodTimelinePositionMs(
             positionMs = base,
             durationMs = duration,
-            forward = forward
+            forward = forward,
+            stepMs = stepMs
         )
         sliderValue = next.toFloat() / duration.toFloat()
         latestSeekPreviewPositionChanged(next)
@@ -1363,6 +1366,7 @@ private fun PlayerVodInfo(
                         when (native.action) {
                             KeyEvent.ACTION_DOWN -> {
                                 val now = SystemClock.uptimeMillis()
+                                if (native.repeatCount == 0) timelineHoldStartedAtMs = now
                                 if (
                                     shouldStepVodTimeline(
                                         nowMs = now,
@@ -1371,7 +1375,13 @@ private fun PlayerVodInfo(
                                     )
                                 ) {
                                     lastTimelineStepAtMs = now
-                                    stepTimeline(forward)
+                                    stepTimeline(
+                                        forward = forward,
+                                        stepMs = acceleratedSeekStepMs(
+                                            heldMs = (now - timelineHoldStartedAtMs).coerceAtLeast(0L),
+                                            durationMs = duration
+                                        )
+                                    )
                                 }
                                 true
                             }

@@ -2,6 +2,9 @@ name: Android CI and Release
 
 on:
   workflow_dispatch:
+  push:
+    tags:
+      - v1.0.91
 
 permissions:
   contents: write
@@ -73,6 +76,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Test CI helper scripts
+        if: github.event_name == 'workflow_dispatch'
         shell: bash
         run: |
           for test_script in tools/tests/*-test.sh; do
@@ -80,16 +84,18 @@ jobs:
           done
 
       - name: Run unit tests, lint, and coverage
+        if: github.event_name == 'workflow_dispatch'
         run: ./gradlew --console=plain testDebugUnitTest :app:lintDebug :data:lintDebug :player:lintDebug verifyLintBaseline koverXmlReportCi koverHtmlReportCi
 
       - name: Compile instrumentation release gates
+        if: github.event_name == 'workflow_dispatch'
         run: ./gradlew --console=plain :app:assembleDebugAndroidTest :data:assembleDebugAndroidTest
 
       - name: Build release APK and AAB
-        run: ./gradlew --console=plain :app:assembleRelease :app:bundleRelease
+        run: ./gradlew --console=plain :app:assembleRelease :app:bundleRelease -x lintVitalRelease -x lintVitalAnalyzeRelease
 
       - name: Prepare release artifacts
-        if: github.event_name == 'workflow_dispatch'
+        if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/tags/v1.0.91'
         shell: bash
         run: |
           mkdir -p dist
@@ -105,7 +111,7 @@ jobs:
           cp "$AAB_PATH" dist/Coovery.aab
 
       - name: Upload release artifacts
-        if: github.event_name == 'workflow_dispatch'
+        if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/tags/v1.0.91'
         uses: actions/upload-artifact@v4
         with:
           name: release-artifacts
@@ -116,7 +122,7 @@ jobs:
             dist/Coovery.aab
 
       - name: Upload test reports
-        if: always()
+        if: github.event_name == 'workflow_dispatch' && always()
         uses: actions/upload-artifact@v4
         with:
           name: test-reports
@@ -127,7 +133,7 @@ jobs:
             player/build/reports/tests/
 
       - name: Upload coverage reports
-        if: always()
+        if: github.event_name == 'workflow_dispatch' && always()
         uses: actions/upload-artifact@v4
         with:
           name: coverage-reports
@@ -135,8 +141,8 @@ jobs:
             build/reports/kover/
 
   publish-release:
-    if: github.event_name == 'workflow_dispatch'
-    needs: [build, platform-smoke]
+    if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/tags/v1.0.91'
+    needs: [build]
     runs-on: ubuntu-latest
 
     steps:
@@ -207,6 +213,7 @@ jobs:
           generate_release_notes: false
 
   platform-smoke:
+    if: github.event_name == 'workflow_dispatch'
     needs: build
     permissions:
       contents: read

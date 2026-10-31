@@ -7,8 +7,26 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
-internal const val TELEVISION_HOLD_SEEK_STEP_MS = 20_000L
-internal const val TELEVISION_HOLD_SEEK_INTERVAL_MS = 500L
+internal const val TELEVISION_HOLD_SEEK_STEP_MS = 10_000L
+internal const val TELEVISION_HOLD_SEEK_INTERVAL_MS = 200L
+
+/**
+ * Netflix-style hold speed. A short hold nudges a few seconds. Keeping the
+ * remote button down speeds up until a movie can reach the middle or the end
+ * without waiting through fixed 20-second jumps.
+ */
+internal fun acceleratedSeekStepMs(heldMs: Long, durationMs: Long): Long {
+    val timed = when {
+        heldMs < 700L -> 10_000L
+        heldMs < 1_400L -> 30_000L
+        heldMs < 2_200L -> 60_000L
+        heldMs < 3_200L -> 180_000L
+        else -> 0L
+    }
+    if (timed > 0L) return timed
+    if (durationMs <= 0L) return 600_000L
+    return (durationMs / 8L).coerceAtLeast(180_000L).coerceAtMost(durationMs)
+}
 
 internal enum class TelevisionHoldSeekDirection {
     BACKWARD,
@@ -51,15 +69,15 @@ internal fun nextTelevisionHoldSeekPosition(
 }
 
 /**
- * While the remote's left or right key is held during a movie or episode, step
- * the playhead by 20 seconds until the key is released. A short press still
- * follows the existing single-step seek.
+ * While the remote's left or right key is held during a movie or episode, move
+ * through the video. The longer the button stays down, the bigger each jump,
+ * until the viewer releases it and playback continues from that position.
  */
 internal class TelevisionHoldSeekController(
     private val scope: CoroutineScope,
     private val longPressTimeoutMs: Long,
     private val intervalMs: Long = TELEVISION_HOLD_SEEK_INTERVAL_MS,
-    private val onStep: (TelevisionHoldSeekDirection) -> Unit,
+    private val onStep: (TelevisionHoldSeekDirection, Long) -> Unit,
     private val onReleased: () -> Unit
 ) {
     private var pressedKey: Int? = null
@@ -114,8 +132,9 @@ internal class TelevisionHoldSeekController(
             }
             if (!isActive || pressedKey != keyCode) return@launch
             seeking = true
+            val startedAtMs = android.os.SystemClock.uptimeMillis()
             while (isActive && pressedKey == keyCode) {
-                onStep(direction)
+                onStep(direction, (android.os.SystemClock.uptimeMillis() - startedAtMs).coerceAtLeast(0L))
                 delay(intervalMs)
             }
         }
