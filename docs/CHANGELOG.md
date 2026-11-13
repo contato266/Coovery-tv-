@@ -2,6 +2,13 @@
 
 All notable product changes are recorded in this document.
 
+## [1.0.93]
+
+### Changed
+
+- Android TV launcher banner uses the horizontal Coovery tv+ logo.
+- Phone home-screen and app-drawer icon uses the stacked Coovery tv+ logo.
+
 ## [1.0.92]
 
 ### Added
